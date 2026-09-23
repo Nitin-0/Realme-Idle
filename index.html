@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realm Idle RPG</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="js/debug/debug.css">
+</head>
+
+<body>
+
+<!-- WORLD EVENT BANNER OVERLAY -->
+<div class="event-banner" id="eventBanner"></div>
+
+<div class="game">
+
+    <header class="topbar">
+
+        <div class="brand">
+            <div class="brand-icon" id="heroClassIcon">🛡️</div>
+
+            <div>
+                <h1>Realm Idle RPG</h1>
+                <p><span id="heroClassName">Knight Templar</span> · Legends are forged in darkness.</p>
+            </div>
+        </div>
+
+        <div class="realm-badge">
+            <span>REALM</span>
+            <strong id="realm">I</strong>
+        </div>
+
+    </header>
+
+
+    <!-- PLAYER RESOURCES & STATS -->
+    <section class="resources">
+
+        <div class="resource gold">
+            <span>✦ Gold</span>
+            <strong id="gold">1,240</strong>
+        </div>
+
+        <div class="resource">
+            <span>⚔ Attack</span>
+            <strong id="power">42</strong>
+        </div>
+
+        <div class="resource hp-card">
+            <span>❤️ Health</span>
+            <strong><span id="playerHpCard">100</span>/<span id="playerMaxHpCard">100</span></strong>
+        </div>
+
+    </section>
+
+    <!-- PLAYER XP & HEALTH BARS -->
+    <div class="bars-container">
+        <div class="xp-wrapper">
+            <div class="xp-header">
+                <span>LEVEL <strong id="playerLevel">1</strong> HERO</span>
+                <span><strong id="playerXp">0</strong> / <strong id="playerXpNext">100</strong> XP</span>
+            </div>
+            <div class="xp-bar">
+                <div class="xp-fill" id="xpFill"></div>
+            </div>
+        </div>
+
+        <div class="hp-wrapper">
+            <div class="hp-bar-header">
+                <span>❤️ HERO HEALTH</span>
+                <span><strong id="playerHpText">100</strong> / <strong id="playerMaxHpText">100</strong> HP</span>
+            </div>
+            <div class="player-hp-bar">
+                <div class="player-hp-fill" id="playerHpFill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS BREAKDOWN STRIP -->
+    <div class="stats-strip">
+        <div class="stat-badge">🛡️ Def: <strong id="statDefense">10</strong></div>
+        <div class="stat-badge">🎯 Crit: <strong id="statCrit">10%</strong></div>
+        <div class="stat-badge">💨 Dodge: <strong id="statDodge">5%</strong></div>
+        <div class="stat-badge">🩸 Lifesteal: <strong id="statLifesteal">0%</strong></div>
+    </div>
+
+    <!-- MAIN NAVIGATION BAR -->
+    <nav class="game-nav-tabs">
+        <button class="nav-tab-btn active" data-tab="arena">⚔️ Arena & Combat</button>
+        <button class="nav-tab-btn" data-tab="character">👤 Character & Class</button>
+        <button class="nav-tab-btn" data-tab="inventory">🎒 Inventory & Forge</button>
+        <button class="nav-tab-btn" data-tab="shop">🛒 Realm Shop</button>
+    </nav>
+
+    <!-- ==================== TAB PAGE 1: ARENA & COMBAT ==================== -->
+    <div class="game-tab-page active" id="tab_arena">
+
+        <main class="arena" id="arena">
+
+            <!-- WEATHER PARTICLES CANVAS LAYER -->
+            <canvas id="weatherCanvas" class="weather-canvas"></canvas>
+
+            <div class="stars"></div>
+            <div class="moon"></div>
+
+            <div class="enemy-container">
+
+                <div class="enemy" id="enemy">
+                    👹
+                </div>
+
+                <h2 id="enemyName">
+                    The Hollow Goblin
+                </h2>
+
+                <div class="enemy-type">
+                    ANCIENT GUARDIAN
+                </div>
+
+                <div class="health-wrapper">
+
+                    <div class="health-bar">
+                        <div
+                            class="health-fill"
+                            id="healthFill">
+                        </div>
+                    </div>
+
+                    <div class="health-text">
+                        <span id="hp">72</span>
+                        /
+                        <span id="maxHp">100</span>
+                        HP
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="battle-status" id="status">
+                ⚔ Your hero attacks automatically
+            </div>
+
+        </main>
+
+        <!-- COMBAT ACTION & POTIONS HUD -->
+        <div class="combat-hud">
+            <div class="hud-skill-box">
+                <button class="btn-cast-skill" id="btnCastSkill">
+                    <span class="skill-icon" id="skillIcon">🛡️</span>
+                    <div class="skill-info">
+                        <strong id="skillName">Shield Slam</strong>
+                        <small id="skillDesc">220% Dmg + Defense Buff</small>
+                    </div>
+                    <div class="skill-cd-badge" id="skillCdBadge">READY</div>
+                </button>
+
+                <label class="hud-toggle">
+                    <input type="checkbox" id="chkAutoCast" checked>
+                    <span>Auto-Cast</span>
+                </label>
+            </div>
+
+            <div class="hud-potion-box">
+                <div class="potion-belt">
+                    <button class="btn-belt-pot" data-pot="potion_minor" title="Minor Potion (+50 HP)">
+                        🧪 Minor <span class="pot-count" id="potCount_minor">x5</span>
+                    </button>
+                    <button class="btn-belt-pot" data-pot="potion_major" title="Major Potion (+180 HP)">
+                        🧪 Major <span class="pot-count" id="potCount_major">x1</span>
+                    </button>
+                    <button class="btn-belt-pot" data-pot="potion_full" title="Elixir of Rebirth (100% HP)">
+                        🏺 Full <span class="pot-count" id="potCount_full">x0</span>
+                    </button>
+                </div>
+
+                <label class="hud-toggle">
+                    <input type="checkbox" id="chkAutoPotion" checked>
+                    <span>Auto-Pot &lt;35% HP</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- ACTIVE BUFFS STRIP -->
+        <div class="active-buffs-strip" id="activeBuffsStrip"></div>
+
+        <!-- EQUIPMENT SLOTS SECTION -->
+        <section class="equipment-grid">
+            <div class="eq-slot" id="eqSlot_weapon"><span class="eq-empty">Empty Weapon</span></div>
+            <div class="eq-slot" id="eqSlot_armor"><span class="eq-empty">Empty Armor</span></div>
+            <div class="eq-slot" id="eqSlot_ring"><span class="eq-empty">Empty Ring</span></div>
+        </section>
+
+        <!-- KINGDOM BUILDINGS SECTION -->
+        <section class="kingdom-panel">
+            <div class="panel-header">
+                <h2>Kingdom Domain</h2>
+                <span>INFRASTRUCTURE</span>
+            </div>
+
+            <div class="kingdom-grid">
+                <div class="bldg-card">
+                    <div class="bldg-icon">🏰</div>
+                    <div class="bldg-info">
+                        <strong>Castle (Lv. <span id="bldgLvl_castle">1</span>)</strong>
+                        <small>+25 Max HP per level</small>
+                    </div>
+                    <button class="bldg-btn" id="btnBldg_castle" data-bldg-upgrade="castle">
+                        UPGRADE <span id="bldgCost_castle">✦ 200</span>
+                    </button>
+                </div>
+
+                <div class="bldg-card">
+                    <div class="bldg-icon">💰</div>
+                    <div class="bldg-info">
+                        <strong>Treasury (Lv. <span id="bldgLvl_treasury">1</span>)</strong>
+                        <small>+10% Gold Income per level</small>
+                    </div>
+                    <button class="bldg-btn" id="btnBldg_treasury" data-bldg-upgrade="treasury">
+                        UPGRADE <span id="bldgCost_treasury">✦ 300</span>
+                    </button>
+                </div>
+
+                <div class="bldg-card">
+                    <div class="bldg-icon">⚒️</div>
+                    <div class="bldg-info">
+                        <strong>Blacksmith (Lv. <span id="bldgLvl_blacksmith">1</span>)</strong>
+                        <small>+5% Attack & Gear Mult</small>
+                    </div>
+                    <button class="bldg-btn" id="btnBldg_blacksmith" data-bldg-upgrade="blacksmith">
+                        UPGRADE <span id="bldgCost_blacksmith">✦ 400</span>
+                    </button>
+                </div>
+
+                <div class="bldg-card">
+                    <div class="bldg-icon">🔮</div>
+                    <div class="bldg-info">
+                        <strong>Mage Tower (Lv. <span id="bldgLvl_mageTower">1</span>)</strong>
+                        <small>+2% Crit Chance per level</small>
+                    </div>
+                    <button class="bldg-btn" id="btnBldg_mageTower" data-bldg-upgrade="mageTower">
+                        UPGRADE <span id="bldgCost_mageTower">✦ 500</span>
+                    </button>
+                </div>
+
+                <div class="bldg-card">
+                    <div class="bldg-icon">🛡️</div>
+                    <div class="bldg-info">
+                        <strong>Barracks (Lv. <span id="bldgLvl_barracks">1</span>)</strong>
+                        <small>+5% Base Attack per level</small>
+                    </div>
+                    <button class="bldg-btn" id="btnBldg_barracks" data-bldg-upgrade="barracks">
+                        UPGRADE <span id="bldgCost_barracks">✦ 350</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- DYNAMIC QUESTS SECTION -->
+        <section class="panel" style="margin-top: 14px;">
+            <div class="panel-header">
+                <h2>Active Quests</h2>
+                <span>OBJECTIVES & REWARDS</span>
+            </div>
+            <div class="quests-list" id="questsList"></div>
+        </section>
+
+        <!-- BOTTOM UPGRADE GRID -->
+        <section class="bottom-grid">
+
+            <div class="panel">
+
+                <div class="panel-header">
+                    <h2>Ascension</h2>
+                    <span>UPGRADES</span>
+                </div>
+
+                <button
+                    class="upgrade"
+                    id="damageUpgrade">
+
+                    <div class="upgrade-icon">
+                        🗡️
+                    </div>
+
+                    <div class="upgrade-info">
+                        <strong>Runed Blade</strong>
+
+                        <small>
+                            Increase attack power
+                        </small>
+                    </div>
+
+                    <div
+                        class="upgrade-cost"
+                        id="damageCost">
+                        ✦ 120
+                    </div>
+
+                </button>
+
+                <button
+                    class="upgrade"
+                    id="incomeUpgrade">
+
+                    <div class="upgrade-icon">
+                        💰
+                    </div>
+
+                    <div class="upgrade-info">
+                        <strong>Royal Treasury</strong>
+
+                        <small>
+                            Increase gold generation
+                        </small>
+                    </div>
+
+                    <div
+                        class="upgrade-cost"
+                        id="incomeCost">
+                        ✦ 250
+                    </div>
+
+                </button>
+
+            </div>
+
+            <div class="panel">
+
+                <div class="panel-header">
+                    <h2>Realm Gate</h2>
+                    <span>PROGRESS</span>
+                </div>
+
+                <div class="realm-card">
+
+                    <div class="realm-title">
+                        <strong id="realmName">
+                            Moonlit Vale
+                        </strong>
+
+                        <span>✦</span>
+                    </div>
+
+                    <p>
+                        Enemies grow stronger.
+                        Rewards become greater.
+                    </p>
+
+                    <button
+                        class="next-realm"
+                        id="nextRealm">
+
+                        ENTER NEXT REALM
+                        <span id="realmCost">✦ 1,000</span>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- ==================== TAB PAGE 2: CHARACTER & CLASS ==================== -->
+    <div class="game-tab-page" id="tab_character">
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Hero Character Sheet</h2>
+                <span>ATTRIBUTES & STATS</span>
+            </div>
+
+            <div class="char-sheet-grid">
+                <div class="char-hero-card">
+                    <div class="char-avatar" id="charSheetIcon">🛡️</div>
+                    <div>
+                        <h3 id="charSheetName">Knight Templar</h3>
+                        <p class="char-hero-desc" id="charSheetDesc">Stalwart defender with high Defense.</p>
+                        <span class="char-hero-perk" id="charSheetPerks">+50% bonus from Shields and Armor.</span>
+                    </div>
+                </div>
+
+                <div class="char-stats-list">
+                    <div class="stat-line"><span>Total Attack Power:</span> <strong id="charStatAttack">42</strong></div>
+                    <div class="stat-line"><span>Total Armor Defense:</span> <strong id="charStatDefense">15</strong></div>
+                    <div class="stat-line"><span>Critical Strike Chance:</span> <strong id="charStatCrit">10%</strong></div>
+                    <div class="stat-line"><span>Critical Multiplier:</span> <strong id="charStatCritDmg">1.5x</strong></div>
+                    <div class="stat-line"><span>Dodge Probability:</span> <strong id="charStatDodge">5%</strong></div>
+                    <div class="stat-line"><span>Lifesteal Leech:</span> <strong id="charStatLifesteal">0%</strong></div>
+                    <div class="stat-line"><span>Maximum Health (HP):</span> <strong id="charStatHp">100</strong></div>
+                    <div class="stat-line"><span>Passive Income:</span> <strong id="charStatGps">3g / sec</strong></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN-MANAGED CLASS SELECTION -->
+        <section class="panel" style="margin-top: 14px;">
+            <div class="panel-header">
+                <h2>Class Hall (Admin Configured)</h2>
+                <span>CHOOSE YOUR VOCATION</span>
+            </div>
+
+            <div class="classes-grid" id="classesGrid"></div>
+        </section>
+
+    </div>
+
+    <!-- ==================== TAB PAGE 3: INVENTORY & FORGE ==================== -->
+    <div class="game-tab-page" id="tab_inventory">
+
+        <!-- MATERIALS OVERVIEW BAR -->
+        <div class="materials-bar" id="materialsBar"></div>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Backpack & Vault</h2>
+                <div class="inv-filter-bar">
+                    <button class="inv-filter-btn active" data-inv-filter="all">All</button>
+                    <button class="inv-filter-btn" data-inv-filter="equipment">Equipment</button>
+                    <button class="inv-filter-btn" data-inv-filter="consumable">Consumables</button>
+                </div>
+            </div>
+
+            <div class="inv-container-grid">
+                <div class="inv-slots-grid" id="inventoryGrid"></div>
+
+                <!-- ITEM INSPECT / FORGE ACTION CARD -->
+                <div class="inv-details-card" id="itemDetailsPanel">
+                    <div class="empty-select-hint">Select an item from your backpack to inspect, equip, upgrade, or sell.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CRAFTING FORGE -->
+        <section class="panel" style="margin-top: 14px;">
+            <div class="panel-header">
+                <h2>Blacksmith Crafting Forge</h2>
+                <span>COMBINE MATERIALS & RECIPES</span>
+            </div>
+            <div class="crafting-grid" id="craftingGrid"></div>
+        </section>
+
+    </div>
+
+    <!-- ==================== TAB PAGE 4: REALM SHOP ==================== -->
+    <div class="game-tab-page" id="tab_shop">
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Realm Merchant Post</h2>
+                <div class="inv-filter-bar">
+                    <button class="shop-filter-btn active" data-shop-filter="all">All Items</button>
+                    <button class="shop-filter-btn" data-shop-filter="consumable">Potions & Elixirs</button>
+                    <button class="shop-filter-btn" data-shop-filter="equipment">Equipment</button>
+                    <button class="shop-filter-btn" data-shop-filter="material">Materials</button>
+                </div>
+            </div>
+
+            <div class="shop-grid" id="shopGrid"></div>
+        </section>
+
+    </div>
+
+    <!-- ==================== OFFLINE PROGRESSION MODAL ==================== -->
+    <div class="offline-modal" id="offlineModal">
+        <div class="offline-card">
+            <div class="offline-header">
+                <h3>👑 WELCOME BACK, ADVENTURER!</h3>
+                <small>OFFLINE PROGRESSION REPORT</small>
+            </div>
+            <div class="offline-body">
+                <p id="offlineTimeText">You were away for 0m.</p>
+                <div class="offline-stats-grid">
+                    <div class="offline-stat"><span>⚔️ Foes Defeated:</span> <strong id="offStatKills">0</strong></div>
+                    <div class="offline-stat"><span>✦ Gold Accumulated:</span> <strong id="offStatGold">+0</strong></div>
+                    <div class="offline-stat"><span>⭐ Experience Earned:</span> <strong id="offStatXp">+0</strong></div>
+                    <div class="offline-stat"><span>🧪 Potions Found:</span> <strong id="offStatPots">0</strong></div>
+                </div>
+                <div class="offline-loot-box" id="offlineLootBox"></div>
+                <button class="btn-claim-offline" id="btnClaimOffline">CLAIM ALL REWARDS</button>
+            </div>
+        </div>
+    </div>
+
+
+    <footer>
+
+        <span>
+            Auto-save enabled
+        </span>
+
+        <div class="footer-buttons">
+            <button id="btnDevToggle" class="btn-dev-trigger">
+                🐛 DEBUG (F2)
+            </button>
+
+            <button id="reset">
+                Reset Progress
+            </button>
+        </div>
+
+    </footer>
+
+</div>
+
+
+<!-- TINY FAST F2 DEBUG FLOATING CARD -->
+<div class="debug-widget" id="debugWidget">
+
+    <div class="dbg-header">
+        <h4><span class="dbg-icon">🐛</span> F2 QUICK DEBUG</h4>
+        <button class="dbg-close" id="debugClose">&times;</button>
+    </div>
+
+    <div class="dbg-body">
+
+        <div class="dbg-row">
+            <span class="dbg-label">GOLD</span>
+            <div class="dbg-btn-group">
+                <button data-dbg-gold="-100">-100</button>
+                <button data-dbg-gold="100">+100</button>
+                <button data-dbg-gold="1000">+1,000</button>
+            </div>
+        </div>
+
+        <div class="dbg-row">
+            <span class="dbg-label">POWER</span>
+            <div class="dbg-btn-group">
+                <button data-dbg-power="-10">-10</button>
+                <button data-dbg-power="10">+10</button>
+                <button data-dbg-power="100">+100</button>
+            </div>
+        </div>
+
+        <div class="dbg-toggles">
+            <label class="dbg-toggle-item">
+                <input type="checkbox" id="dbgChkGod">
+                <span>☑ God Mode</span>
+            </label>
+
+            <label class="dbg-toggle-item">
+                <input type="checkbox" id="dbgChkOneHit">
+                <span>☑ One Hit Kill</span>
+            </label>
+
+            <label class="dbg-toggle-item">
+                <input type="checkbox" id="dbgChkNoCd">
+                <span>☑ No Cooldowns</span>
+            </label>
+        </div>
+
+        <div class="dbg-row">
+            <button id="dbgBtnHeal" class="dbg-btn-action">❤️ Heal Player</button>
+            <button id="dbgBtnKill" class="dbg-btn-action">⚡ Kill Enemy</button>
+        </div>
+
+        <div class="dbg-row">
+            <button id="dbgBtnSimOffline" class="dbg-btn-action">⏳ Sim 8h Offline</button>
+            <button id="dbgBtnMaxGear" class="dbg-btn-action">🛡️ Max Gear (+10)</button>
+        </div>
+
+        <div class="dbg-row">
+            <button id="dbgBtnGiveSupplies" class="dbg-btn-action">🧪 +50 Potions/Mats</button>
+            <button id="dbgBtnGiveGold" class="dbg-btn-action">💰 +100k Gold</button>
+        </div>
+
+        <div class="dbg-row">
+            <span class="dbg-label">SPEED</span>
+            <div class="dbg-speed-selector">
+                <button class="dbg-speed-btn" data-speed="0.5">0.5x</button>
+                <button class="dbg-speed-btn active" data-speed="1">1x</button>
+                <button class="dbg-speed-btn" data-speed="2">2x</button>
+                <button class="dbg-speed-btn" data-speed="5">5x</button>
+                <button class="dbg-speed-btn" data-speed="10">10x</button>
+            </div>
+        </div>
+
+        <button id="dbgBtnOpenManager" class="dbg-btn-manager">
+            🛠️ Open Game Manager App
+        </button>
+
+    </div>
+
+</div>
+
+<!-- DATA MODULES -->
+<script src="js/data/heroes.js"></script>
+<script src="js/data/mobs.js"></script>
+<script src="js/data/maps.js"></script>
+<script src="js/data/weather.js"></script>
+<script src="js/data/events.js"></script>
+<script src="js/data/items.js"></script>
+<script src="js/data/scenarios.js"></script>
+
+<!-- CORE STATE -->
+<script src="js/core/state.js"></script>
+
+<!-- SYSTEMS -->
+<script src="js/systems/combat.js"></script>
+<script src="js/systems/spawning.js"></script>
+<script src="js/systems/maps.js"></script>
+<script src="js/systems/weather.js"></script>
+<script src="js/systems/time.js"></script>
+<script src="js/systems/events.js"></script>
+<script src="js/systems/scenarios.js"></script>
+<script src="js/systems/inventory.js"></script>
+<script src="js/systems/kingdom.js"></script>
+<script src="js/systems/quests.js"></script>
+<script src="js/systems/journal.js"></script>
+
+<!-- DEV & API CONTROLLERS -->
+<script src="js/dev/devMode.js"></script>
+<script src="js/dev/devPanel.js"></script>
+<script src="js/dev/commands.js"></script>
+<script src="js/api/gameApi.js"></script>
+<script src="js/debug/debug.js"></script>
+
+<!-- BOOTSTRAPPER -->
+<script src="js/main.js"></script>
+
+</body>
+</html>

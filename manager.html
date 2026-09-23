@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realm Idle — Game Manager</title>
+    <link rel="stylesheet" href="manager.css">
+</head>
+
+<body>
+
+<div class="mgr-app">
+
+    <!-- SIDEBAR NAV -->
+    <aside class="mgr-sidebar">
+
+        <div class="mgr-brand">
+            <span class="mgr-logo">👑</span>
+            <div>
+                <h2>REALM IDLE</h2>
+                <small>GAME MANAGER v2.0</small>
+            </div>
+        </div>
+
+        <nav class="mgr-nav">
+            <button class="mgr-nav-btn active" data-mgr-tab="dashboard">📊 Dashboard</button>
+            <button class="mgr-nav-btn" data-mgr-tab="classes">👑 Classes & Skills</button>
+            <button class="mgr-nav-btn" data-mgr-tab="mobs">👹 Mob & Drop Rates</button>
+            <button class="mgr-nav-btn" data-mgr-tab="items">🎒 Items & Equipment</button>
+            <button class="mgr-nav-btn" data-mgr-tab="shop">🛒 Shop Catalog</button>
+            <button class="mgr-nav-btn" data-mgr-tab="maps">🗺️ Map & Realm Editor</button>
+            <button class="mgr-nav-btn" data-mgr-tab="weather">🌧️ Weather Editor</button>
+            <button class="mgr-nav-btn" data-mgr-tab="events">⚡ Scenarios & Events</button>
+            <button class="mgr-nav-btn" data-mgr-tab="data">💾 Data Import / Export</button>
+        </nav>
+
+        <div class="mgr-sidebar-footer">
+            <button id="btnReturnToGame" class="btn-primary">🎮 Launch Game App</button>
+        </div>
+
+    </aside>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="mgr-main">
+
+        <!-- HEADER TOPBAR -->
+        <header class="mgr-header">
+            <h3 id="mgrHeaderTitle">World Dashboard</h3>
+
+            <div class="mgr-header-actions">
+                <span class="mgr-status-badge">🟢 GameAPI Connected</span>
+                <button id="btnMgrExport" class="btn-secondary">📤 Export JSON</button>
+            </div>
+        </header>
+
+        <div class="mgr-content">
+
+            <!-- TAB 1: DASHBOARD -->
+            <div class="mgr-tab-content active" id="tab_dashboard">
+                <div class="mgr-metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">CURRENT MAP</span>
+                        <strong id="dashMap">Moonlit Vale</strong>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">CURRENT WEATHER</span>
+                        <strong id="dashWeather">Clear Sky</strong>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">WORLD TIME</span>
+                        <strong id="dashTime">12:00 (Day)</strong>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">HERO LEVEL / GOLD</span>
+                        <strong id="dashHero">Lvl 1 · 1,240g</strong>
+                    </div>
+                </div>
+
+                <div class="mgr-grid-2">
+                    <div class="mgr-card">
+                        <h4>ACTIVE MOB WAVE</h4>
+                        <div id="dashActiveMob" class="mgr-active-mob">
+                            <span class="mob-emoji">👹</span>
+                            <div>
+                                <strong id="dashMobName">The Hollow Goblin</strong>
+                                <small id="dashMobHp">100 / 100 HP</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mgr-card">
+                        <h4>ACTIVE SCENARIOS & EVENTS</h4>
+                        <div id="dashActiveEvent" class="mgr-active-event">
+                            <span>No active world events</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: CLASSES & SKILLS EDITOR -->
+            <div class="mgr-tab-content" id="tab_classes">
+                <div class="mgr-grid-2">
+                    <div class="mgr-card">
+                        <h4>HERO CLASS DICTIONARY</h4>
+                        <div class="mgr-list" id="mgrClassList"></div>
+                    </div>
+
+                    <div class="mgr-card">
+                        <h4>CREATE / EDIT HERO CLASS & SKILLS</h4>
+                        <form id="formClassEditor" class="mgr-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Class ID Key:</label>
+                                    <input type="text" id="classEdit_id" required placeholder="e.g. paladin">
+                                </div>
+                                <div class="form-group">
+                                    <label>Class Name:</label>
+                                    <input type="text" id="classEdit_name" required placeholder="e.g. Paladin">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Class Icon Emoji:</label>
+                                    <input type="text" id="classEdit_icon" value="🛡️">
+                                </div>
+                                <div class="form-group">
+                                    <label>Required Hero Level:</label>
+                                    <input type="number" id="classEdit_reqLevel" value="1">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                    <input type="checkbox" id="classEdit_unlocked" checked>
+                                    <span>Unlocked & Available to Players</span>
+                                </label>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Base HP:</label>
+                                    <input type="number" id="classEdit_hp" value="120">
+                                </div>
+                                <div class="form-group">
+                                    <label>Base Attack:</label>
+                                    <input type="number" id="classEdit_atk" value="12">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Crit Chance (0 - 1.0):</label>
+                                    <input type="number" step="0.01" id="classEdit_crit" value="0.05">
+                                </div>
+                                <div class="form-group">
+                                    <label>Lifesteal (0 - 1.0):</label>
+                                    <input type="number" step="0.01" id="classEdit_lifesteal" value="0">
+                                </div>
+                            </div>
+
+                            <h5 style="margin: 6px 0 0 0; color: #edc76f; font-size: 11px;">ACTIVE COMBAT SKILL CONFIGURATION</h5>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Skill Name:</label>
+                                    <input type="text" id="classEdit_skillName" value="Shield Slam">
+                                </div>
+                                <div class="form-group">
+                                    <label>Skill Icon:</label>
+                                    <input type="text" id="classEdit_skillIcon" value="🛡️💥">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Cooldown (Seconds):</label>
+                                    <input type="number" id="classEdit_skillCd" value="8">
+                                </div>
+                                <div class="form-group">
+                                    <label>Damage Multiplier (e.g. 2.2 = 220%):</label>
+                                    <input type="number" step="0.1" id="classEdit_skillMult" value="2.2">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Skill Description:</label>
+                                <input type="text" id="classEdit_skillDesc" value="Slams enemy with heavy shield for massive damage and stuns briefly.">
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-success">💾 Save Class Definition</button>
+                                <button type="button" id="btnApplyClassToPlayer" class="btn-primary">👑 Select For Player Now</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: MOBS & AI EDITOR -->
+            <div class="mgr-tab-content" id="tab_mobs">
+                <div class="mgr-grid-2">
+                    <div class="mgr-card">
+                        <h4>MOB DICTIONARY (DEFINITIONS)</h4>
+                        <div class="mgr-list" id="mgrMobList"></div>
+                    </div>
+
+                    <div class="mgr-card">
+                        <h4>CREATE / EDIT MOB TEMPLATE</h4>
+                        <form id="formMobEditor" class="mgr-form">
+                            <div class="form-group">
+                                <label>Mob ID Key:</label>
+                                <input type="text" id="mobEdit_id" required placeholder="e.g. shadow_dragon">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Mob Name:</label>
+                                <input type="text" id="mobEdit_name" required placeholder="e.g. Shadow Dragon">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Icon Emoji:</label>
+                                    <input type="text" id="mobEdit_icon" value="🐉">
+                                </div>
+                                <div class="form-group">
+                                    <label>Type Tag:</label>
+                                    <input type="text" id="mobEdit_type" value="ANCIENT BEAST">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Base HP:</label>
+                                    <input type="number" id="mobEdit_hp" value="5000">
+                                </div>
+                                <div class="form-group">
+                                    <label>Base Attack:</label>
+                                    <input type="number" id="mobEdit_dmg" value="250">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Gold Reward:</label>
+                                    <input type="number" id="mobEdit_gold" value="1000">
+                                </div>
+                                <div class="form-group">
+                                    <label>XP Reward:</label>
+                                    <input type="number" id="mobEdit_xp" value="500">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Drop Chance (0.0 - 1.0):</label>
+                                    <input type="number" step="0.05" id="mobEdit_dropChance" value="0.35">
+                                </div>
+                                <div class="form-group">
+                                    <label>Drop Table (comma-separated item IDs):</label>
+                                    <input type="text" id="mobEdit_dropTable" value="iron_sword, leather_armor, potion_minor">
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-success">💾 Save Mob Definition</button>
+                                <button type="button" id="btnSpawnEditedMob" class="btn-primary">⚡ Spawn Instantly</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: ITEMS & DROP RATES EDITOR -->
+            <div class="mgr-tab-content" id="tab_items">
+                <div class="mgr-grid-2">
+                    <div class="mgr-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h4 style="margin:0;">ITEMS & EQUIPMENT CATALOG</h4>
+                            <select id="mgrItemFilter" style="background:#1c1e2e; border:1px solid rgba(255,255,255,0.12); color:#fff; font-size:10px; border-radius:6px; padding:4px 8px;">
+                                <option value="all">All Items</option>
+                                <option value="weapon">Weapons</option>
+                                <option value="armor">Armor</option>
+                                <option value="ring">Rings</option>
+                                <option value="consumable">Consumables</option>
+                                <option value="material">Materials</option>
+                            </select>
+                        </div>
+                        <div class="mgr-list" id="mgrItemList"></div>
+                    </div>
+
+                    <div class="mgr-card">
+                        <h4>CREATE / EDIT ITEM DEFINITION</h4>
+                        <form id="formItemEditor" class="mgr-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Item ID Key:</label>
+                                    <input type="text" id="itemEdit_id" required placeholder="e.g. void_blade">
+                                </div>
+                                <div class="form-group">
+                                    <label>Item Name:</label>
+                                    <input type="text" id="itemEdit_name" required placeholder="e.g. Void Blade">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Slot / Type:</label>
+                                    <select id="itemEdit_slot">
+                                        <option value="weapon">Weapon</option>
+                                        <option value="armor">Armor</option>
+                                        <option value="ring">Ring / Accessory</option>
+                                        <option value="consumable">Consumable</option>
+                                        <option value="material">Crafting Material</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Rarity Tier:</label>
+                                    <select id="itemEdit_rarity">
+                                        <option value="common">Common (White)</option>
+                                        <option value="uncommon">Uncommon (Green)</option>
+                                        <option value="rare">Rare (Blue)</option>
+                                        <option value="epic">Epic (Purple)</option>
+                                        <option value="legendary">Legendary (Gold)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Icon Emoji:</label>
+                                    <input type="text" id="itemEdit_icon" value="⚔️">
+                                </div>
+                                <div class="form-group">
+                                    <label>Sell Value (Gold):</label>
+                                    <input type="number" id="itemEdit_sellValue" value="150">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Attack Bonus:</label>
+                                    <input type="number" id="itemEdit_atk" value="25">
+                                </div>
+                                <div class="form-group">
+                                    <label>HP Bonus:</label>
+                                    <input type="number" id="itemEdit_hp" value="0">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Crit Bonus (0.0 - 1.0):</label>
+                                    <input type="number" step="0.01" id="itemEdit_crit" value="0.05">
+                                </div>
+                                <div class="form-group">
+                                    <label>Lifesteal Bonus (0.0 - 1.0):</label>
+                                    <input type="number" step="0.01" id="itemEdit_lifesteal" value="0.02">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Description:</label>
+                                <input type="text" id="itemEdit_desc" value="A blade forged from the dark fabric of the void.">
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-success">💾 Save Item Definition</button>
+                                <button type="button" id="btnGiveItemToPlayer" class="btn-primary">🎁 Grant 1 to Player</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: SHOP CATALOG MANAGER -->
+            <div class="mgr-tab-content" id="tab_shop">
+                <div class="mgr-grid-2">
+                    <div class="mgr-card">
+                        <h4>SHOP MERCHANDISE LIST</h4>
+                        <div class="mgr-list" id="mgrShopList"></div>
+                    </div>
+
+                    <div class="mgr-card">
+                        <h4>CREATE / EDIT SHOP ITEM</h4>
+                        <form id="formShopEditor" class="mgr-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Shop Item ID:</label>
+                                    <input type="text" id="shopEdit_id" required placeholder="e.g. shop_potion_full">
+                                </div>
+                                <div class="form-group">
+                                    <label>Display Name:</label>
+                                    <input type="text" id="shopEdit_name" required placeholder="e.g. Supreme Rejuvenation Potion">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Category:</label>
+                                    <select id="shopEdit_category">
+                                        <option value="consumable">Consumable (Potion / Elixir)</option>
+                                        <option value="weapon">Weapon</option>
+                                        <option value="armor">Armor</option>
+                                        <option value="ring">Ring / Accessory</option>
+                                        <option value="material">Crafting Material</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Icon Emoji:</label>
+                                    <input type="text" id="shopEdit_icon" value="🧪">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Linked Item ID or Mat Key:</label>
+                                    <input type="text" id="shopEdit_itemId" required placeholder="e.g. potion_full or iron_ore">
+                                </div>
+                                <div class="form-group">
+                                    <label>Material Qty (if Material):</label>
+                                    <input type="number" id="shopEdit_matQty" value="5">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Price in Gold:</label>
+                                    <input type="number" id="shopEdit_costGold" value="500">
+                                </div>
+                                <div class="form-group">
+                                    <label>Required Hero Level:</label>
+                                    <input type="number" id="shopEdit_reqLevel" value="1">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Description / Flavor Text:</label>
+                                <input type="text" id="shopEdit_desc" value="Restores 100% of maximum HP instantly.">
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-success">💾 Save Shop Item</button>
+                                <button type="button" id="btnDeleteShopItem" class="btn-danger">🗑️ Remove from Shop</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: MAPS & REALMS EDITOR -->
+            <div class="mgr-tab-content" id="tab_maps">
+                <div class="mgr-grid-2">
+                    <div class="mgr-card">
+                        <h4>REALM MAP DICTIONARY</h4>
+                        <div class="mgr-list" id="mgrMapList"></div>
+                    </div>
+
+                    <div class="mgr-card">
+                        <h4>CREATE / EDIT REALM MAP</h4>
+                        <form id="formMapEditor" class="mgr-form">
+                            <div class="form-group">
+                                <label>Map ID Key:</label>
+                                <input type="text" id="mapEdit_id" required placeholder="e.g. infernal_depths">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Map Name:</label>
+                                <input type="text" id="mapEdit_name" required placeholder="e.g. Infernal Depths">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Realm Index (1-8):</label>
+                                    <input type="number" id="mapEdit_realmIndex" value="5">
+                                </div>
+                                <div class="form-group">
+                                    <label>Roman Numeral:</label>
+                                    <input type="text" id="mapEdit_roman" value="V">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>CSS Background Radial Gradient:</label>
+                                <input type="text" id="mapEdit_bgGradient" value="radial-gradient(circle at 50% 42%, #7a2b16 0%, #0f0502 100%)">
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-success">💾 Save Map Definition</button>
+                                <button type="button" id="btnTravelEditedMap" class="btn-primary">🗺️ Travel Now</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: WEATHER EDITOR -->
+            <div class="mgr-tab-content" id="tab_weather">
+                <div class="mgr-grid-2">
+                    <div class="mgr-card">
+                        <h4>WEATHER PHENOMENA</h4>
+                        <div class="mgr-list" id="mgrWeatherList"></div>
+                    </div>
+
+                    <div class="mgr-card">
+                        <h4>EDIT WEATHER STAT MULTIPLIERS</h4>
+                        <form id="formWeatherEditor" class="mgr-form">
+                            <div class="form-group">
+                                <label>Weather ID:</label>
+                                <input type="text" id="weatherEdit_id" readonly>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Player Damage Mult:</label>
+                                    <input type="number" step="0.1" id="weatherEdit_playerDmg" value="1.0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Enemy Damage Mult:</label>
+                                    <input type="number" step="0.1" id="weatherEdit_enemyDmg" value="1.0">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Gold Mult:</label>
+                                    <input type="number" step="0.1" id="weatherEdit_gold" value="1.0">
+                                </div>
+                                <div class="form-group">
+                                    <label>XP Mult:</label>
+                                    <input type="number" step="0.1" id="weatherEdit_xp" value="1.0">
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-success">💾 Save Weather Settings</button>
+                                <button type="button" id="btnApplyEditedWeather" class="btn-primary">🌧️ Apply Now</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: SCENARIOS & EVENTS -->
+            <div class="mgr-tab-content" id="tab_events">
+                <div class="mgr-card">
+                    <h4>ONE-CLICK SCENARIOS & WORLD EVENTS</h4>
+                    <div class="mgr-btn-grid">
+                        <button data-mgr-scenario="dragon_invasion" class="btn-danger">🔥 Run Dragon Siege Invasion</button>
+                        <button data-mgr-scenario="blood_moon_surge" class="btn-warn">🔴 Run Blood Moon Surge</button>
+                        <button data-mgr-scenario="frostpeak_blizzard" class="btn-warn">❄️ Run Frostpeak Blizzard</button>
+                        <button data-mgr-scenario="goblin_horde" class="btn-warn">👹 Run Goblin Horde Siege</button>
+                        <button data-mgr-scenario="stop" class="btn-secondary">🛑 Stop Active Scenario</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: DATA IMPORT / EXPORT -->
+            <div class="mgr-tab-content" id="tab_data">
+                <div class="mgr-card">
+                    <h4>JSON GAME DEFINITIONS CONFIGURATION</h4>
+                    <textarea id="txtJsonConfig" class="mgr-json-area" rows="16"></textarea>
+
+                    <div class="form-actions" style="margin-top: 12px;">
+                        <button id="btnMgrRefreshJson" class="btn-secondary">🔄 Refresh JSON</button>
+                        <button id="btnMgrImportJson" class="btn-success">📥 Import & Save Config</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<!-- DATA & API LOADERS -->
+<script src="js/data/heroes.js"></script>
+<script src="js/data/mobs.js"></script>
+<script src="js/data/maps.js"></script>
+<script src="js/data/weather.js"></script>
+<script src="js/data/events.js"></script>
+<script src="js/data/items.js"></script>
+<script src="js/data/scenarios.js"></script>
+
+<script src="js/core/state.js"></script>
+<script src="js/systems/spawning.js"></script>
+<script src="js/systems/maps.js"></script>
+<script src="js/systems/weather.js"></script>
+<script src="js/systems/events.js"></script>
+<script src="js/systems/scenarios.js"></script>
+<script src="js/systems/inventory.js"></script>
+
+<script src="js/dev/devMode.js"></script>
+<script src="js/api/gameApi.js"></script>
+
+<script src="js/manager/managerApp.js"></script>
+
+</body>
+</html>

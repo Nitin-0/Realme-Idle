@@ -1,0 +1,444 @@
+/* =========================================================
+   REALM IDLE CORE - UNIFIED SINGLE ROOT GAME STATE
+========================================================= */
+
+window.gameState = {
+    lastSaveTime: Date.now(),
+    offlineReport: null,
+
+    player: {
+        heroClass: "knight",
+        level: 1,
+        xp: 0,
+        xpToNext: 100,
+        gold: 1240,
+        power: 42,
+        defense: 10,
+        critChance: 0.10,
+        critDmg: 1.5,
+        dodge: 0.05,
+        lifesteal: 0.0,
+        hp: 100,
+        maxHp: 100,
+        equipment: {
+            weapon: null,
+            armor: null,
+            ring: null
+        },
+        inventory: [],
+        materials: {
+            ironOre: 15,
+            wood: 15,
+            crystal: 5,
+            dragonScale: 0,
+            shadowEssence: 0
+        },
+        potions: {
+            potion_minor: 5,
+            potion_major: 1,
+            potion_full: 0,
+            elixir_fury: 1,
+            elixir_iron: 1
+        },
+        autoPotion: true,
+        skills: {
+            activeCooldown: 0,
+            autoCast: true
+        },
+        activeBuffs: []
+    },
+
+    world: {
+        currentMapId: "moonlit_vale",
+        currentWeatherId: "clear",
+        worldTime: 12,
+        activeEventId: null,
+        activeEventTimer: 0,
+        activeScenarioId: null,
+        activeScenarioTimer: 0
+    },
+
+    combat: {
+        currentMob: null
+    },
+
+    kingdom: {
+        castle: 1,
+        treasury: 1,
+        blacksmith: 1,
+        mageTower: 1,
+        barracks: 1
+    },
+
+    quests: {
+        active: [],
+        completedCount: 0
+    },
+
+    journal: {
+        discoveredMobs: {},
+        discoveredItems: {}
+    },
+
+    costs: {
+        damageCost: 120,
+        incomeCost: 250,
+        realmCost: 1000,
+        goldPerSecond: 3
+    },
+
+    listeners: [],
+
+    subscribe(fn) {
+        this.listeners.push(fn);
+    },
+
+    notify() {
+        this.listeners.forEach(fn => fn(this));
+    },
+
+    /* =========================
+       COMPATIBILITY ACCESSORS
+    ========================= */
+    get currentMapId() { return this.world.currentMapId; },
+    set currentMapId(val) { this.world.currentMapId = val; },
+
+    get currentWeatherId() { return this.world.currentWeatherId; },
+    set currentWeatherId(val) { this.world.currentWeatherId = val; },
+
+    get worldTime() { return this.world.worldTime; },
+    set worldTime(val) { this.world.worldTime = val; },
+
+    get activeEventId() { return this.world.activeEventId; },
+    set activeEventId(val) { this.world.activeEventId = val; },
+
+    get activeEventTimer() { return this.world.activeEventTimer; },
+    set activeEventTimer(val) { this.world.activeEventTimer = val; },
+
+    get activeScenarioId() { return this.world.activeScenarioId; },
+    set activeScenarioId(val) { this.world.activeScenarioId = val; },
+
+    get activeScenarioTimer() { return this.world.activeScenarioTimer; },
+    set activeScenarioTimer(val) { this.world.activeScenarioTimer = val; },
+
+    /* =========================
+       HELPERS & STAT FORMULAS
+    ========================= */
+
+    getItemEffectiveStats(item) {
+        if (!item || !item.stats) return {};
+        const upgLevel = item.upgradeLevel || 0;
+        const mult = 1 + upgLevel * 0.15; // +15% per upgrade level
+        const res = {};
+        for (const [key, val] of Object.entries(item.stats)) {
+            if (typeof val === "number") {
+                res[key] = key.toLowerCase().includes("chance") || key.toLowerCase().includes("mult") || key.toLowerCase().includes("lifesteal") || key.toLowerCase().includes("dodge")
+                    ? +(val * (1 + upgLevel * 0.08)).toFixed(3)
+                    : Math.round(val * mult);
+            }
+        }
+        return res;
+    },
+
+    getEffectiveAttack() {
+        let att = this.player.power;
+
+        // Add equipment attack (with upgrade scaling)
+        Object.values(this.player.equipment).forEach(item => {
+            if (item) {
+                const eff = this.getItemEffectiveStats(item);
+                if (eff.attack) att += eff.attack;
+            }
+        });
+
+        // Add Kingdom Barracks multiplier (+5% per level)
+        att *= (1 + (this.kingdom.barracks - 1) * 0.05);
+
+        // Add Blacksmith multiplier (+5% per level)
+        att *= (1 + (this.kingdom.blacksmith - 1) * 0.05);
+
+        // Active buffs
+        this.player.activeBuffs.forEach(b => {
+            if (b.stat === "attack") att += b.bonus;
+            else if (b.stat === "attackMult") att *= (1 + b.bonus);
+        });
+
+        return Math.floor(att);
+    },
+
+    getEffectiveDefense() {
+        let def = this.player.defense;
+        Object.values(this.player.equipment).forEach(item => {
+            if (item) {
+                const eff = this.getItemEffectiveStats(item);
+                if (eff.defense) def += eff.defense;
+            }
+        });
+
+        this.player.activeBuffs.forEach(b => {
+            if (b.stat === "defense") def += b.bonus;
+        });
+
+        return Math.floor(def);
+    },
+
+    getEffectiveCritChance() {
+        let crit = this.player.critChance;
+        Object.values(this.player.equipment).forEach(item => {
+            if (item) {
+                const eff = this.getItemEffectiveStats(item);
+                if (eff.critChance) crit += eff.critChance;
+            }
+        });
+        // Mage Tower (+2% crit per level)
+        crit += (this.kingdom.mageTower - 1) * 0.02;
+
+        this.player.activeBuffs.forEach(b => {
+            if (b.stat === "critChance") crit += b.bonus;
+        });
+
+        return Math.min(0.95, crit);
+    },
+
+    getEffectiveDodge() {
+        let dodge = this.player.dodge;
+        Object.values(this.player.equipment).forEach(item => {
+            if (item) {
+                const eff = this.getItemEffectiveStats(item);
+                if (eff.dodge) dodge += eff.dodge;
+            }
+        });
+
+        this.player.activeBuffs.forEach(b => {
+            if (b.stat === "dodge") dodge += b.bonus;
+        });
+
+        return Math.min(0.75, dodge);
+    },
+
+    getEffectiveLifesteal() {
+        let ls = this.player.lifesteal;
+        Object.values(this.player.equipment).forEach(item => {
+            if (item) {
+                const eff = this.getItemEffectiveStats(item);
+                if (eff.lifesteal) ls += eff.lifesteal;
+            }
+        });
+        return Math.min(0.50, ls);
+    },
+
+    addGold(amount) {
+        const devMult = (window.devMode && window.devMode.enabled) ? window.devMode.goldMultiplier : 1;
+        const weather = window.WeatherData ? window.WeatherData[this.world.currentWeatherId] : null;
+        const weatherMult = weather ? weather.goldMult : 1;
+
+        let eventMult = 1;
+        if (this.world.activeEventId && window.EventsData && window.EventsData[this.world.activeEventId]) {
+            eventMult *= window.EventsData[this.world.activeEventId].goldMult;
+        }
+        if (this.world.activeScenarioId && window.ScenariosData && window.ScenariosData[this.world.activeScenarioId]) {
+            eventMult *= window.ScenariosData[this.world.activeScenarioId].modifiers.goldMult;
+        }
+
+        // Equipment Gold Bonus (e.g. Ring of Fortune)
+        let gearGoldMult = 1;
+        Object.values(this.player.equipment).forEach(item => {
+            if (item) {
+                const eff = this.getItemEffectiveStats(item);
+                if (eff.goldMult) gearGoldMult += eff.goldMult;
+            }
+        });
+
+        // Kingdom Treasury Bonus (+10% per level)
+        const treasuryMult = 1 + (this.kingdom.treasury - 1) * 0.10;
+
+        const totalGold = amount * devMult * weatherMult * eventMult * treasuryMult * gearGoldMult;
+        this.player.gold += totalGold;
+        this.notify();
+    },
+
+    spendGold(cost) {
+        if (window.devMode && window.devMode.enabled && window.devMode.infiniteGold) return;
+        this.player.gold = Math.max(0, this.player.gold - cost);
+        this.notify();
+    },
+
+    canAfford(cost) {
+        if (window.devMode && window.devMode.enabled && window.devMode.infiniteGold) return true;
+        return this.player.gold >= cost;
+    },
+
+    addXp(amount) {
+        const weather = window.WeatherData ? window.WeatherData[this.world.currentWeatherId] : null;
+        const weatherMult = weather ? weather.xpMult : 1;
+
+        let eventMult = 1;
+        if (this.world.activeEventId && window.EventsData && window.EventsData[this.world.activeEventId]) {
+            eventMult *= window.EventsData[this.world.activeEventId].xpMult;
+        }
+        if (this.world.activeScenarioId && window.ScenariosData && window.ScenariosData[this.world.activeScenarioId]) {
+            eventMult *= window.ScenariosData[this.world.activeScenarioId].modifiers.xpMult;
+        }
+
+        const totalXp = amount * weatherMult * eventMult;
+        this.player.xp += Math.floor(totalXp);
+
+        while (this.player.xp >= this.player.xpToNext) {
+            this.player.xp -= this.player.xpToNext;
+            this.player.level++;
+            this.player.power += 6;
+            this.player.maxHp += 25;
+            this.player.hp = this.player.maxHp;
+            this.player.xpToNext = Math.floor(this.player.xpToNext * 1.4);
+
+            if (window.devMode && typeof window.devMode.logToConsole === "function") {
+                window.devMode.logToConsole(`🌟 LEVEL UP! You reached Level ${this.player.level}! (+6 Power, +25 Max HP)`, "success");
+            }
+        }
+        this.notify();
+    },
+
+    setHeroClass(classId) {
+        const heroDef = window.HeroesData[classId];
+        if (!heroDef) return;
+
+        this.player.heroClass = classId;
+        this.player.power = heroDef.baseAttack;
+        this.player.defense = heroDef.baseDefense;
+        this.player.critChance = heroDef.baseCritChance;
+        this.player.critDmg = heroDef.baseCritDmg;
+        this.player.dodge = heroDef.baseDodge;
+        this.player.lifesteal = heroDef.baseLifesteal;
+        this.player.skills.activeCooldown = 0;
+        this.notify();
+    },
+
+    /* =========================
+       OFFLINE PROGRESS ENGINE
+    ========================= */
+    calculateOfflineProgress() {
+        const now = Date.now();
+        const last = this.lastSaveTime || now;
+        const elapsedSec = Math.floor((now - last) / 1000);
+
+        // Minimum 15 seconds to trigger offline report, max 12 hours (43200s)
+        if (elapsedSec < 15) {
+            this.lastSaveTime = now;
+            return null;
+        }
+
+        const cappedSec = Math.min(elapsedSec, 43200);
+
+        // 1. Passive gold accumulated
+        const passiveGold = Math.floor(cappedSec * (this.costs.goldPerSecond || 3));
+
+        // 2. Simulated combat kills (assume 1 mob defeated every ~3.0s)
+        const kills = Math.floor(cappedSec / 3.0);
+        const map = window.MapsData[this.world.currentMapId] || window.MapsData.moonlit_vale;
+        const mobPool = (map.mobs && map.mobs.length > 0) ? map.mobs : ["goblin"];
+        const avgMobId = mobPool[0];
+        const mobDef = window.MobsData[avgMobId] || window.MobsData.goblin;
+
+        const combatGold = Math.floor(kills * (mobDef.goldReward || 25) * 0.7);
+        const combatXp = Math.floor(kills * (mobDef.xpReward || 15) * 0.7);
+
+        // 3. Loot drops rolled offline
+        const materialsGathered = { ironOre: 0, wood: 0, crystal: 0, dragonScale: 0, shadowEssence: 0 };
+        let potionsGathered = 0;
+        let gearGathered = [];
+
+        for (let i = 0; i < Math.min(kills, 100); i++) {
+            if (Math.random() < 0.40) {
+                materialsGathered.ironOre += Math.floor(Math.random() * 2) + 1;
+                materialsGathered.wood += Math.floor(Math.random() * 2) + 1;
+            }
+            if (Math.random() < 0.15) {
+                materialsGathered.crystal += 1;
+            }
+            if (Math.random() < 0.10) {
+                potionsGathered += 1;
+                this.player.potions.potion_minor = (this.player.potions.potion_minor || 0) + 1;
+            }
+            if (Math.random() < 0.05 && gearGathered.length < 3) {
+                const possible = Object.keys(window.ItemsData).filter(k => window.ItemsData[k].type === "equipment");
+                const picked = possible[Math.floor(Math.random() * possible.length)];
+                if (picked && window.InventoryManager) {
+                    window.InventoryManager.addItem(picked);
+                    gearGathered.push(window.ItemsData[picked].name);
+                }
+            }
+        }
+
+        // Apply materials
+        for (const [mat, qty] of Object.entries(materialsGathered)) {
+            if (this.player.materials[mat] !== undefined) {
+                this.player.materials[mat] += qty;
+            }
+        }
+
+        const totalGold = passiveGold + combatGold;
+        this.addGold(totalGold);
+        this.addXp(combatXp);
+        this.lastSaveTime = now;
+
+        const report = {
+            elapsedSec,
+            cappedSec,
+            totalGold,
+            totalXp: combatXp,
+            kills,
+            materialsGathered,
+            potionsGathered,
+            gearGathered
+        };
+
+        this.offlineReport = report;
+        return report;
+    },
+
+    save() {
+        this.lastSaveTime = Date.now();
+        localStorage.setItem("realmIdleRootSave", JSON.stringify({
+            lastSaveTime: this.lastSaveTime,
+            player: this.player,
+            world: this.world,
+            kingdom: this.kingdom,
+            quests: this.quests,
+            journal: this.journal,
+            costs: this.costs
+        }));
+    },
+
+    load() {
+        const saved = localStorage.getItem("realmIdleRootSave");
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                if (data.lastSaveTime) this.lastSaveTime = data.lastSaveTime;
+                if (data.player) {
+                    Object.assign(this.player, data.player);
+                    if (!this.player.potions) {
+                        this.player.potions = { potion_minor: 5, potion_major: 1, potion_full: 0, elixir_fury: 1, elixir_iron: 1 };
+                    }
+                    if (!this.player.skills) {
+                        this.player.skills = { activeCooldown: 0, autoCast: true };
+                    }
+                    if (!this.player.activeBuffs) {
+                        this.player.activeBuffs = [];
+                    }
+                }
+                if (data.world) Object.assign(this.world, data.world);
+                if (data.kingdom) Object.assign(this.kingdom, data.kingdom);
+                if (data.quests) Object.assign(this.quests, data.quests);
+                if (data.journal) Object.assign(this.journal, data.journal);
+                if (data.costs) Object.assign(this.costs, data.costs);
+            } catch (e) {
+                console.log("Save could not be parsed.");
+            }
+        }
+    }
+};
+
+// Backward compatibility alias for GameState
+window.GameState = window.gameState;
+

@@ -1,0 +1,160 @@
+/* =========================================================
+   REALM IDLE DEBUG - TINY FAST F2 FLOATING WIDGET CSS
+========================================================= */
+
+.debug-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    width: 290px;
+    background: rgba(14, 16, 26, 0.94);
+    border: 1px solid rgba(155, 124, 255, 0.35);
+    border-radius: 14px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(155, 124, 255, 0.2);
+    backdrop-filter: blur(8px);
+    color: #e0dede;
+    font-family: Inter, sans-serif;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(15px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.debug-widget.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.dbg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dbg-header h4 {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--gold, #edc76f);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dbg-close {
+    background: none;
+    border: none;
+    color: #85899f;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.dbg-close:hover {
+    color: white;
+}
+
+.dbg-body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dbg-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.dbg-label {
+    font-size: 10px;
+    color: #85899f;
+    font-weight: bold;
+}
+
+.dbg-btn-group {
+    display: flex;
+    gap: 4px;
+}
+
+.dbg-btn-group button, .dbg-btn-action {
+    background: #1e2133;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #dedede;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.dbg-btn-group button:hover, .dbg-btn-action:hover {
+    background: #2b2f4a;
+    border-color: rgba(155, 124, 255, 0.4);
+    color: white;
+}
+
+.dbg-toggles {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.dbg-toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.dbg-speed-selector {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+}
+
+.dbg-speed-btn {
+    flex: 1;
+    background: #1c1e2e;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #85899f;
+    padding: 4px 0;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.dbg-speed-btn.active {
+    background: #9b7cff;
+    color: white;
+    border-color: #9b7cff;
+}
+
+.dbg-btn-manager {
+    width: 100%;
+    margin-top: 4px;
+    background: linear-gradient(180deg, #3d2f63, #261d3f);
+    border: 1px solid rgba(155, 124, 255, 0.4);
+    color: #d2c2ff;
+    padding: 6px 0;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+}
+
+.dbg-btn-manager:hover {
+    background: linear-gradient(180deg, #534085, #352857);
+    color: white;
+}
