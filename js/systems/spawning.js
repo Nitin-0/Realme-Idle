@@ -54,9 +54,32 @@ window.SpawningManager = {
         };
     },
 
+    spawnBossForMap(mapId) {
+        const state = window.gameState;
+        const map = window.MapsData[mapId || state.world.currentMapId] || window.MapsData.moonlit_vale;
+        const mobsList = map.mobs && map.mobs.length > 0 ? map.mobs : ["goblin"];
+        const bossId = map.bossId || mobsList[mobsList.length - 1];
+
+        this.spawnMobById(bossId, {
+            isBoss: true,
+            level: (map.levelMax || 5)
+        });
+    },
+
     spawnNextMob() {
         const state = window.gameState;
+        if (state.combat.inTemple) {
+            state.combat.currentMob = null;
+            state.notify();
+            return;
+        }
+
         const map = window.MapsData[state.world.currentMapId] || window.MapsData.moonlit_vale;
+
+        if (state.combat.stage >= state.combat.maxStages) {
+            this.spawnBossForMap(state.world.currentMapId);
+            return;
+        }
 
         const mobsList = map.mobs && map.mobs.length > 0 ? map.mobs : ["goblin"];
         const randomMobId = mobsList[Math.floor(Math.random() * mobsList.length)];

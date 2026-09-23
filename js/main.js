@@ -13,12 +13,25 @@ window.MainEngine = {
     currentInvFilter: "all",
     currentShopFilter: "all",
 
+    onboardState: {
+        step: 1,
+        name: "Roland",
+        gender: "male",
+        selectedClass: "knight"
+    },
+    victoryDetails: null,
+
     init() {
         // 1. Load State & Initialize Quests
         window.gameState.load();
         if (window.QuestManager) window.QuestManager.initDefaultQuests();
 
-        // 2. Check & Report Offline Progress
+        // 2. Check Onboarding
+        if (!window.gameState.player.hasCompletedOnboarding) {
+            this.showOnboardingModal();
+        }
+
+        // 3. Check & Report Offline Progress
         const offReport = window.gameState.calculateOfflineProgress();
         if (offReport) {
             this.showOfflineModal(offReport);
@@ -174,6 +187,174 @@ window.MainEngine = {
                 if (modal) modal.classList.remove("visible");
             });
         }
+
+        // Onboarding Wizard Navigation & Inputs
+        const btnToStep2 = document.getElementById("btnOnboardToStep2");
+        if (btnToStep2) {
+            btnToStep2.addEventListener("click", () => {
+                this.onboardState.step = 2;
+                this.renderOnboardingStep();
+            });
+        }
+
+        const btnBackTo1 = document.getElementById("btnBackToStep1");
+        if (btnBackTo1) {
+            btnBackTo1.addEventListener("click", () => {
+                this.onboardState.step = 1;
+                this.renderOnboardingStep();
+            });
+        }
+
+        const btnRandName = document.getElementById("btnRandomName");
+        if (btnRandName) {
+            btnRandName.addEventListener("click", () => this.randomizeHeroName());
+        }
+
+        const inputHeroName = document.getElementById("onboardHeroName");
+        if (inputHeroName) {
+            inputHeroName.addEventListener("input", (e) => {
+                this.onboardState.name = (e.target.value || "").trim();
+            });
+        }
+
+        const genderGroup = document.getElementById("genderButtonGroup");
+        if (genderGroup) {
+            genderGroup.addEventListener("click", (e) => {
+                const btn = e.target.closest(".btn-gender");
+                if (!btn) return;
+                this.onboardState.gender = btn.dataset.gender || "male";
+                genderGroup.querySelectorAll(".btn-gender").forEach(b => b.classList.toggle("active", b === btn));
+            });
+        }
+
+        const btnToStep3 = document.getElementById("btnOnboardToStep3");
+        if (btnToStep3) {
+            btnToStep3.addEventListener("click", () => {
+                if (!this.onboardState.name) this.onboardState.name = "Hero";
+                this.onboardState.step = 3;
+                this.renderOnboardingStep();
+            });
+        }
+
+        const btnBackTo2 = document.getElementById("btnBackToStep2");
+        if (btnBackTo2) {
+            btnBackTo2.addEventListener("click", () => {
+                this.onboardState.step = 2;
+                this.renderOnboardingStep();
+            });
+        }
+
+        const btnToStep4 = document.getElementById("btnOnboardToStep4");
+        if (btnToStep4) {
+            btnToStep4.addEventListener("click", () => {
+                this.onboardState.step = 4;
+                this.renderOnboardingStep();
+            });
+        }
+
+        const btnBackTo3 = document.getElementById("btnBackToStep3");
+        if (btnBackTo3) {
+            btnBackTo3.addEventListener("click", () => {
+                this.onboardState.step = 3;
+                this.renderOnboardingStep();
+            });
+        }
+
+        const btnEmbark = document.getElementById("btnOnboardEmbark");
+        if (btnEmbark) {
+            btnEmbark.addEventListener("click", () => {
+                const chosenName = this.onboardState.name || "Hero";
+                const chosenGender = this.onboardState.gender || "male";
+                const chosenClass = this.onboardState.selectedClass || "knight";
+                api.player.completeOnboarding(chosenName, chosenGender, chosenClass);
+                this.hideOnboardingModal();
+            });
+        }
+
+        // Combat Control Strip
+        const btnAuto = document.getElementById("btnAutoFight");
+        if (btnAuto) {
+            btnAuto.addEventListener("click", () => api.combat.toggleAutoFight());
+        }
+
+        const btnStrike = document.getElementById("btnManualStrike");
+        if (btnStrike) {
+            btnStrike.addEventListener("click", () => api.combat.manualStrike());
+        }
+
+        // Temple Safe Zone & Modal Actions
+        const btnResumeBanner = document.getElementById("btnResumeFromBanner");
+        if (btnResumeBanner) {
+            btnResumeBanner.addEventListener("click", () => {api.combat.resumeFromTemple()
+                console.log("resume battle");
+                
+            });
+        }
+
+        const btnTempleResume = document.getElementById("btnTempleResumeBattle");
+        if (btnTempleResume) {
+            btnTempleResume.addEventListener("click", () => {
+                this.hideTempleModal();
+                api.combat.resumeFromTemple();
+            });
+        }
+
+        const btnTemplePray = document.getElementById("btnTemplePrayHeal");
+        if (btnTemplePray) {
+            btnTemplePray.addEventListener("click", () => {
+                state.player.hp = state.player.maxHp;
+                state.notify();
+                btnTemplePray.textContent = "✨ Full Health Restored!";
+                setTimeout(() => {
+                    if (btnTemplePray) btnTemplePray.textContent = "❤️ Pray for Divine Health (+50% HP)";
+                }, 2000);
+            });
+        }
+
+        const btnTempleShop = document.getElementById("btnTempleOpenShop");
+        if (btnTempleShop) {
+            btnTempleShop.addEventListener("click", () => {
+                this.hideTempleModal();
+                this.switchTab("shop");
+            });
+        }
+
+        const btnTempleForge = document.getElementById("btnTempleOpenForge");
+        if (btnTempleForge) {
+            btnTempleForge.addEventListener("click", () => {
+                this.hideTempleModal();
+                this.switchTab("inventory");
+            });
+        }
+
+        // Victory Modal Actions
+        const btnVicTravel = document.getElementById("btnVictoryTravel");
+        if (btnVicTravel) {
+            btnVicTravel.addEventListener("click", () => {
+                this.hideVictoryModal();
+                if (this.victoryDetails && this.victoryDetails.nextMapId && window.MapManager) {
+                    window.MapManager.loadMap(this.victoryDetails.nextMapId);
+                }
+            });
+        }
+
+        const btnVicStay = document.getElementById("btnVictoryStay");
+        if (btnVicStay) {
+            btnVicStay.addEventListener("click", () => {
+                this.hideVictoryModal();
+            });
+        }
+
+        // New Game / Reset Hero
+        const btnNewHero = document.getElementById("btnNewGame");
+        if (btnNewHero) {
+            btnNewHero.addEventListener("click", () => {
+                if (confirm("👑 Create a new hero and restart the realm journey? Current hero progress will be reset.")) {
+                    api.player.resetToNewGame();
+                    this.showOnboardingModal();
+                }
+            });
+        }
     },
 
     switchTab(tabId) {
@@ -277,8 +458,56 @@ window.MainEngine = {
         if (document.getElementById("playerXp")) document.getElementById("playerXp").textContent = state.player.xp.toLocaleString();
         if (document.getElementById("playerXpNext")) document.getElementById("playerXpNext").textContent = state.player.xpToNext.toLocaleString();
 
+        const nameEl = document.getElementById("playerNameDisplay");
+        if (nameEl) nameEl.textContent = state.player.name || "Hero";
+
+        const genderEl = document.getElementById("playerGenderDisplay");
+        if (genderEl) {
+            const g = state.player.gender || "male";
+            const icon = g === "female" ? "♀" : (g === "other" ? "⚧" : "♂");
+            genderEl.textContent = `· ${icon}`;
+        }
+
         const xpPercent = Math.min(100, Math.max(0, (state.player.xp / state.player.xpToNext) * 100));
         if (document.getElementById("xpFill")) document.getElementById("xpFill").style.width = xpPercent + "%";
+
+        // Arena Stage Tracker Bar
+        const stageRealmEl = document.getElementById("arenaRealmName");
+        if (stageRealmEl) stageRealmEl.textContent = map.name;
+
+        const stageNumEl = document.getElementById("arenaStageNum");
+        if (stageNumEl) stageNumEl.textContent = state.combat.stage || 1;
+
+        const stageFillEl = document.getElementById("stageProgressFill");
+        if (stageFillEl) {
+            const pct = Math.min(100, Math.max(10, ((state.combat.stage || 1) / 10) * 100));
+            stageFillEl.style.width = pct + "%";
+        }
+
+        const bossBadgeEl = document.getElementById("arenaBossBadge");
+        if (bossBadgeEl) {
+            bossBadgeEl.classList.toggle("active", (state.combat.stage || 1) >= 10);
+            bossBadgeEl.textContent = (state.combat.stage || 1) >= 10 ? "⚠️ BOSS BATTLE!" : "👑 BOSS AT STAGE 10";
+        }
+
+        // Autofight Button State
+        const btnAuto = document.getElementById("btnAutoFight");
+        const autoTxt = document.getElementById("autoFightStatusText");
+        if (btnAuto && autoTxt) {
+            if (state.combat.autoFight) {
+                btnAuto.classList.add("active");
+                autoTxt.textContent = "AUTOFIGHT [ON]";
+            } else {
+                btnAuto.classList.remove("active");
+                autoTxt.textContent = "AUTOFIGHT [OFF]";
+            }
+        }
+
+        // Temple Safe Zone Banner
+        const templeBanner = document.getElementById("templeSafeBanner");
+        if (templeBanner) {
+            templeBanner.style.display = state.combat.inTemple ? "flex" : "none";
+        }
 
         // Hero HP Sync
         if (document.getElementById("playerHpCard")) document.getElementById("playerHpCard").textContent = Math.max(0, Math.floor(state.player.hp)).toLocaleString();
@@ -690,8 +919,174 @@ window.MainEngine = {
             `;
             grid.appendChild(card);
         });
+    },
+
+    /* =========================================================
+       NEW PLAYER ONBOARDING & PROGRESSION MODALS
+    ========================================================= */
+    showOnboardingModal() {
+        const modal = document.getElementById("onboardingModal");
+        if (!modal) return;
+        this.onboardState.step = 1;
+        this.renderOnboardingStep();
+        modal.classList.add("visible");
+    },
+
+    hideOnboardingModal() {
+        const modal = document.getElementById("onboardingModal");
+        if (modal) modal.classList.remove("visible");
+    },
+
+    randomizeHeroName() {
+        const names = [
+            "Roland", "Aria", "Valerius", "Lyra", "Gideon",
+            "Seraphina", "Kaelen", "Thorne", "Eldrin", "Morrigan",
+            "Caelum", "Zephyr", "Rowan", "Aeloria", "Darius"
+        ];
+        const chosen = names[Math.floor(Math.random() * names.length)];
+        this.onboardState.name = chosen;
+        const input = document.getElementById("onboardHeroName");
+        if (input) input.value = chosen;
+    },
+
+    renderOnboardingStep() {
+        for (let i = 1; i <= 4; i++) {
+            const stepEl = document.getElementById(`onboardStep_${i}`);
+            if (stepEl) {
+                stepEl.classList.toggle("active", i === this.onboardState.step);
+            }
+        }
+
+        if (this.onboardState.step === 2) {
+            const input = document.getElementById("onboardHeroName");
+            if (input && !input.value) input.value = this.onboardState.name;
+            const genderGroup = document.getElementById("genderButtonGroup");
+            if (genderGroup) {
+                genderGroup.querySelectorAll(".btn-gender").forEach(b => {
+                    b.classList.toggle("active", b.dataset.gender === this.onboardState.gender);
+                });
+            }
+        } else if (this.onboardState.step === 3) {
+            this.renderOnboardingClassGrid();
+        } else if (this.onboardState.step === 4) {
+            this.renderOnboardingGearSummary();
+        }
+    },
+
+    renderOnboardingClassGrid() {
+        const grid = document.getElementById("onboardClassGrid");
+        if (!grid || !window.HeroesData) return;
+        grid.innerHTML = "";
+
+        Object.values(window.HeroesData).forEach(h => {
+            if (h.unlocked === false) return; // Managed by Admin Panel: only show unlocked classes
+            const isSelected = (this.onboardState.selectedClass === h.id);
+            const card = document.createElement("div");
+            card.className = `onboard-class-card ${isSelected ? "selected" : ""}`;
+            card.innerHTML = `
+                <div class="onboard-class-icon">${h.icon}</div>
+                <div class="onboard-class-info">
+                    <h4>${h.name}</h4>
+                    <p>${h.description}</p>
+                    <div class="onboard-class-stats">
+                        <span>⚔️ Atk: ${h.baseAttack}</span>
+                        <span>🛡️ Def: ${h.baseDefense}</span>
+                        <span>🎯 Crit: ${Math.round(h.baseCritChance * 100)}%</span>
+                        <span>💨 Dodge: ${Math.round(h.baseDodge * 100)}%</span>
+                    </div>
+                    ${h.skill ? `<small class="onboard-class-skill">Skill: <strong>${h.skill.name}</strong> (${h.skill.description})</small>` : ""}
+                </div>
+                <div class="onboard-select-indicator">${isSelected ? "✓ SELECTED" : "SELECT"}</div>
+            `;
+            card.addEventListener("click", () => {
+                this.onboardState.selectedClass = h.id;
+                this.renderOnboardingClassGrid();
+            });
+            grid.appendChild(card);
+        });
+    },
+
+    renderOnboardingGearSummary() {
+        const summary = document.getElementById("starterGearSummary");
+        if (!summary) return;
+
+        const starterGear = {
+            knight: { weapon: "iron_sword", armor: "iron_chestplate" },
+            mage: { weapon: "apprentice_wand", armor: "apprentice_robes" },
+            rogue: { weapon: "shadow_daggers", armor: "leather_armor" },
+            paladin: { weapon: "blessed_mace", armor: "crusader_plate" }
+        };
+        const gear = starterGear[this.onboardState.selectedClass] || starterGear.knight;
+        const weaponItem = (window.ItemsData && gear.weapon) ? window.ItemsData[gear.weapon] : null;
+        const armorItem = (window.ItemsData && gear.armor) ? window.ItemsData[gear.armor] : null;
+
+        summary.innerHTML = `
+            <div class="starter-gear-card">
+                <span class="gear-slot-label">MAIN WEAPON</span>
+                <div class="gear-item-line">
+                    <span class="gear-icon">${weaponItem ? weaponItem.icon : "🗡️"}</span>
+                    <strong>${weaponItem ? weaponItem.name : "Class Starter Weapon"}</strong>
+                    <span class="gear-stats">(Atk +${weaponItem ? weaponItem.attackBonus : 5})</span>
+                </div>
+            </div>
+            <div class="starter-gear-card">
+                <span class="gear-slot-label">CHEST ARMOR</span>
+                <div class="gear-item-line">
+                    <span class="gear-icon">${armorItem ? armorItem.icon : "🛡️"}</span>
+                    <strong>${armorItem ? armorItem.name : "Class Starter Armor"}</strong>
+                    <span class="gear-stats">(Def +${armorItem ? armorItem.defenseBonus : 3})</span>
+                </div>
+            </div>
+        `;
+    },
+
+    /* =========================================================
+       TEMPLE OF REVIVAL (SANCTUARY SAFE HAVEN)
+    ========================================================= */
+    showTempleModal() {
+        const modal = document.getElementById("templeModal");
+        if (modal) modal.classList.add("visible");
+    },
+
+    hideTempleModal() {
+        const modal = document.getElementById("templeModal");
+        if (modal) modal.classList.remove("visible");
+    },
+
+    /* =========================================================
+       REALM CLEARED VICTORY CELEBRATION
+    ========================================================= */
+    showVictoryModal(details) {
+        this.victoryDetails = details;
+        const modal = document.getElementById("victoryModal");
+        if (!modal) return;
+
+        if (document.getElementById("victoryTitle")) {
+            document.getElementById("victoryTitle").textContent = `${details.mapName.toUpperCase()} CLEARED!`;
+        }
+        if (document.getElementById("victorySubtitle")) {
+            document.getElementById("victorySubtitle").textContent = `GUARDIAN ${details.bossName.toUpperCase()} DEFEATED`;
+        }
+        if (document.getElementById("vicRewardGold")) {
+            document.getElementById("vicRewardGold").textContent = `💰 +${details.gold.toLocaleString()} Gold`;
+        }
+        if (document.getElementById("vicRewardXp")) {
+            document.getElementById("vicRewardXp").textContent = `⭐ +${details.xp.toLocaleString()} XP`;
+        }
+        if (document.getElementById("vicRewardNext")) {
+            document.getElementById("vicRewardNext").textContent = details.nextMap ? `🗺️ Unlocked: ${details.nextMap}!` : `✨ Realm Fully Conquered!`;
+        }
+
+        modal.classList.add("visible");
+    },
+
+    hideVictoryModal() {
+        const modal = document.getElementById("victoryModal");
+        if (modal) modal.classList.remove("visible");
     }
 };
+
+window.UIManager = window.MainEngine;
 
 document.addEventListener("DOMContentLoaded", () => {
     window.MainEngine.init();

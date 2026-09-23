@@ -58,7 +58,7 @@
     <div class="bars-container">
         <div class="xp-wrapper">
             <div class="xp-header">
-                <span>LEVEL <strong id="playerLevel">1</strong> HERO</span>
+                <span>LVL <strong id="playerLevel">1</strong> · <strong id="playerNameDisplay">Hero</strong> <small id="playerGenderDisplay" style="color:#a89cf6;"></small></span>
                 <span><strong id="playerXp">0</strong> / <strong id="playerXpNext">100</strong> XP</span>
             </div>
             <div class="xp-bar">
@@ -96,7 +96,30 @@
     <!-- ==================== TAB PAGE 1: ARENA & COMBAT ==================== -->
     <div class="game-tab-page active" id="tab_arena">
 
+        <!-- STAGE TRACKER BAR -->
+        <div class="stage-tracker-bar" id="stageTrackerBar">
+            <div class="stage-info">
+                <span>📍 <strong id="arenaRealmName">Moonlit Vale</strong> · STAGE <strong id="arenaStageNum">1</strong> / 10</span>
+                <span class="boss-warning" id="arenaBossBadge">👑 BOSS AT STAGE 10</span>
+            </div>
+            <div class="stage-progress-track">
+                <div class="stage-progress-fill" id="stageProgressFill" style="width: 10%;"></div>
+            </div>
+        </div>
+
         <main class="arena" id="arena">
+
+            <!-- TEMPLE SAFE ZONE BANNER (VISIBLE WHEN inTemple) -->
+            <div class="temple-safe-banner" id="templeSafeBanner" style="display: none;">
+                <div class="temple-safe-inner">
+                    <span class="temple-glow-icon">🏛️</span>
+                    <div>
+                        <h4>SANCTUARY OF REVIVAL (SAFE ZONE)</h4>
+                        <p>Resting safely at the Temple. Priests have mended your wounds (50% HP). Prepare your gear, then click Resume.</p>
+                    </div>
+                    <button type="button" id="btnResumeFromBanner" class="btn-resume-banner">⚔️ Resume Battle</button>
+                </div>
+            </div>
 
             <!-- WEATHER PARTICLES CANVAS LAYER -->
             <canvas id="weatherCanvas" class="weather-canvas"></canvas>
@@ -139,10 +162,21 @@
             </div>
 
             <div class="battle-status" id="status">
-                ⚔ Your hero attacks automatically
+                ⚔ Press Strike or enable Autofight to begin
             </div>
 
         </main>
+
+        <!-- PRIMARY COMBAT CONTROLS: AUTOFIGHT & MANUAL STRIKE -->
+        <div class="combat-control-strip">
+            <button class="btn-autofight" id="btnAutoFight">
+                <span class="autofight-icon">⚔️</span>
+                <span id="autoFightStatusText">AUTOFIGHT [OFF]</span>
+            </button>
+            <button class="btn-manual-strike" id="btnManualStrike">
+                ⚡ Strike Enemy
+            </button>
+        </div>
 
         <!-- COMBAT ACTION & POTIONS HUD -->
         <div class="combat-hud">
@@ -484,6 +518,145 @@
                 <button class="btn-claim-offline" id="btnClaimOffline">CLAIM ALL REWARDS</button>
             </div>
         </div>
+    <!-- ==================== NEW PLAYER ONBOARDING WIZARD MODAL ==================== -->
+    <div class="onboarding-modal" id="onboardingModal">
+        <div class="onboarding-card">
+            
+            <!-- STEP 1: WELCOME & LORE -->
+            <div class="onboarding-step active" id="onboardStep_1">
+                <div class="onboard-hero-banner">
+                    <span class="onboard-emblem">👑</span>
+                    <h2>REALM IDLE RPG</h2>
+                    <span class="onboard-tag">THE LOST PROVINCES</span>
+                </div>
+                <div class="onboard-lore">
+                    <p>The ancient kingdoms of Eldoria have succumbed to corruption. Beasts, undead legions, and shadowy sentinels roam the realms unrestrained.</p>
+                    <p>You have been summoned to restore light to the provinces. Choose your path, gear up, and claim victory over the realm guardians.</p>
+                </div>
+                <div class="onboard-actions">
+                    <button type="button" class="btn-onboard-next" id="btnOnboardToStep2">⚔️ Begin Your Journey</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: NAME & GENDER SELECTION -->
+            <div class="onboarding-step" id="onboardStep_2">
+                <div class="onboard-header">
+                    <h3>Character Profile</h3>
+                    <small>STEP 1 OF 3: IDENTITY</small>
+                </div>
+                <div class="onboard-form-group">
+                    <label>Hero Name:</label>
+                    <div class="name-input-row">
+                        <input type="text" id="onboardHeroName" maxlength="18" placeholder="Enter character name..." value="Roland">
+                        <button type="button" class="btn-random-name" id="btnRandomName">🎲 Random</button>
+                    </div>
+                </div>
+
+                <div class="onboard-form-group">
+                    <label>Gender Selection:</label>
+                    <div class="gender-btn-group" id="genderButtonGroup">
+                        <button type="button" class="btn-gender active" data-gender="male">♂ Male</button>
+                        <button type="button" class="btn-gender" data-gender="female">♀ Female</button>
+                        <button type="button" class="btn-gender" data-gender="other">⚧ Other</button>
+                    </div>
+                </div>
+
+                <div class="onboard-actions-row">
+                    <button type="button" class="btn-onboard-back" id="btnBackToStep1">← Back</button>
+                    <button type="button" class="btn-onboard-next" id="btnOnboardToStep3">Choose Class →</button>
+                </div>
+            </div>
+
+            <!-- STEP 3: CLASS SELECTION (ADMIN MANAGED) -->
+            <div class="onboarding-step" id="onboardStep_3">
+                <div class="onboard-header">
+                    <h3>Choose Your Class</h3>
+                    <small>STEP 2 OF 3: COMBAT MASTERY</small>
+                </div>
+                <p class="onboard-subtext">Controlled dynamically by the Admin Panel. Choose your calling:</p>
+                
+                <div class="onboard-class-grid" id="onboardClassGrid"></div>
+
+                <div class="onboard-actions-row">
+                    <button type="button" class="btn-onboard-back" id="btnBackToStep2">← Back</button>
+                    <button type="button" class="btn-onboard-next" id="btnOnboardToStep4">Review Starting Gear →</button>
+                </div>
+            </div>
+
+            <!-- STEP 4: STARTING GEAR & EMBARK -->
+            <div class="onboarding-step" id="onboardStep_4">
+                <div class="onboard-header">
+                    <h3>Starting Supplies & Gear</h3>
+                    <small>STEP 3 OF 3: PREPARE FOR BATTLE</small>
+                </div>
+                
+                <div class="starter-gear-summary" id="starterGearSummary"></div>
+
+                <div class="starter-supplies-box">
+                    <strong>Starting Provisions:</strong>
+                    <ul>
+                        <li>🧪 5x Minor Healing Potions (Restores 50 HP)</li>
+                        <li>💰 100 Gold Coins</li>
+                        <li>🗺️ Travel Map: Realm I — Moonlit Vale</li>
+                    </ul>
+                </div>
+
+                <div class="onboard-actions-row">
+                    <button type="button" class="btn-onboard-back" id="btnBackToStep3">← Back</button>
+                    <button type="button" class="btn-onboard-finish" id="btnOnboardEmbark">🚀 Embark to Moonlit Vale (Stage 1)</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================== TEMPLE OF REVIVAL MODAL ==================== -->
+    <div class="temple-modal" id="templeModal">
+        <div class="temple-card">
+            <div class="temple-modal-header">
+                <span class="temple-icon">🏛️</span>
+                <h3>TEMPLE OF REVIVAL</h3>
+                <small>SANCTUARY SAFE HAVEN</small>
+            </div>
+            <div class="temple-modal-body">
+                <p class="temple-revival-msg">
+                    Your hero was overwhelmed in battle. The Priests of the Temple have resurrected your spirit and cleansed your wounds (50% HP restored).
+                </p>
+                <div class="temple-advice-box">
+                    <strong>💡 High Priest's Guidance:</strong>
+                    <span>"Before venturing into the wilds again, strengthen your champion. Visit the Merchant Shop for elixirs, upgrade your weapon at the Blacksmith Forge, or pray for divine health."</span>
+                </div>
+                <div class="temple-modal-actions">
+                    <button type="button" class="btn-temple-action" id="btnTemplePrayHeal">❤️ Pray for Divine Health (+50% HP)</button>
+                    <button type="button" class="btn-temple-action" id="btnTempleOpenShop">🛒 Visit Merchant Shop</button>
+                    <button type="button" class="btn-temple-action" id="btnTempleOpenForge">⚒️ Blacksmith Forge</button>
+                    <button type="button" class="btn-temple-resume-big" id="btnTempleResumeBattle">⚔️ Resume Progression</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== REALM CLEARED VICTORY MODAL ==================== -->
+    <div class="victory-modal" id="victoryModal">
+        <div class="victory-card">
+            <div class="victory-header">
+                <span class="victory-trophy">🏆</span>
+                <h3 id="victoryTitle">REALM CLEARED!</h3>
+                <small id="victorySubtitle">GUARDIAN DEFEATED</small>
+            </div>
+            <div class="victory-body">
+                <p id="victoryMsg">You have triumphed over the boss and conquered the realm!</p>
+                <div class="victory-rewards-box">
+                    <div class="reward-pill" id="vicRewardGold">💰 +300 Gold</div>
+                    <div class="reward-pill" id="vicRewardXp">⭐ +150 XP</div>
+                    <div class="reward-pill highlight" id="vicRewardNext">🗺️ Unlocked Next Realm!</div>
+                </div>
+                <div class="victory-actions">
+                    <button type="button" class="btn-victory-travel" id="btnVictoryTravel">🗺️ Travel to Next Realm</button>
+                    <button type="button" class="btn-victory-stay" id="btnVictoryStay">🌾 Continue Farming Here</button>
+                </div>
+            </div>
+        </div>
     </div>
 
 
@@ -494,6 +667,10 @@
         </span>
 
         <div class="footer-buttons">
+            <button id="btnNewGame" class="btn-new-hero">
+                👑 New Hero
+            </button>
+
             <button id="btnDevToggle" class="btn-dev-trigger">
                 🐛 DEBUG (F2)
             </button>

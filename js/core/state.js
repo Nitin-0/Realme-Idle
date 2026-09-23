@@ -7,6 +7,9 @@ window.gameState = {
     offlineReport: null,
 
     player: {
+        name: "Hero",
+        gender: "male",
+        hasCompletedOnboarding: false,
         heroClass: "knight",
         level: 1,
         xp: 0,
@@ -55,11 +58,16 @@ window.gameState = {
         activeEventId: null,
         activeEventTimer: 0,
         activeScenarioId: null,
-        activeScenarioTimer: 0
+        activeScenarioTimer: 0,
+        unlockedMaps: ["moonlit_vale"]
     },
 
     combat: {
-        currentMob: null
+        currentMob: null,
+        autoFight: false,
+        stage: 1,
+        maxStages: 10,
+        inTemple: false
     },
 
     kingdom: {
@@ -313,6 +321,100 @@ window.gameState = {
         this.notify();
     },
 
+    completeOnboarding(name, gender, heroClass) {
+        this.player.name = name || "Hero";
+        this.player.gender = gender || "male";
+        this.player.hasCompletedOnboarding = true;
+        this.player.level = 1;
+        this.player.xp = 0;
+        this.player.xpToNext = 100;
+        this.setHeroClass(heroClass || "knight");
+
+        // Starter supplies
+        this.player.gold = 100;
+        this.player.potions = {
+            potion_minor: 5,
+            potion_major: 0,
+            potion_full: 0,
+            elixir_fury: 0,
+            elixir_iron: 0
+        };
+
+        // Class starter equipment
+        this.player.equipment = { weapon: null, armor: null, ring: null };
+        this.player.inventory = [];
+        const starterGear = {
+            knight: { weapon: "iron_sword", armor: "iron_plate" },
+            rogue: { weapon: "steel_rapier", armor: "hardened_leather" },
+            mage: { weapon: "apprentice_staff", armor: "silk_robes" },
+            paladin: { weapon: "blessed_mace", armor: "crusader_plate" }
+        };
+        const gear = starterGear[heroClass] || starterGear.knight;
+        if (window.InventoryManager) {
+            if (gear.weapon) {
+                window.InventoryManager.addItem(gear.weapon);
+                window.InventoryManager.equipItem(gear.weapon);
+            }
+            if (gear.armor) {
+                window.InventoryManager.addItem(gear.armor);
+                window.InventoryManager.equipItem(gear.armor);
+            }
+        }
+
+        this.combat.stage = 1;
+        this.combat.inTemple = false;
+        this.combat.autoFight = false;
+        this.player.hp = this.player.maxHp;
+
+        if (window.SpawningManager) window.SpawningManager.spawnNextMob();
+        this.save();
+        this.notify();
+    },
+
+    respawnAtTemple() {
+        this.combat.autoFight = false;
+        this.combat.inTemple = true;
+        this.combat.currentMob = null;
+        this.player.hp = Math.max(1, Math.floor(this.player.maxHp * 0.5));
+        this.save();
+        this.notify();
+    },
+
+    resumeProgression() {
+        this.combat.inTemple = false;
+        this.combat.autoFight = false;
+        if (!this.combat.currentMob && window.SpawningManager) {
+            window.SpawningManager.spawnNextMob();
+        }
+        this.notify();
+    },
+
+    resetToNewGame() {
+        this.player.hasCompletedOnboarding = false;
+        this.player.name = "Hero";
+        this.player.gender = "male";
+        this.player.level = 1;
+        this.player.xp = 0;
+        this.player.xpToNext = 100;
+        this.combat.stage = 1;
+        this.combat.autoFight = false;
+        this.combat.inTemple = false;
+        this.combat.currentMob = null;
+        this.world.currentMapId = "moonlit_vale";
+        this.world.unlockedMaps = ["moonlit_vale"];
+        this.save();
+        this.notify();
+    },
+
+    unlockMap(mapId) {
+        if (!this.world.unlockedMaps) this.world.unlockedMaps = ["moonlit_vale"];
+        if (!this.world.unlockedMaps.includes(mapId)) {
+            this.world.unlockedMaps.push(mapId);
+            this.save();
+            this.notify();
+        }
+    },
+
     /* =========================
        OFFLINE PROGRESS ENGINE
     ========================= */
@@ -402,6 +504,7 @@ window.gameState = {
             lastSaveTime: this.lastSaveTime,
             player: this.player,
             world: this.world,
+            combat: { stage: this.combat.stage, inTemple: this.combat.inTemple },
             kingdom: this.kingdom,
             quests: this.quests,
             journal: this.journal,
@@ -428,6 +531,10 @@ window.gameState = {
                     }
                 }
                 if (data.world) Object.assign(this.world, data.world);
+                if (data.combat) {
+                    if (data.combat.stage) this.combat.stage = data.combat.stage;
+                    if (data.combat.inTemple !== undefined) this.combat.inTemple = data.combat.inTemple;
+                }
                 if (data.kingdom) Object.assign(this.kingdom, data.kingdom);
                 if (data.quests) Object.assign(this.quests, data.quests);
                 if (data.journal) Object.assign(this.journal, data.journal);

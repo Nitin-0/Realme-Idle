@@ -70,11 +70,29 @@ window.GameAPI = {
             state.player.materials.magic_shard = (state.player.materials.magic_shard || 0) + 100;
             state.player.materials.dragon_scale = (state.player.materials.dragon_scale || 0) + 100;
             state.notify();
+        },
+        completeOnboarding(name, gender, heroClass) {
+            window.gameState.completeOnboarding(name, gender, heroClass);
+        },
+        resetToNewGame() {
+            window.gameState.resetToNewGame();
         }
     },
 
     // Combat Controller
     combat: {
+        toggleAutoFight(enable = null) {
+            const state = window.gameState;
+            state.combat.autoFight = (enable !== null) ? enable : !state.combat.autoFight;
+            state.notify();
+            return state.combat.autoFight;
+        },
+        manualStrike() {
+            if (window.CombatManager) window.CombatManager.manualStrike();
+        },
+        resumeFromTemple() {
+            window.gameState.resumeProgression();
+        },
         killCurrentEnemy() {
             if (window.CombatManager && window.gameState.combat.currentMob) {
                 window.gameState.combat.currentMob.hp = 0;
@@ -202,6 +220,32 @@ window.GameAPI = {
             window.ItemsData[itemObj.id] = { ...itemObj };
             this.persistCustomData();
             this.broadcast("ITEM_UPDATED", itemObj);
+        },
+        deleteMob(id) {
+            delete window.MobsData[id];
+            this.persistCustomData();
+            this.broadcast("MOB_DELETED", { id });
+        },
+        deleteHeroClass(id) {
+            delete window.HeroesData[id];
+            this.persistCustomData();
+            this.broadcast("HERO_DELETED", { id });
+        },
+        deleteItem(id) {
+            delete window.ItemsData[id];
+            this.persistCustomData();
+            this.broadcast("ITEM_DELETED", { id });
+        },
+        deleteShopItem(id) {
+            const idx = (window.ShopData || []).findIndex(s => s.id === id);
+            if (idx >= 0) window.ShopData.splice(idx, 1);
+            this.persistCustomData();
+            this.broadcast("SHOP_DELETED", { id });
+        },
+        deleteMap(id) {
+            delete window.MapsData[id];
+            this.persistCustomData();
+            this.broadcast("MAP_DELETED", { id });
         },
         persistCustomData() {
             localStorage.setItem("realmIdleCustomData", JSON.stringify({

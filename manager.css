@@ -397,3 +397,208 @@ body {
 .badge-rare { background: rgba(80, 160, 255, 0.2); color: #50a0ff; }
 .badge-epic { background: rgba(180, 90, 255, 0.2); color: #b45aff; }
 .badge-legendary { background: rgba(255, 180, 40, 0.2); color: #ffb428; }
+
+/* =========================================================
+   MANAGER CRUD TOOLBARS & SEARCH
+========================================================= */
+
+.mgr-card-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.mgr-search-input {
+    width: 100%;
+    background: #0d0f1a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: white;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    margin-bottom: 10px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.mgr-search-input:focus {
+    border-color: #9b7cff;
+}
+
+.btn-xs {
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+}
+
+.btn-xs:hover {
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   VISUAL DROP TABLE BUILDER
+========================================================= */
+
+.drop-builder-section {
+    background: #0a0b14;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 6px;
+    margin-bottom: 12px;
+}
+
+.drop-builder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.drop-builder-header h5 {
+    margin: 0;
+    font-size: 11px;
+    color: #edc76f;
+    letter-spacing: 0.5px;
+}
+
+.drop-rows-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.drop-row {
+    background: #141728;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.drop-row select,
+.drop-row input {
+    background: #0a0c16;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    outline: none;
+}
+
+.drop-row select:focus,
+.drop-row input:focus {
+    border-color: #9b7cff;
+}
+
+.drop-col-type {
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.drop-col-target {
+    flex: 1;
+}
+
+.drop-col-chance {
+    width: 75px;
+    flex-shrink: 0;
+}
+
+.drop-col-qty {
+    width: 55px;
+    flex-shrink: 0;
+}
+
+.btn-remove-drop {
+    background: rgba(255, 71, 87, 0.2);
+    border: 1px solid rgba(255, 71, 87, 0.4);
+    color: #ff4757;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.15s;
+}
+
+.btn-remove-drop:hover {
+    background: #ff4757;
+    color: white;
+}
+
+.drop-empty-msg {
+    font-size: 11px;
+    color: #85899f;
+    text-align: center;
+    padding: 8px;
+}
+
+/* =========================================================
+   FLOATING TOAST NOTIFICATIONS
+========================================================= */
+
+.mgr-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.mgr-toast {
+    background: #141627;
+    border: 1px solid rgba(155, 124, 255, 0.4);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pointer-events: auto;
+    animation: toastSlideIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.2s;
+}
+
+.mgr-toast.success {
+    border-left: 4px solid #00e676;
+}
+
+.mgr-toast.error {
+    border-left: 4px solid #ff4757;
+}
+
+.mgr-toast.info {
+    border-left: 4px solid #64b5f6;
+}
+
+.mgr-toast.fade-out {
+    opacity: 0;
+    transform: translateY(-8px);
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

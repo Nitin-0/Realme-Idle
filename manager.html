@@ -104,12 +104,16 @@
             <div class="mgr-tab-content" id="tab_classes">
                 <div class="mgr-grid-2">
                     <div class="mgr-card">
-                        <h4>HERO CLASS DICTIONARY</h4>
+                        <div class="mgr-card-toolbar">
+                            <h4 style="margin:0;">HERO CLASSES</h4>
+                            <button type="button" id="btnNewClass" class="btn-success btn-xs">➕ New Class</button>
+                        </div>
+                        <input type="text" id="classSearchInput" class="mgr-search-input" placeholder="🔍 Search classes...">
                         <div class="mgr-list" id="mgrClassList"></div>
                     </div>
 
                     <div class="mgr-card">
-                        <h4>CREATE / EDIT HERO CLASS & SKILLS</h4>
+                        <h4 id="classFormTitle">CREATE / EDIT HERO CLASS & SKILLS</h4>
                         <form id="formClassEditor" class="mgr-form">
                             <div class="form-row">
                                 <div class="form-group">
@@ -148,6 +152,17 @@
                                 <div class="form-group">
                                     <label>Base Attack:</label>
                                     <input type="number" id="classEdit_atk" value="12">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Base Defense:</label>
+                                    <input type="number" id="classEdit_def" value="10">
+                                </div>
+                                <div class="form-group">
+                                    <label>Base Dodge (0 - 1.0):</label>
+                                    <input type="number" step="0.01" id="classEdit_dodge" value="0.05">
                                 </div>
                             </div>
 
@@ -192,8 +207,9 @@
                             </div>
 
                             <div class="form-actions">
-                                <button type="submit" class="btn-success">💾 Save Class Definition</button>
-                                <button type="button" id="btnApplyClassToPlayer" class="btn-primary">👑 Select For Player Now</button>
+                                <button type="submit" class="btn-success">💾 Save Class</button>
+                                <button type="button" id="btnDeleteClass" class="btn-danger">🗑️ Delete Class</button>
+                                <button type="button" id="btnApplyClassToPlayer" class="btn-primary">👑 Select For Player</button>
                             </div>
                         </form>
                     </div>
@@ -204,21 +220,26 @@
             <div class="mgr-tab-content" id="tab_mobs">
                 <div class="mgr-grid-2">
                     <div class="mgr-card">
-                        <h4>MOB DICTIONARY (DEFINITIONS)</h4>
+                        <div class="mgr-card-toolbar">
+                            <h4 style="margin:0;">MOB DEFINITIONS</h4>
+                            <button type="button" id="btnNewMob" class="btn-success btn-xs">➕ New Mob</button>
+                        </div>
+                        <input type="text" id="mobSearchInput" class="mgr-search-input" placeholder="🔍 Search mobs by name or type...">
                         <div class="mgr-list" id="mgrMobList"></div>
                     </div>
 
                     <div class="mgr-card">
-                        <h4>CREATE / EDIT MOB TEMPLATE</h4>
+                        <h4 id="mobFormTitle">CREATE / EDIT MOB TEMPLATE</h4>
                         <form id="formMobEditor" class="mgr-form">
-                            <div class="form-group">
-                                <label>Mob ID Key:</label>
-                                <input type="text" id="mobEdit_id" required placeholder="e.g. shadow_dragon">
-                            </div>
-
-                            <div class="form-group">
-                                <label>Mob Name:</label>
-                                <input type="text" id="mobEdit_name" required placeholder="e.g. Shadow Dragon">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Mob ID Key:</label>
+                                    <input type="text" id="mobEdit_id" required placeholder="e.g. shadow_dragon">
+                                </div>
+                                <div class="form-group">
+                                    <label>Mob Name:</label>
+                                    <input type="text" id="mobEdit_name" required placeholder="e.g. Shadow Dragon">
+                                </div>
                             </div>
 
                             <div class="form-row">
@@ -254,19 +275,23 @@
                                 </div>
                             </div>
 
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Drop Chance (0.0 - 1.0):</label>
-                                    <input type="number" step="0.05" id="mobEdit_dropChance" value="0.35">
+                            <div class="form-group">
+                                <label>Loot Drop Chance (0.0 - 1.0):</label>
+                                <input type="number" step="0.05" id="mobEdit_dropChance" value="0.45" min="0" max="1">
+                            </div>
+
+                            <!-- VISUAL DROP TABLE BUILDER -->
+                            <div class="drop-builder-section">
+                                <div class="drop-builder-header">
+                                    <h5>🎯 LOOT DROP TABLE (DYNAMIC SLOTS)</h5>
+                                    <button type="button" id="btnAddDropRow" class="btn-secondary btn-xs">➕ Add Drop</button>
                                 </div>
-                                <div class="form-group">
-                                    <label>Drop Table (comma-separated item IDs):</label>
-                                    <input type="text" id="mobEdit_dropTable" value="iron_sword, leather_armor, potion_minor">
-                                </div>
+                                <div class="drop-rows-container" id="mobDropRowsContainer"></div>
                             </div>
 
                             <div class="form-actions">
                                 <button type="submit" class="btn-success">💾 Save Mob Definition</button>
+                                <button type="button" id="btnDeleteMob" class="btn-danger">🗑️ Delete Mob</button>
                                 <button type="button" id="btnSpawnEditedMob" class="btn-primary">⚡ Spawn Instantly</button>
                             </div>
                         </form>
@@ -278,8 +303,12 @@
             <div class="mgr-tab-content" id="tab_items">
                 <div class="mgr-grid-2">
                     <div class="mgr-card">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                            <h4 style="margin:0;">ITEMS & EQUIPMENT CATALOG</h4>
+                        <div class="mgr-card-toolbar">
+                            <h4 style="margin:0;">ITEMS CATALOG</h4>
+                            <button type="button" id="btnNewItem" class="btn-success btn-xs">➕ New Item</button>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-bottom:10px;">
+                            <input type="text" id="itemSearchInput" class="mgr-search-input" style="margin-bottom:0;" placeholder="🔍 Search items...">
                             <select id="mgrItemFilter" style="background:#1c1e2e; border:1px solid rgba(255,255,255,0.12); color:#fff; font-size:10px; border-radius:6px; padding:4px 8px;">
                                 <option value="all">All Items</option>
                                 <option value="weapon">Weapons</option>
@@ -293,7 +322,7 @@
                     </div>
 
                     <div class="mgr-card">
-                        <h4>CREATE / EDIT ITEM DEFINITION</h4>
+                        <h4 id="itemFormTitle">CREATE / EDIT ITEM DEFINITION</h4>
                         <form id="formItemEditor" class="mgr-form">
                             <div class="form-row">
                                 <div class="form-group">
@@ -346,8 +375,19 @@
                                     <input type="number" id="itemEdit_atk" value="25">
                                 </div>
                                 <div class="form-group">
+                                    <label>Defense Bonus:</label>
+                                    <input type="number" id="itemEdit_def" value="0">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label>HP Bonus:</label>
                                     <input type="number" id="itemEdit_hp" value="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Dodge Bonus (0 - 1.0):</label>
+                                    <input type="number" step="0.01" id="itemEdit_dodge" value="0">
                                 </div>
                             </div>
 
@@ -368,7 +408,8 @@
                             </div>
 
                             <div class="form-actions">
-                                <button type="submit" class="btn-success">💾 Save Item Definition</button>
+                                <button type="submit" class="btn-success">💾 Save Item</button>
+                                <button type="button" id="btnDeleteItem" class="btn-danger">🗑️ Delete Item</button>
                                 <button type="button" id="btnGiveItemToPlayer" class="btn-primary">🎁 Grant 1 to Player</button>
                             </div>
                         </form>
@@ -380,12 +421,16 @@
             <div class="mgr-tab-content" id="tab_shop">
                 <div class="mgr-grid-2">
                     <div class="mgr-card">
-                        <h4>SHOP MERCHANDISE LIST</h4>
+                        <div class="mgr-card-toolbar">
+                            <h4 style="margin:0;">SHOP MERCHANDISE</h4>
+                            <button type="button" id="btnNewShopItem" class="btn-success btn-xs">➕ New Listing</button>
+                        </div>
+                        <input type="text" id="shopSearchInput" class="mgr-search-input" placeholder="🔍 Search shop catalog...">
                         <div class="mgr-list" id="mgrShopList"></div>
                     </div>
 
                     <div class="mgr-card">
-                        <h4>CREATE / EDIT SHOP ITEM</h4>
+                        <h4 id="shopFormTitle">CREATE / EDIT SHOP ITEM</h4>
                         <form id="formShopEditor" class="mgr-form">
                             <div class="form-row">
                                 <div class="form-group">
@@ -455,12 +500,15 @@
             <div class="mgr-tab-content" id="tab_maps">
                 <div class="mgr-grid-2">
                     <div class="mgr-card">
-                        <h4>REALM MAP DICTIONARY</h4>
+                        <div class="mgr-card-toolbar">
+                            <h4 style="margin:0;">REALM MAPS</h4>
+                            <button type="button" id="btnNewMap" class="btn-success btn-xs">➕ New Map</button>
+                        </div>
                         <div class="mgr-list" id="mgrMapList"></div>
                     </div>
 
                     <div class="mgr-card">
-                        <h4>CREATE / EDIT REALM MAP</h4>
+                        <h4 id="mapFormTitle">CREATE / EDIT REALM MAP</h4>
                         <form id="formMapEditor" class="mgr-form">
                             <div class="form-group">
                                 <label>Map ID Key:</label>
@@ -489,7 +537,8 @@
                             </div>
 
                             <div class="form-actions">
-                                <button type="submit" class="btn-success">💾 Save Map Definition</button>
+                                <button type="submit" class="btn-success">💾 Save Map</button>
+                                <button type="button" id="btnDeleteMap" class="btn-danger">🗑️ Delete Map</button>
                                 <button type="button" id="btnTravelEditedMap" class="btn-primary">🗺️ Travel Now</button>
                             </div>
                         </form>
@@ -598,6 +647,9 @@
 <script src="js/api/gameApi.js"></script>
 
 <script src="js/manager/managerApp.js"></script>
+
+<!-- FLOATING TOAST NOTIFICATIONS -->
+<div class="mgr-toast-container" id="mgrToastContainer"></div>
 
 </body>
 </html>

@@ -47,6 +47,9 @@ window.CombatManager = {
 
     attackTick() {
         const state = window.gameState;
+        if (!state.player.hasCompletedOnboarding || state.combat.inTemple) {
+            return;
+        }
 
         // 1. Tick Buffs Duration & Expiration
         if (state.player.activeBuffs && state.player.activeBuffs.length > 0) {
@@ -63,6 +66,11 @@ window.CombatManager = {
         // 3. Emergency Auto-Potion Check (when HP <= 35%)
         if (state.player.autoPotion && (state.player.hp / state.player.maxHp) <= 0.35) {
             this.checkAutoPotion();
+        }
+
+        // If autoFight is disabled, do not execute automated attack
+        if (!state.combat.autoFight) {
+            return;
         }
 
         if (!state.combat.currentMob) {
@@ -139,6 +147,55 @@ window.CombatManager = {
             this.onMobDefeated();
         } else {
             // Mob counter-attack
+            this.mobAttackTick(mob);
+            state.notify();
+        }
+    },
+
+    manualStrike() {
+        const state = window.gameState;
+        if (!state.player.hasCompletedOnboarding || state.combat.inTemple) return;
+
+        if (!state.combat.currentMob) {
+            if (window.SpawningManager) window.SpawningManager.spawnNextMob();
+            return;
+        }
+
+        const mob = state.combat.currentMob;
+        let baseDmg = this.calculatePlayerDamage();
+        let isCrit = false;
+
+        const critChance = state.getEffectiveCritChance();
+        if (Math.random() < critChance) {
+            isCrit = true;
+            baseDmg *= state.player.critDmg;
+        }
+
+        if (window.devMode && window.devMode.enabled && window.devMode.oneHitKill) {
+            baseDmg = mob.hp;
+        }
+
+        const finalDmg = Math.max(1, Math.floor(baseDmg));
+        mob.hp -= finalDmg;
+
+        const lifestealPct = state.getEffectiveLifesteal();
+        if (lifestealPct > 0) {
+            const healed = Math.floor(finalDmg * lifestealPct);
+            state.player.hp = Math.min(state.player.maxHp, state.player.hp + healed);
+        }
+
+        this.showDamagePopup(isCrit ? `CRIT! -${finalDmg}` : `-${finalDmg}`, isCrit, false);
+
+        const enemyEl = document.getElementById("enemy");
+        if (enemyEl) {
+            enemyEl.classList.remove("hit");
+            void enemyEl.offsetWidth;
+            enemyEl.classList.add("hit");
+        }
+
+        if (mob.hp <= 0) {
+            this.onMobDefeated();
+        } else {
             this.mobAttackTick(mob);
             state.notify();
         }
@@ -228,17 +285,68 @@ window.CombatManager = {
         // Check Quests
         if (window.QuestManager) window.QuestManager.checkProgress("kill", mob.id, 1);
 
-        const statusEl = document.getElementById("status");
-        if (statusEl) {
-            statusEl.textContent = `✦ ${mob.name} Defeated · +${mob.goldReward} Gold · +${mob.xpReward} XP`;
-            setTimeout(() => {
-                if (statusEl.textContent.includes("Defeated")) {
-                    statusEl.textContent = "⚔ Your hero attacks automatically";
+        const wasBoss = !!mob.isBoss;
+        state.combat.currentMob = null;
+
+        if (wasBoss) {
+            this.handleBossDefeated(mob);
+        } else {
+            // Stage progression
+            state.combat.stage = (state.combat.stage || 1) + 1;
+            if (state.combat.stage > state.combat.maxStages) {
+                state.combat.stage = state.combat.maxStages;
+            }
+
+            const statusEl = document.getElementById("status");
+            if (statusEl) {
+                if (state.combat.stage === state.combat.maxStages) {
+                    statusEl.textContent = `👑 BOSS ENCOUNTER! Defeat the Realm Guardian to clear the area!`;
+                } else {
+                    statusEl.textContent = `✦ ${mob.name} Defeated · Stage ${state.combat.stage}/${state.combat.maxStages}`;
                 }
-            }, 1200);
+            }
+
+            if (window.SpawningManager) {
+                window.SpawningManager.spawnNextMob();
+            }
+        }
+        state.notify();
+    },
+
+    handleBossDefeated(bossMob) {
+        const state = window.gameState;
+        const currentMap = window.MapsData[state.world.currentMapId] || window.MapsData.moonlit_vale;
+        const currentIdx = currentMap.realmIndex || 1;
+        const nextMap = Object.values(window.MapsData).find(m => m.realmIndex === currentIdx + 1);
+
+        if (nextMap) {
+            state.unlockMap(nextMap.id);
         }
 
-        state.combat.currentMob = null;
+        const bonusGold = (bossMob.goldReward || 100) * 3;
+        const bonusXp = (bossMob.xpReward || 50) * 2;
+        state.addGold(bonusGold);
+        state.addXp(bonusXp);
+
+        // Reset stage for future runs
+        state.combat.stage = 1;
+
+        if (window.UIManager && typeof window.UIManager.showVictoryModal === "function") {
+            window.UIManager.showVictoryModal({
+                bossName: bossMob.name,
+                mapName: currentMap.name,
+                nextMap: nextMap ? nextMap.name : null,
+                nextMapId: nextMap ? nextMap.id : null,
+                gold: bonusGold,
+                xp: bonusXp
+            });
+        }
+
+        const statusEl = document.getElementById("status");
+        if (statusEl) {
+            statusEl.textContent = `🏆 REALM CLEARED! You defeated ${bossMob.name}!`;
+        }
+
         if (window.SpawningManager) {
             window.SpawningManager.spawnNextMob();
         }
@@ -287,27 +395,19 @@ window.CombatManager = {
 
     onPlayerDeath() {
         const state = window.gameState;
-
-        // Reset player HP
-        state.player.hp = state.player.maxHp;
-
-        // Clear the current mob (flee/respawn)
-        state.combat.currentMob = null;
+        state.respawnAtTemple();
 
         const statusEl = document.getElementById("status");
         if (statusEl) {
-            statusEl.textContent = "💀 Your hero fell in battle... regaining strength!";
-            setTimeout(() => {
-                if (statusEl.textContent.includes("fell in battle")) {
-                    statusEl.textContent = "⚔ Your hero attacks automatically";
-                }
-            }, 3000);
+            statusEl.textContent = "💀 Your hero fell in battle... You have awakened at the Temple of Revival.";
         }
 
         if (window.devMode && typeof window.devMode.logToConsole === "function") {
-            window.devMode.logToConsole("💀 PLAYER DIED — HP restored, mob cleared.", "error");
+            window.devMode.logToConsole("💀 PLAYER DEFEATED — Resurrected at Temple of Solitude.", "error");
         }
 
-        state.notify();
+        if (window.UIManager && typeof window.UIManager.showTempleModal === "function") {
+            window.UIManager.showTempleModal();
+        }
     }
 };
