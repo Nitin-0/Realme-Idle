@@ -12,6 +12,7 @@ window.MapsData = {
         levelMax: 5,
         defaultWeather: "clear",
         mobs: ["goblin", "wolf"],
+        bossId: "wolf",
         bgGradient: "radial-gradient(circle at 50% 42%, #45376e 0%, #282143 23%, #161827 55%, #0c0e17 100%)",
         moonColor: "#eee5c9"
     },
@@ -23,7 +24,8 @@ window.MapsData = {
         levelMin: 5,
         levelMax: 15,
         defaultWeather: "ashfall",
-        mobs: ["orc", "skeleton"],
+        mobs: ["skeleton", "orc"],
+        bossId: "orc",
         bgGradient: "radial-gradient(circle at 50% 42%, #633324 0%, #361b14 25%, #190f0c 55%, #0d0806 100%)",
         moonColor: "#e8996b"
     },
@@ -35,7 +37,8 @@ window.MapsData = {
         levelMin: 15,
         levelMax: 25,
         defaultWeather: "fog",
-        mobs: ["wolf", "skeleton", "orc"],
+        mobs: ["wolf", "skeleton"],
+        bossId: "orc",
         bgGradient: "radial-gradient(circle at 50% 42%, #5c1e2d 0%, #301019 25%, #18090d 55%, #0d0507 100%)",
         moonColor: "#f27979"
     },
@@ -47,7 +50,8 @@ window.MapsData = {
         levelMin: 25,
         levelMax: 40,
         defaultWeather: "snow",
-        mobs: ["skeleton", "orc", "void_sentinel"],
+        mobs: ["skeleton", "orc"],
+        bossId: "void_sentinel",
         bgGradient: "radial-gradient(circle at 50% 42%, #2d556e 0%, #172d3b 25%, #0b171f 55%, #050b0f 100%)",
         moonColor: "#ccebfb"
     },
@@ -59,7 +63,8 @@ window.MapsData = {
         levelMin: 40,
         levelMax: 55,
         defaultWeather: "ashfall",
-        mobs: ["orc", "dragon"],
+        mobs: ["orc", "void_sentinel"],
+        bossId: "dragon",
         bgGradient: "radial-gradient(circle at 50% 42%, #7a2b16 0%, #42160a 25%, #210a05 55%, #0f0502 100%)",
         moonColor: "#ff5522"
     },
@@ -71,7 +76,8 @@ window.MapsData = {
         levelMin: 55,
         levelMax: 70,
         defaultWeather: "arcane_storm",
-        mobs: ["void_sentinel", "dragon"],
+        mobs: ["skeleton", "void_sentinel"],
+        bossId: "dragon",
         bgGradient: "radial-gradient(circle at 50% 42%, #4f1d6b 0%, #2a0e3b 25%, #15061f 55%, #0a030f 100%)",
         moonColor: "#d97aff"
     },
@@ -83,7 +89,8 @@ window.MapsData = {
         levelMin: 70,
         levelMax: 85,
         defaultWeather: "storm",
-        mobs: ["dragon", "lich"],
+        mobs: ["orc", "void_sentinel"],
+        bossId: "dragon",
         bgGradient: "radial-gradient(circle at 50% 42%, #6e541b 0%, #3b2c0d 25%, #1f1706 55%, #0f0b03 100%)",
         moonColor: "#ffd675"
     },
@@ -95,7 +102,8 @@ window.MapsData = {
         levelMin: 85,
         levelMax: 100,
         defaultWeather: "eclipse",
-        mobs: ["lich"],
+        mobs: ["void_sentinel", "dragon"],
+        bossId: "lich",
         bgGradient: "radial-gradient(circle at 50% 42%, #3a3f6e 0%, #1f223d 25%, #0f101f 55%, #08080f 100%)",
         moonColor: "#e0e2ff"
     }

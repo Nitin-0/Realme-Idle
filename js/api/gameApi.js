@@ -76,6 +76,10 @@ window.GameAPI = {
         },
         resetToNewGame() {
             window.gameState.resetToNewGame();
+        },
+        wipeAllDataAndRestart() {
+            localStorage.removeItem("realmIdleRootSave");
+            window.location.reload();
         }
     },
 
@@ -309,16 +313,60 @@ window.GameAPI = {
                 return false;
             }
         }
+    },
+
+    // Game Rules & Economy Configuration API
+    settings: {
+        saveRules(rules) {
+            const state = window.gameState;
+            if (rules.guildIncome) {
+                state.guildIncome = rules.guildIncome;
+                localStorage.setItem("realmIdle_cfg_guildIncome", JSON.stringify(rules.guildIncome));
+            }
+            if (rules.templeDonation) {
+                state.templeDonation = rules.templeDonation;
+                localStorage.setItem("realmIdle_cfg_templeDonation", JSON.stringify(rules.templeDonation));
+            }
+            state.save();
+            state.notify();
+            if (syncChannel) syncChannel.postMessage({ type: "RULES_UPDATED", rules });
+        },
+        loadRules() {
+            let gi = null;
+            let td = null;
+            try {
+                const giStr = localStorage.getItem("realmIdle_cfg_guildIncome");
+                if (giStr) {
+                    gi = JSON.parse(giStr);
+                    if (window.gameState) window.gameState.guildIncome = gi;
+                } else if (window.gameState && window.gameState.guildIncome) {
+                    gi = window.gameState.guildIncome;
+                }
+                const tdStr = localStorage.getItem("realmIdle_cfg_templeDonation");
+                if (tdStr) {
+                    td = JSON.parse(tdStr);
+                    if (window.gameState) window.gameState.templeDonation = td;
+                } else if (window.gameState && window.gameState.templeDonation) {
+                    td = window.gameState.templeDonation;
+                }
+            } catch (e) {}
+            return {
+                guildIncome: gi || (window.gameState ? window.gameState.guildIncome : { enabled: true, goldPerSecond: 3 }),
+                templeDonation: td || (window.gameState ? window.gameState.templeDonation : { enabled: true, cost: 50 })
+            };
+        }
     }
 };
 
-// Auto-load custom data on startup
+// Auto-load custom data & rules on startup
 window.GameAPI.data.loadCustomData();
+if (window.GameAPI.settings) window.GameAPI.settings.loadRules();
 
 // Listen for broadcast sync across tabs
 if (syncChannel) {
     syncChannel.onmessage = (e) => {
         window.GameAPI.data.loadCustomData();
+        if (window.GameAPI.settings) window.GameAPI.settings.loadRules();
         if (window.gameState) window.gameState.notify();
     };
 }

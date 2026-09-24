@@ -95,6 +95,18 @@ window.gameState = {
         goldPerSecond: 3
     },
 
+    templeDonation: {
+        enabled: true,
+        cost: 50
+    },
+
+    guildIncome: {
+        enabled: true,
+        goldPerSecond: 3
+    },
+
+    lastTempleDonation: 0,
+
     listeners: [],
 
     subscribe(fn) {
@@ -376,6 +388,16 @@ window.gameState = {
         this.combat.inTemple = true;
         this.combat.currentMob = null;
         this.player.hp = Math.max(1, Math.floor(this.player.maxHp * 0.5));
+
+        // Temple Donation / Tithe on Death
+        let tithe = 0;
+        if (this.templeDonation && this.templeDonation.enabled !== false) {
+            const cost = (typeof this.templeDonation.cost === "number") ? this.templeDonation.cost : 50;
+            tithe = Math.min(this.player.gold, cost);
+            this.player.gold -= tithe;
+        }
+        this.lastTempleDonation = tithe;
+
         this.save();
         this.notify();
     },
@@ -418,10 +440,10 @@ window.gameState = {
     /* =========================
        OFFLINE PROGRESS ENGINE
     ========================= */
-    calculateOfflineProgress() {
+    calculateOfflineProgress(customElapsedSec = null) {
         const now = Date.now();
         const last = this.lastSaveTime || now;
-        const elapsedSec = Math.floor((now - last) / 1000);
+        const elapsedSec = (customElapsedSec !== null) ? customElapsedSec : Math.floor((now - last) / 1000);
 
         // Minimum 15 seconds to trigger offline report, max 12 hours (43200s)
         if (elapsedSec < 15) {
@@ -430,52 +452,73 @@ window.gameState = {
         }
 
         const cappedSec = Math.min(elapsedSec, 43200);
+        const hoursAway = (cappedSec / 3600).toFixed(1);
 
-        // 1. Passive gold accumulated
-        const passiveGold = Math.floor(cappedSec * (this.costs.goldPerSecond || 3));
+        // 1. Passive Guild Income
+        const guildRate = (this.guildIncome && this.guildIncome.enabled !== false)
+            ? (this.guildIncome.goldPerSecond !== undefined ? this.guildIncome.goldPerSecond : (this.costs.goldPerSecond || 3))
+            : 0;
+        const treasuryBonus = 1 + (this.kingdom.treasury - 1) * 0.10;
+        const passiveGold = Math.floor(cappedSec * guildRate * treasuryBonus);
 
-        // 2. Simulated combat kills (assume 1 mob defeated every ~3.0s)
-        const kills = Math.floor(cappedSec / 3.0);
-        const map = window.MapsData[this.world.currentMapId] || window.MapsData.moonlit_vale;
-        const mobPool = (map.mobs && map.mobs.length > 0) ? map.mobs : ["goblin"];
-        const avgMobId = mobPool[0];
-        const mobDef = window.MobsData[avgMobId] || window.MobsData.goblin;
+        // Check if player was actively in combat with autofight enabled
+        const wasFighting = (this.combat && this.combat.autoFight === true && !this.combat.inTemple);
 
-        const combatGold = Math.floor(kills * (mobDef.goldReward || 25) * 0.7);
-        const combatXp = Math.floor(kills * (mobDef.xpReward || 15) * 0.7);
-
-        // 3. Loot drops rolled offline
+        let kills = 0;
+        let combatGold = 0;
+        let combatXp = 0;
         const materialsGathered = { ironOre: 0, wood: 0, crystal: 0, dragonScale: 0, shadowEssence: 0 };
         let potionsGathered = 0;
         let gearGathered = [];
+        let activityText = "";
 
-        for (let i = 0; i < Math.min(kills, 100); i++) {
-            if (Math.random() < 0.40) {
-                materialsGathered.ironOre += Math.floor(Math.random() * 2) + 1;
-                materialsGathered.wood += Math.floor(Math.random() * 2) + 1;
-            }
-            if (Math.random() < 0.15) {
-                materialsGathered.crystal += 1;
-            }
-            if (Math.random() < 0.10) {
-                potionsGathered += 1;
-                this.player.potions.potion_minor = (this.player.potions.potion_minor || 0) + 1;
-            }
-            if (Math.random() < 0.05 && gearGathered.length < 3) {
-                const possible = Object.keys(window.ItemsData).filter(k => window.ItemsData[k].type === "equipment");
-                const picked = possible[Math.floor(Math.random() * possible.length)];
-                if (picked && window.InventoryManager) {
-                    window.InventoryManager.addItem(picked);
-                    gearGathered.push(window.ItemsData[picked].name);
+        if (wasFighting) {
+            // Simulated combat kills (assume 1 mob defeated every ~3.0s)
+            kills = Math.floor(cappedSec / 3.0);
+            const map = window.MapsData[this.world.currentMapId] || window.MapsData.moonlit_vale;
+            const mobPool = (map.mobs && map.mobs.length > 0) ? map.mobs : ["goblin"];
+            const avgMobId = mobPool[0];
+            const mobDef = window.MobsData[avgMobId] || window.MobsData.goblin;
+
+            combatGold = Math.floor(kills * (mobDef.goldReward || 25) * 0.7);
+            combatXp = Math.floor(kills * (mobDef.xpReward || 15) * 0.7);
+
+            for (let i = 0; i < Math.min(kills, 100); i++) {
+                if (Math.random() < 0.40) {
+                    materialsGathered.ironOre += Math.floor(Math.random() * 2) + 1;
+                    materialsGathered.wood += Math.floor(Math.random() * 2) + 1;
+                }
+                if (Math.random() < 0.15) {
+                    materialsGathered.crystal += 1;
+                }
+                if (Math.random() < 0.10) {
+                    potionsGathered += 1;
+                    this.player.potions.potion_minor = (this.player.potions.potion_minor || 0) + 1;
+                }
+                if (Math.random() < 0.05 && gearGathered.length < 3) {
+                    const possible = Object.keys(window.ItemsData).filter(k => window.ItemsData[k].type === "equipment");
+                    const picked = possible[Math.floor(Math.random() * possible.length)];
+                    if (picked && window.InventoryManager) {
+                        window.InventoryManager.addItem(picked);
+                        gearGathered.push(window.ItemsData[picked].name);
+                    }
                 }
             }
-        }
 
-        // Apply materials
-        for (const [mat, qty] of Object.entries(materialsGathered)) {
-            if (this.player.materials[mat] !== undefined) {
-                this.player.materials[mat] += qty;
+            // Apply materials
+            for (const [mat, qty] of Object.entries(materialsGathered)) {
+                if (this.player.materials[mat] !== undefined) {
+                    this.player.materials[mat] += qty;
+                }
             }
+
+            activityText = `While you were away for ${hoursAway} hours, your hero continued fighting in battle:`;
+        } else {
+            // Peaceful offline exploration / training in the kingdom
+            kills = 0;
+            combatGold = 0;
+            combatXp = Math.floor(cappedSec * 0.35); // Modest training XP
+            activityText = `While you were away for ${hoursAway} hours, you trained and looked around the kingdom:`;
         }
 
         const totalGold = passiveGold + combatGold;
@@ -486,6 +529,9 @@ window.gameState = {
         const report = {
             elapsedSec,
             cappedSec,
+            hoursAway,
+            wasFighting,
+            activityText,
             totalGold,
             totalXp: combatXp,
             kills,
@@ -504,11 +550,13 @@ window.gameState = {
             lastSaveTime: this.lastSaveTime,
             player: this.player,
             world: this.world,
-            combat: { stage: this.combat.stage, inTemple: this.combat.inTemple },
+            combat: { stage: this.combat.stage, inTemple: this.combat.inTemple, autoFight: this.combat.autoFight },
             kingdom: this.kingdom,
             quests: this.quests,
             journal: this.journal,
-            costs: this.costs
+            costs: this.costs,
+            templeDonation: this.templeDonation,
+            guildIncome: this.guildIncome
         }));
     },
 
@@ -534,11 +582,14 @@ window.gameState = {
                 if (data.combat) {
                     if (data.combat.stage) this.combat.stage = data.combat.stage;
                     if (data.combat.inTemple !== undefined) this.combat.inTemple = data.combat.inTemple;
+                    if (data.combat.autoFight !== undefined) this.combat.autoFight = data.combat.autoFight;
                 }
                 if (data.kingdom) Object.assign(this.kingdom, data.kingdom);
                 if (data.quests) Object.assign(this.quests, data.quests);
                 if (data.journal) Object.assign(this.journal, data.journal);
                 if (data.costs) Object.assign(this.costs, data.costs);
+                if (data.templeDonation) Object.assign(this.templeDonation, data.templeDonation);
+                if (data.guildIncome) Object.assign(this.guildIncome, data.guildIncome);
             } catch (e) {
                 console.log("Save could not be parsed.");
             }

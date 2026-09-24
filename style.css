@@ -83,6 +83,19 @@ body {
         0 0 30px #8064d522;
 
     font-size: 21px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    user-select: none;
+}
+
+.brand-icon:hover {
+    transform: scale(1.12);
+    border-color: #ffd700;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.45);
+}
+
+.brand-icon:active {
+    transform: scale(0.96);
 }
 
 .brand h1 {
@@ -2147,6 +2160,8 @@ footer button:hover {
 
 /* OFFLINE MODAL */
 .offline-modal {
+    display: flex;
+    flex-direction: column;
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.85);
@@ -2402,60 +2417,75 @@ footer button:hover {
     transform: scale(0.97);
 }
 
-/* Temple Sanctuary Safe Zone Banner */
+/* Temple Sanctuary Safe Zone Banner Overlay */
 .temple-safe-banner {
-    background: linear-gradient(135deg, rgba(16, 44, 87, 0.95), rgba(53, 95, 142, 0.95));
-    border: 1px solid #64b5f6;
-    border-radius: 12px;
-    padding: 14px 18px;
-    margin-bottom: 14px;
-    box-shadow: 0 0 20px rgba(100, 181, 246, 0.3);
-    z-index: 1;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 10, 20, 0.88);
+    backdrop-filter: blur(8px);
+    z-index: 50;
+    padding: 20px;
+    border-radius: 24px;
 }
 
 .temple-safe-inner {
+    background: linear-gradient(135deg, rgba(16, 44, 87, 0.96), rgba(30, 58, 95, 0.96));
+    border: 1px solid #64b5f6;
+    border-radius: 16px;
+    padding: 22px 26px;
+    box-shadow: 0 0 35px rgba(100, 181, 246, 0.4), 0 10px 30px rgba(0, 0, 0, 0.8);
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
 }
 
 .temple-glow-icon {
-    font-size: 28px;
+    font-size: 34px;
     flex-shrink: 0;
+    filter: drop-shadow(0 0 10px rgba(144, 202, 249, 0.8));
 }
 
 .temple-safe-inner h4 {
-    margin: 0 0 4px 0;
-    font-size: 12px;
-    letter-spacing: 1px;
+    margin: 0;
+    font-size: 14px;
+    letter-spacing: 1.5px;
     color: #90caf9;
+    font-family: Georgia, serif;
 }
 
 .temple-safe-inner p {
     margin: 0;
-    font-size: 10px;
+    font-size: 11px;
     color: #e3f2fd;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 .btn-resume-banner {
-    margin-left: auto;
+    margin-top: 4px;
     background: #00e676;
     color: #0b1f14;
     border: none;
     font-weight: bold;
-    padding: 10px 16px;
+    padding: 11px 24px;
     border-radius: 8px;
-    font-size: 11px;
+    font-size: 12px;
     cursor: pointer;
     white-space: nowrap;
-    transition: all 0.15s;
+    transition: all 0.15s ease;
+    box-shadow: 0 0 16px rgba(0, 230, 118, 0.4);
 }
 
 .btn-resume-banner:hover {
     background: #69f0ae;
-    transform: translateY(-1px);
-    box-shadow: 0 0 12px rgba(0, 230, 118, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 0 22px rgba(0, 230, 118, 0.7);
 }
 
 /* =========================================================
@@ -3003,5 +3033,413 @@ footer button:hover {
 .btn-new-hero:hover {
     box-shadow: 0 0 12px rgba(243, 156, 18, 0.5);
     transform: translateY(-1px);
+}
+
+/* =========================================================
+   GUILD INCOME PILL & HOVER
+========================================================= */
+.guild-income-pill {
+    background: rgba(237, 199, 111, 0.18);
+    border: 1px solid rgba(237, 199, 111, 0.4);
+    color: var(--gold);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 6px;
+    font-weight: bold;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.resource.gold {
+    cursor: help;
+}
+
+/* =========================================================
+   REALM NAVIGATION CONTROLS & UNLOCKED CHIPS
+========================================================= */
+.realm-actions-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.btn-prev-realm {
+    flex: 1;
+    background: #1e2238;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #cbd5e1;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-prev-realm:hover:not(:disabled) {
+    background: #2b304f;
+    color: white;
+    border-color: var(--purple);
+    transform: translateY(-1px);
+}
+
+.btn-prev-realm:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.unlocked-realms-box {
+    margin-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 10px;
+}
+
+.unlocked-realms-box small {
+    display: block;
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.unlocked-realms-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.realm-chip {
+    background: #141727;
+    border: 1px solid rgba(155, 124, 255, 0.25);
+    color: #e2e8f0;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.realm-chip:hover:not(.active-chip) {
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: translateY(-1px);
+}
+
+.realm-chip.active-chip {
+    background: linear-gradient(135deg, rgba(155, 124, 255, 0.35), rgba(108, 92, 231, 0.35));
+    border-color: var(--purple);
+    color: #ffd700;
+    font-weight: bold;
+    cursor: default;
+}
+
+/* =========================================================
+   HERO QUICK MENU MODAL (POPUPS FROM HERO CLASS ICON)
+========================================================= */
+.hero-quick-menu-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: rgba(6, 8, 16, 0.88);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.hero-quick-menu-modal.visible {
+    display: flex;
+}
+
+.hero-quick-menu-card {
+    background: #141628;
+    border: 1px solid rgba(155, 124, 255, 0.4);
+    border-radius: 18px;
+    padding: 22px;
+    max-width: 420px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(155, 124, 255, 0.25);
+    color: white;
+}
+
+.quick-menu-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+}
+
+.quick-hero-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6c5ce7, #2d3436);
+    display: grid;
+    place-items: center;
+    font-size: 26px;
+    border: 1px solid #a29bfe;
+    box-shadow: 0 0 15px rgba(162, 155, 254, 0.3);
+}
+
+.quick-hero-info h3 {
+    margin: 0 0 4px 0;
+    font-family: Georgia, serif;
+    font-size: 18px;
+    color: var(--gold);
+}
+
+.quick-hero-info p {
+    margin: 0 0 4px 0;
+    font-size: 11px;
+    color: #dfe6e9;
+}
+
+.quick-hero-info small {
+    font-size: 10px;
+    color: #81ecec;
+    font-weight: bold;
+}
+
+.btn-quick-close {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 8px;
+}
+
+.btn-quick-close:hover {
+    color: white;
+}
+
+.quick-menu-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.btn-quick-action {
+    background: #1c1e34;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e0e2ec;
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-quick-action:hover {
+    background: #282c4e;
+    color: white;
+    border-color: rgba(155, 124, 255, 0.5);
+    transform: translateX(3px);
+}
+
+.btn-quick-action.highlight {
+    background: linear-gradient(135deg, rgba(230, 126, 34, 0.25), rgba(211, 84, 0, 0.25));
+    border-color: #e67e22;
+    color: #f39c12;
+}
+
+.btn-quick-action.highlight:hover {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    color: white;
+}
+
+.btn-quick-action.danger {
+    background: linear-gradient(135deg, rgba(214, 48, 49, 0.2), rgba(183, 21, 64, 0.2));
+    border-color: #d63031;
+    color: #ff7675;
+}
+
+.btn-quick-action.danger:hover {
+    background: linear-gradient(135deg, #d63031, #b71540);
+    color: white;
+}
+
+/* Modals Max Height & Smooth Scrolling */
+.onboarding-card,
+.temple-card,
+.victory-card,
+.offline-card {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN & MOBILE OPTIMIZATION
+========================================================= */
+@media (max-width: 768px) {
+    .game {
+        width: 95%;
+        padding: 14px 0 60px 0;
+    }
+
+    .topbar {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .resources {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .bars-container {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .stats-strip {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .stat-badge {
+        flex: 1 1 45%;
+        text-align: center;
+    }
+
+    .game-nav-tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+    }
+
+    .nav-tab-btn {
+        flex-shrink: 0;
+        font-size: 11px;
+        padding: 9px 12px;
+    }
+
+    .arena {
+        min-height: 310px;
+        border-radius: 16px;
+    }
+
+    .combat-control-strip {
+        gap: 8px;
+    }
+
+    .combat-hud {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .hud-skill-box,
+    .hud-potion-box {
+        width: 100%;
+    }
+
+    .potion-belt {
+        justify-content: space-between;
+    }
+
+    .btn-belt-pot {
+        flex: 1;
+        padding: 8px 4px;
+        font-size: 10px;
+    }
+
+    .equipment-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .kingdom-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bottom-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .char-sheet-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .inv-container-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .shop-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .onboard-class-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-buttons {
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .onboarding-card,
+    .temple-card,
+    .victory-card,
+    .offline-card,
+    .hero-quick-menu-card {
+        padding: 16px;
+        border-radius: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand h1 {
+        font-size: 18px;
+    }
+
+    .brand-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 18px;
+    }
+
+    .combat-control-strip {
+        flex-direction: column;
+    }
+
+    .btn-autofight,
+    .btn-manual-strike {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .realm-actions-row {
+        flex-direction: column;
+    }
+
+    .btn-prev-realm,
+    .next-realm {
+        width: 100%;
+    }
 }
 

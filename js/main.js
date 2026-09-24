@@ -8,7 +8,7 @@ window.MainEngine = {
     eventLoopId: null,
     saveLoopId: null,
 
-    activeTab: "arena",
+    activeTab: "character",
     selectedInventoryItemInstanceId: null,
     currentInvFilter: "all",
     currentShopFilter: "all",
@@ -37,28 +37,39 @@ window.MainEngine = {
             this.showOfflineModal(offReport);
         }
 
-        // 3. Init Canvas Weather
+        // 4. Init Canvas Weather
         if (window.WeatherManager) window.WeatherManager.init();
 
-        // 4. Init GM Panel
+        // 5. Init GM Panel
         if (window.DevPanel) window.DevPanel.init();
 
-        // 5. Subscribe UI sync to root gameState changes
+        // 6. Subscribe UI sync to root gameState changes
         window.gameState.subscribe(() => this.updateUI());
 
-        // 6. Initial Map setup
+        // 7. Initial Map setup
         if (window.MapManager) {
             window.MapManager.loadMap(window.gameState.world.currentMapId);
         }
 
-        // 7. Bind upgrade buttons & UI actions
+        // 8. Bind upgrade buttons & UI actions
         this.bindEvents();
 
-        // 8. Start Loops
+        // 9. Start Loops
         this.restartGameLoops();
 
-        // Render Initial UI
+        // 10. Render Initial Active Tab (Character Sheet & Class Hall)
+        this.switchTab(this.activeTab);
+        this.renderCharacterView();
+
+        // 11. Render Initial UI
         this.updateUI();
+
+        // 12. Expose Developer & User Console Shortcuts
+        window.wipeAllSaveData = () => this.wipeAllSaveData();
+        window.clearSave = () => this.wipeAllSaveData();
+        window.resetGame = () => this.wipeAllSaveData();
+        window.startNewAdventure = () => this.wipeAllSaveData();
+        console.log("%c👑 REALM IDLE: Type clearSave() or resetGame() in console anytime to wipe storage and restart adventure!", "color: #edc76f; font-weight: bold; font-size: 12px;");
 
         console.log("👑 Realm Idle RPG & GM Engine Initialized!");
     },
@@ -119,14 +130,75 @@ window.MainEngine = {
             });
         }
 
-        // Reset
+        // Travel Back (Previous Realm)
+        const btnPrevRealm = document.getElementById("btnPrevRealm");
+        if (btnPrevRealm) {
+            btnPrevRealm.addEventListener("click", () => {
+                const currentMap = window.MapsData[state.world.currentMapId];
+                const prevRealmIndex = (currentMap ? currentMap.realmIndex : 2) - 1;
+                const prevMap = Object.values(window.MapsData).find(m => m.realmIndex === prevRealmIndex);
+                if (prevMap && window.MapManager) {
+                    window.MapManager.loadMap(prevMap.id);
+                    const statusEl = document.getElementById("status");
+                    if (statusEl) statusEl.textContent = `⬅️ Traveled back to ${prevMap.name} (Realm ${prevMap.roman})`;
+                }
+            });
+        }
+
+        // Reset & Full Wipe
         const btnReset = document.getElementById("reset");
         if (btnReset) {
-            btnReset.addEventListener("click", () => {
-                if (!confirm("Reset all progress? This cannot be undone.")) return;
-                localStorage.removeItem("realmIdleRootSave");
-                window.location.reload();
+            btnReset.addEventListener("click", () => this.wipeAllSaveData());
+        }
+
+        // Hero Class Icon Quick Access Menu
+        const heroClassIcon = document.getElementById("heroClassIcon");
+        if (heroClassIcon) {
+            heroClassIcon.addEventListener("click", () => this.toggleHeroQuickMenu());
+        }
+
+        const btnQuickClose = document.getElementById("btnQuickClose");
+        if (btnQuickClose) btnQuickClose.addEventListener("click", () => this.hideHeroQuickMenu());
+
+        const btnQuickChar = document.getElementById("btnQuickCharSheet");
+        if (btnQuickChar) {
+            btnQuickChar.addEventListener("click", () => {
+                this.hideHeroQuickMenu();
+                this.switchTab("character");
             });
+        }
+
+        const btnQuickNewHero = document.getElementById("btnQuickNewHero");
+        if (btnQuickNewHero) {
+            btnQuickNewHero.addEventListener("click", () => {
+                this.hideHeroQuickMenu();
+                this.showOnboardingModal(true);
+            });
+        }
+
+        const btnQuickDbg = document.getElementById("btnQuickDebug");
+        if (btnQuickDbg) {
+            btnQuickDbg.addEventListener("click", () => {
+                this.hideHeroQuickMenu();
+                if (window.DebugWidget) window.DebugWidget.toggle(true);
+            });
+        }
+
+        const btnQuickAdm = document.getElementById("btnQuickAdmin");
+        if (btnQuickAdm) {
+            btnQuickAdm.addEventListener("click", () => {
+                window.open("manager.html", "_blank");
+            });
+        }
+
+        const btnQuickWipe = document.getElementById("btnQuickWipe");
+        if (btnQuickWipe) {
+            btnQuickWipe.addEventListener("click", () => this.wipeAllSaveData());
+        }
+
+        const dbgWipe = document.getElementById("dbgBtnWipeRestart");
+        if (dbgWipe) {
+            dbgWipe.addEventListener("click", () => this.wipeAllSaveData());
         }
 
         // Kingdom building buttons
@@ -380,9 +452,18 @@ window.MainEngine = {
         const timeStr = minutes >= 60 ? `${hours} hours` : `${minutes} minutes`;
 
         const timeText = document.getElementById("offlineTimeText");
-        if (timeText) timeText.textContent = `While you were away for ${timeStr}, your hero continued the quest:`;
+        if (timeText) timeText.textContent = `You were away for ${timeStr}.`;
 
-        if (document.getElementById("offStatKills")) document.getElementById("offStatKills").textContent = report.kills.toLocaleString();
+        const activityEl = document.getElementById("offlineActivityText");
+        if (activityEl) {
+            activityEl.textContent = report.activityText || (report.wasFighting
+                ? `While you were away for ${timeStr}, your hero continued fighting in battle:`
+                : `While you were away for ${timeStr}, you trained and looked around the kingdom:`);
+        }
+
+        if (document.getElementById("offStatKills")) {
+            document.getElementById("offStatKills").textContent = report.kills > 0 ? report.kills.toLocaleString() : "0 (Resting/Idle)";
+        }
         if (document.getElementById("offStatGold")) document.getElementById("offStatGold").textContent = `+${report.totalGold.toLocaleString()}g`;
         if (document.getElementById("offStatXp")) document.getElementById("offStatXp").textContent = `+${report.totalXp.toLocaleString()} XP`;
         if (document.getElementById("offStatPots")) document.getElementById("offStatPots").textContent = `+${report.potionsGathered}`;
@@ -390,17 +471,20 @@ window.MainEngine = {
         const lootBox = document.getElementById("offlineLootBox");
         if (lootBox) {
             lootBox.innerHTML = "";
-            let lootItems = [];
-
-            for (const [mat, qty] of Object.entries(report.materialsGathered)) {
-                if (qty > 0) lootItems.push(`${mat}: +${qty}`);
-            }
-            report.gearGathered.forEach(g => lootItems.push(`🗡️ ${g}`));
-
-            if (lootItems.length > 0) {
-                lootBox.innerHTML = `<strong>Loot Recovered:</strong> ${lootItems.join(" · ")}`;
+            if (!report.wasFighting) {
+                lootBox.innerHTML = `<em>🌿 No battle loot recovered (Hero was resting & exploring kingdom). Enjoy your peaceful training gains!</em>`;
             } else {
-                lootBox.innerHTML = `<em>No gear drops discovered during this rest.</em>`;
+                let lootItems = [];
+                for (const [mat, qty] of Object.entries(report.materialsGathered || {})) {
+                    if (qty > 0) lootItems.push(`${mat}: +${qty}`);
+                }
+                (report.gearGathered || []).forEach(g => lootItems.push(`🗡️ ${g}`));
+
+                if (lootItems.length > 0) {
+                    lootBox.innerHTML = `<strong>Loot Recovered:</strong> ${lootItems.join(" · ")}`;
+                } else {
+                    lootBox.innerHTML = `<em>No gear drops discovered during this rest.</em>`;
+                }
             }
         }
 
@@ -425,7 +509,15 @@ window.MainEngine = {
         }, combatInterval);
 
         this.passiveGoldLoopId = setInterval(() => {
-            window.gameState.addGold(window.gameState.costs.goldPerSecond);
+            const state = window.gameState;
+            if (state.guildIncome && state.guildIncome.enabled !== false) {
+                const baseRate = (state.guildIncome.goldPerSecond !== undefined) ? state.guildIncome.goldPerSecond : (state.costs.goldPerSecond || 3);
+                const treasuryBonus = 1 + (state.kingdom.treasury - 1) * 0.10;
+                const actualEarned = Math.floor(baseRate * treasuryBonus);
+                if (actualEarned > 0) {
+                    state.addGold(actualEarned);
+                }
+            }
         }, passiveInterval);
 
         this.eventLoopId = setInterval(() => {
@@ -642,6 +734,57 @@ window.MainEngine = {
         if (document.getElementById("damageCost")) document.getElementById("damageCost").textContent = "✦ " + state.costs.damageCost.toLocaleString();
         if (document.getElementById("incomeCost")) document.getElementById("incomeCost").textContent = "✦ " + state.costs.incomeCost.toLocaleString();
         if (document.getElementById("realmCost")) document.getElementById("realmCost").textContent = "✦ " + state.costs.realmCost.toLocaleString();
+
+        // Adventurer's Guild Stipend Pill
+        const guildPill = document.getElementById("guildIncomePill");
+        if (guildPill) {
+            if (state.guildIncome && state.guildIncome.enabled === false) {
+                guildPill.textContent = "+0/s (Off)";
+            } else {
+                const baseRate = (state.guildIncome && state.guildIncome.goldPerSecond !== undefined) ? state.guildIncome.goldPerSecond : (state.costs.goldPerSecond || 3);
+                const treasuryBonus = 1 + (state.kingdom.treasury - 1) * 0.10;
+                const totalRate = Math.floor(baseRate * treasuryBonus);
+                guildPill.textContent = `+${totalRate}/s`;
+            }
+        }
+
+        // Temple Banner Text
+        const templeBannerTxt = document.getElementById("templeBannerText");
+        if (templeBannerTxt && state.combat.inTemple) {
+            if (state.lastTempleDonation > 0) {
+                templeBannerTxt.textContent = `Resting safely at the Temple (50% HP). An offering of ${state.lastTempleDonation} gold was tithed to the sanctuary altar. Prepare your gear, then click Resume.`;
+            } else {
+                templeBannerTxt.textContent = `Resting safely at the Temple (50% HP). Priests have mended your wounds with divine grace. Prepare your gear, then click Resume.`;
+            }
+        }
+
+        // Realm Navigation (Previous & Fast Travel Chips)
+        const btnPrev = document.getElementById("btnPrevRealm");
+        if (btnPrev) {
+            const curMap = window.MapsData[state.world.currentMapId];
+            btnPrev.disabled = (!curMap || curMap.realmIndex <= 1);
+        }
+
+        const chipsContainer = document.getElementById("unlockedRealmsChips");
+        if (chipsContainer && window.MapsData) {
+            chipsContainer.innerHTML = "";
+            const unlocked = state.world.unlockedMaps || ["moonlit_vale"];
+            unlocked.forEach(mId => {
+                const mDef = window.MapsData[mId];
+                if (!mDef) return;
+                const chip = document.createElement("button");
+                chip.type = "button";
+                const isCurrent = (mId === state.world.currentMapId);
+                chip.className = `realm-chip ${isCurrent ? 'active-chip' : ''}`;
+                chip.innerHTML = `${mDef.name} [Realm ${mDef.roman}] ${isCurrent ? '✓' : ''}`;
+                if (!isCurrent) {
+                    chip.addEventListener("click", () => {
+                        if (window.MapManager) window.MapManager.loadMap(mId);
+                    });
+                }
+                chipsContainer.appendChild(chip);
+            });
+        }
 
         if (document.getElementById("damageUpgrade")) document.getElementById("damageUpgrade").disabled = !state.canAfford(state.costs.damageCost);
         if (document.getElementById("incomeUpgrade")) document.getElementById("incomeUpgrade").disabled = !state.canAfford(state.costs.incomeCost);
@@ -1043,14 +1186,75 @@ window.MainEngine = {
     /* =========================================================
        TEMPLE OF REVIVAL (SANCTUARY SAFE HAVEN)
     ========================================================= */
+    /* =========================================================
+       TEMPLE OF REVIVAL (SANCTUARY SAFE HAVEN)
+    ========================================================= */
     showTempleModal() {
         const modal = document.getElementById("templeModal");
-        if (modal) modal.classList.add("visible");
+        if (!modal) return;
+        const msgEl = modal.querySelector(".temple-revival-msg");
+        if (msgEl) {
+            const state = window.gameState;
+            if (state.lastTempleDonation > 0) {
+                msgEl.textContent = `Your hero was overwhelmed in battle. The Priests of the Temple have resurrected your spirit and cleansed your wounds (50% HP restored). A tithe of ${state.lastTempleDonation} gold was donated to the sanctuary altar.`;
+            } else {
+                msgEl.textContent = `Your hero was overwhelmed in battle. The Priests of the Temple have resurrected your spirit and cleansed your wounds (50% HP restored).`;
+            }
+        }
+        modal.classList.add("visible");
     },
 
     hideTempleModal() {
         const modal = document.getElementById("templeModal");
         if (modal) modal.classList.remove("visible");
+    },
+
+    /* =========================================================
+       HERO QUICK ACCESS MENU
+    ========================================================= */
+    toggleHeroQuickMenu() {
+        const modal = document.getElementById("heroQuickMenuModal");
+        if (!modal) return;
+        if (modal.classList.contains("visible") || modal.style.display === "flex") {
+            this.hideHeroQuickMenu();
+        } else {
+            this.showHeroQuickMenu();
+        }
+    },
+
+    showHeroQuickMenu() {
+        const modal = document.getElementById("heroQuickMenuModal");
+        if (!modal) return;
+        const state = window.gameState;
+        const heroDef = window.HeroesData[state.player.heroClass] || window.HeroesData.knight;
+        const map = window.MapsData[state.world.currentMapId] || window.MapsData.moonlit_vale;
+
+        if (document.getElementById("quickMenuIcon")) document.getElementById("quickMenuIcon").textContent = heroDef.icon;
+        if (document.getElementById("quickMenuName")) document.getElementById("quickMenuName").textContent = state.player.name || "Hero";
+        if (document.getElementById("quickMenuClass")) document.getElementById("quickMenuClass").textContent = heroDef.name;
+        if (document.getElementById("quickMenuGender")) {
+            const g = state.player.gender || "male";
+            document.getElementById("quickMenuGender").textContent = g === "female" ? "♀ Female" : (g === "other" ? "⚧ Other" : "♂ Male");
+        }
+        if (document.getElementById("quickMenuLevel")) document.getElementById("quickMenuLevel").textContent = state.player.level;
+        if (document.getElementById("quickMenuRealm")) document.getElementById("quickMenuRealm").textContent = `📍 Realm ${map.roman}: ${map.name}`;
+
+        modal.style.display = "flex";
+        modal.classList.add("visible");
+    },
+
+    hideHeroQuickMenu() {
+        const modal = document.getElementById("heroQuickMenuModal");
+        if (modal) {
+            modal.classList.remove("visible");
+            modal.style.display = "none";
+        }
+    },
+
+    wipeAllSaveData() {
+        if (!confirm("Are you sure you want to completely wipe all saved game data and restart with a fresh hero?")) return;
+        localStorage.removeItem("realmIdleRootSave");
+        window.location.reload();
     },
 
     /* =========================================================

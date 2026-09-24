@@ -98,6 +98,54 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- GAME RULES & REWARDS CONFIGURATION -->
+                <div class="mgr-card" style="margin-top: 14px;">
+                    <div class="mgr-card-toolbar">
+                        <h4 style="margin:0;">⚙️ GAME RULES & REWARDS CONFIGURATION</h4>
+                        <span style="font-size:10px; color:#85899f;">Real-time sync to player tabs</span>
+                    </div>
+
+                    <form id="formGameRules" class="mgr-form" style="margin-top: 12px;">
+                        <div class="mgr-grid-2">
+                            <!-- ADVENTURER'S GUILD STIPEND -->
+                            <div style="background: rgba(255,255,255,0.03); padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <strong style="color: #edc76f; font-size: 13px;">💰 Adventurer's Guild Stipend</strong>
+                                    <label class="hud-toggle" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                        <input type="checkbox" id="cfg_guildIncomeEnabled" checked>
+                                        <span style="font-size: 11px;">Enabled</span>
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label>Passive Gold per Second (Base):</label>
+                                    <input type="number" id="cfg_guildIncomeRate" value="3" min="0" max="10000">
+                                </div>
+                                <small style="color: #85899f; font-size: 10px;">Players receive continuous stipend from the Adventurer's Guild during combat and peaceful exploration.</small>
+                            </div>
+
+                            <!-- TEMPLE OF REVIVAL TITHE -->
+                            <div style="background: rgba(255,255,255,0.03); padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <strong style="color: #90caf9; font-size: 13px;">🏛️ Temple Tithe (Death Donation)</strong>
+                                    <label class="hud-toggle" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                        <input type="checkbox" id="cfg_templeDonationEnabled" checked>
+                                        <span style="font-size: 11px;">Enabled</span>
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label>Donation Fee on Defeat (Gold):</label>
+                                    <input type="number" id="cfg_templeDonationCost" value="50" min="0" max="100000">
+                                </div>
+                                <small style="color: #85899f; font-size: 10px;">When hero dies, priests mend wounds (50% HP) and deduct this donation tithe (if player has sufficient gold).</small>
+                            </div>
+                        </div>
+
+                        <div class="form-actions" style="margin-top: 14px;">
+                            <button type="submit" class="btn-success">💾 Save Game Rules & Sync</button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <!-- TAB: CLASSES & SKILLS EDITOR -->
@@ -278,6 +326,28 @@
                             <div class="form-group">
                                 <label>Loot Drop Chance (0.0 - 1.0):</label>
                                 <input type="number" step="0.05" id="mobEdit_dropChance" value="0.45" min="0" max="1">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="hud-toggle" style="margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                        <input type="checkbox" id="mobEdit_isBoss">
+                                        <span style="font-size: 11px;">👑 Designate as Boss Mob (Stage 10 Guardian)</span>
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label class="hud-toggle" style="margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                        <input type="checkbox" id="mobEdit_isUniversal">
+                                        <span style="font-size: 11px;">🌐 Universal Mob (Can spawn in all realms)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Assigned Realm Map:</label>
+                                <select id="mobEdit_assignedMap">
+                                    <option value="all">All Realms (Universal)</option>
+                                </select>
                             </div>
 
                             <!-- VISUAL DROP TABLE BUILDER -->
@@ -534,6 +604,19 @@
                             <div class="form-group">
                                 <label>CSS Background Radial Gradient:</label>
                                 <input type="text" id="mapEdit_bgGradient" value="radial-gradient(circle at 50% 42%, #7a2b16 0%, #0f0502 100%)">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Realm Stage 10 Boss:</label>
+                                    <select id="mapEdit_bossId">
+                                        <option value="">-- Select Boss Mob --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Realm Monster Pool (Comma-separated Mob IDs):</label>
+                                    <input type="text" id="mapEdit_mobs" placeholder="e.g. goblin, wolf">
+                                </div>
                             </div>
 
                             <div class="form-actions">

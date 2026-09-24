@@ -14,6 +14,9 @@ window.MobsData = {
         goldReward: 25,
         xpReward: 15,
         icon: "👹",
+        isBoss: false,
+        isUniversal: true,
+        assignedMap: "all",
         dropChance: 0.45,
         dropTable: [
             { type: "material", key: "ironOre", min: 1, max: 2, chance: 0.60 },
@@ -35,6 +38,9 @@ window.MobsData = {
         goldReward: 45,
         xpReward: 30,
         icon: "🐺",
+        isBoss: false,
+        isUniversal: false,
+        assignedMap: "moonlit_vale",
         dropChance: 0.55,
         dropTable: [
             { type: "material", key: "wood", min: 2, max: 4, chance: 0.70 },
@@ -56,6 +62,9 @@ window.MobsData = {
         goldReward: 90,
         xpReward: 60,
         icon: "💀",
+        isBoss: false,
+        isUniversal: true,
+        assignedMap: "all",
         dropChance: 0.60,
         dropTable: [
             { type: "material", key: "ironOre", min: 2, max: 5, chance: 0.75 },
@@ -77,6 +86,9 @@ window.MobsData = {
         goldReward: 220,
         xpReward: 150,
         icon: "🧟",
+        isBoss: false,
+        isUniversal: false,
+        assignedMap: "ashen_wastes",
         dropChance: 0.70,
         dropTable: [
             { type: "material", key: "ironOre", min: 4, max: 8, chance: 0.80 },
@@ -98,6 +110,9 @@ window.MobsData = {
         goldReward: 800,
         xpReward: 500,
         icon: "👿",
+        isBoss: true,
+        isUniversal: false,
+        assignedMap: "frostpeak",
         dropChance: 0.80,
         dropTable: [
             { type: "material", key: "crystal", min: 4, max: 8, chance: 0.85 },
@@ -120,6 +135,9 @@ window.MobsData = {
         goldReward: 3500,
         xpReward: 2000,
         icon: "🐉",
+        isBoss: true,
+        isUniversal: false,
+        assignedMap: "infernal_depths",
         dropChance: 1.0,
         dropTable: [
             { type: "material", key: "dragonScale", min: 3, max: 8, chance: 0.95 },
@@ -140,6 +158,9 @@ window.MobsData = {
         goldReward: 15000,
         xpReward: 10000,
         icon: "🔮",
+        isBoss: true,
+        isUniversal: false,
+        assignedMap: "eternal_realm",
         dropChance: 1.0,
         dropTable: [
             { type: "material", key: "shadowEssence", min: 5, max: 12, chance: 1.0 },

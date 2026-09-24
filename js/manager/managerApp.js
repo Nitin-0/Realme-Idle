@@ -13,6 +13,8 @@ window.ManagerApp = {
     init() {
         this.bindTabs();
         this.bindEvents();
+        this.populateDropdowns();
+        this.loadGameRulesForm();
         this.renderDashboard();
         this.renderLists();
         this.startDashboardSync();
@@ -86,6 +88,24 @@ window.ManagerApp = {
             });
         }
 
+        // ==================== GAME RULES & ECONOMY ====================
+        const formRules = document.getElementById("formGameRules");
+        if (formRules) {
+            formRules.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const guildEnabled = document.getElementById("cfg_guildIncomeEnabled").checked;
+                const guildRate = parseInt(document.getElementById("cfg_guildIncomeRate").value, 10) || 0;
+                const templeEnabled = document.getElementById("cfg_templeDonationEnabled").checked;
+                const templeCost = parseInt(document.getElementById("cfg_templeDonationCost").value, 10) || 0;
+
+                api.settings.saveRules({
+                    guildIncome: { enabled: guildEnabled, goldPerSecond: Math.max(0, guildRate) },
+                    templeDonation: { enabled: templeEnabled, cost: Math.max(0, templeCost) }
+                });
+                this.showToast("Game Rules & Rewards updated and synced across all tabs!", "success");
+            });
+        }
+
         // ==================== MOBS CRUD ====================
         const btnNewMob = document.getElementById("btnNewMob");
         if (btnNewMob) {
@@ -118,8 +138,10 @@ window.ManagerApp = {
                     return;
                 }
 
+                const existing = (window.MobsData && window.MobsData[mobId]) || {};
                 const dropTable = this.collectDropTable();
                 const mobObj = {
+                    ...existing,
                     id: mobId,
                     name: mobName,
                     icon: document.getElementById("mobEdit_icon").value.trim() || "👹",
@@ -129,11 +151,15 @@ window.ManagerApp = {
                     goldReward: parseInt(document.getElementById("mobEdit_gold").value, 10) || 200,
                     xpReward: parseInt(document.getElementById("mobEdit_xp").value, 10) || 100,
                     dropChance: parseFloat(document.getElementById("mobEdit_dropChance").value) || 0.45,
+                    isBoss: document.getElementById("mobEdit_isBoss").checked,
+                    isUniversal: document.getElementById("mobEdit_isUniversal").checked,
+                    assignedMap: document.getElementById("mobEdit_assignedMap").value,
                     dropTable: dropTable,
-                    levelMin: 1,
-                    levelMax: 100
+                    levelMin: existing.levelMin || 1,
+                    levelMax: existing.levelMax || 100
                 };
                 api.data.saveMob(mobObj);
+                this.populateDropdowns();
                 this.renderMobList();
                 this.showToast(`Mob '${mobObj.name}' saved and synced!`, "success");
             });
@@ -149,6 +175,7 @@ window.ManagerApp = {
                 }
                 if (confirm(`Permanently delete mob '${window.MobsData[mobId].name}' (${mobId})?`)) {
                     api.data.deleteMob(mobId);
+                    this.populateDropdowns();
                     this.renderMobList();
                     this.newMob();
                     this.showToast(`Deleted mob ${mobId}.`, "info");
@@ -422,16 +449,24 @@ window.ManagerApp = {
                     return;
                 }
 
+                const existing = (window.MapsData && window.MapsData[mapId]) || {};
+                const bossVal = document.getElementById("mapEdit_bossId").value.trim();
+                const mobsRaw = document.getElementById("mapEdit_mobs").value.trim();
+                const mobsArr = mobsRaw ? mobsRaw.split(",").map(s => s.trim()).filter(Boolean) : (existing.mobs || ["goblin"]);
+
                 const mapObj = {
+                    ...existing,
                     id: mapId,
                     name: mapName,
                     realmIndex: parseInt(document.getElementById("mapEdit_realmIndex").value, 10) || 1,
                     roman: document.getElementById("mapEdit_roman").value.trim() || "I",
                     bgGradient: document.getElementById("mapEdit_bgGradient").value.trim(),
-                    defaultWeather: "clear",
-                    mobs: (window.MapsData[mapId] && window.MapsData[mapId].mobs) ? window.MapsData[mapId].mobs : ["goblin"]
+                    bossId: bossVal || undefined,
+                    mobs: mobsArr,
+                    defaultWeather: existing.defaultWeather || "clear"
                 };
                 api.data.saveMap(mapObj);
+                this.populateDropdowns();
                 this.renderMapList();
                 this.showToast(`Map '${mapObj.name}' saved and synced!`, "success");
             });
@@ -447,6 +482,7 @@ window.ManagerApp = {
                 }
                 if (confirm(`Permanently delete map '${window.MapsData[mapId].name}' (${mapId})?`)) {
                     api.data.deleteMap(mapId);
+                    this.populateDropdowns();
                     this.renderMapList();
                     this.newMap();
                     this.showToast(`Deleted map ${mapId}.`, "info");
@@ -674,6 +710,9 @@ window.ManagerApp = {
         document.getElementById("mobEdit_gold").value = 40;
         document.getElementById("mobEdit_xp").value = 25;
         document.getElementById("mobEdit_dropChance").value = 0.5;
+        document.getElementById("mobEdit_isBoss").checked = false;
+        document.getElementById("mobEdit_isUniversal").checked = true;
+        document.getElementById("mobEdit_assignedMap").value = "all";
         const title = document.getElementById("mobFormTitle");
         if (title) title.textContent = "CREATE NEW MOB";
         this.renderDropTableRows([
@@ -749,6 +788,8 @@ window.ManagerApp = {
         document.getElementById("mapEdit_realmIndex").value = (Object.keys(window.MapsData || {}).length + 1);
         document.getElementById("mapEdit_roman").value = "VI";
         document.getElementById("mapEdit_bgGradient").value = "radial-gradient(circle at 50% 42%, #2d184a 0%, #0d0614 100%)";
+        document.getElementById("mapEdit_bossId").value = "";
+        document.getElementById("mapEdit_mobs").value = "goblin, wolf";
         const title = document.getElementById("mapFormTitle");
         if (title) title.textContent = "CREATE NEW REALM MAP";
         this.showToast("Ready to design new realm map.", "info");
@@ -831,6 +872,9 @@ window.ManagerApp = {
                 document.getElementById("mobEdit_gold").value = m.goldReward;
                 document.getElementById("mobEdit_xp").value = m.xpReward;
                 document.getElementById("mobEdit_dropChance").value = (m.dropChance !== undefined) ? m.dropChance : 0.45;
+                document.getElementById("mobEdit_isBoss").checked = !!m.isBoss;
+                document.getElementById("mobEdit_isUniversal").checked = (m.isUniversal !== false);
+                document.getElementById("mobEdit_assignedMap").value = m.assignedMap || (m.isUniversal !== false ? "all" : "");
                 this.renderDropTableRows(m.dropTable || []);
             });
             mobListEl.appendChild(item);
@@ -926,9 +970,60 @@ window.ManagerApp = {
                 document.getElementById("mapEdit_realmIndex").value = m.realmIndex;
                 document.getElementById("mapEdit_roman").value = m.roman;
                 document.getElementById("mapEdit_bgGradient").value = m.bgGradient;
+                document.getElementById("mapEdit_bossId").value = m.bossId || "";
+                document.getElementById("mapEdit_mobs").value = Array.isArray(m.mobs) ? m.mobs.join(", ") : "";
             });
             mapListEl.appendChild(item);
         });
+    },
+
+    populateDropdowns() {
+        // Assigned Map dropdown in mob editor
+        const mapSelect = document.getElementById("mobEdit_assignedMap");
+        if (mapSelect && window.MapsData) {
+            const curVal = mapSelect.value;
+            mapSelect.innerHTML = `<option value="all">All Realms (Universal)</option>`;
+            Object.values(window.MapsData).forEach(m => {
+                const opt = document.createElement("option");
+                opt.value = m.id;
+                opt.textContent = `${m.name} [Realm ${m.roman || m.realmIndex}]`;
+                mapSelect.appendChild(opt);
+            });
+            if (curVal) mapSelect.value = curVal;
+        }
+
+        // Boss ID dropdown in map editor
+        const bossSelect = document.getElementById("mapEdit_bossId");
+        if (bossSelect && window.MobsData) {
+            const curVal = bossSelect.value;
+            bossSelect.innerHTML = `<option value="">-- None / Default --</option>`;
+            Object.values(window.MobsData).forEach(mob => {
+                const opt = document.createElement("option");
+                opt.value = mob.id;
+                const bossTag = mob.isBoss ? " 👑" : "";
+                opt.textContent = `${mob.icon || '👹'} ${mob.name} (${mob.id})${bossTag}`;
+                bossSelect.appendChild(opt);
+            });
+            if (curVal) bossSelect.value = curVal;
+        }
+    },
+
+    loadGameRulesForm() {
+        const rules = (window.GameAPI && window.GameAPI.settings) ? window.GameAPI.settings.loadRules() : null;
+        if (rules) {
+            if (rules.guildIncome) {
+                const chk = document.getElementById("cfg_guildIncomeEnabled");
+                if (chk) chk.checked = (rules.guildIncome.enabled !== false);
+                const rate = document.getElementById("cfg_guildIncomeRate");
+                if (rate) rate.value = rules.guildIncome.goldPerSecond !== undefined ? rules.guildIncome.goldPerSecond : 3;
+            }
+            if (rules.templeDonation) {
+                const chk = document.getElementById("cfg_templeDonationEnabled");
+                if (chk) chk.checked = (rules.templeDonation.enabled !== false);
+                const cost = document.getElementById("cfg_templeDonationCost");
+                if (cost) cost.value = rules.templeDonation.cost !== undefined ? rules.templeDonation.cost : 50;
+            }
+        }
     },
 
     renderWeatherList() {

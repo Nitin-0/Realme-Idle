@@ -56,9 +56,14 @@ window.SpawningManager = {
 
     spawnBossForMap(mapId) {
         const state = window.gameState;
-        const map = window.MapsData[mapId || state.world.currentMapId] || window.MapsData.moonlit_vale;
-        const mobsList = map.mobs && map.mobs.length > 0 ? map.mobs : ["goblin"];
-        const bossId = map.bossId || mobsList[mobsList.length - 1];
+        const currentId = mapId || state.world.currentMapId;
+        const map = window.MapsData[currentId] || window.MapsData.moonlit_vale;
+        
+        let bossId = map.bossId;
+        if (!bossId || !window.MobsData[bossId]) {
+            const mobsList = map.mobs && map.mobs.length > 0 ? map.mobs : ["goblin"];
+            bossId = mobsList[mobsList.length - 1];
+        }
 
         this.spawnMobById(bossId, {
             isBoss: true,
@@ -74,15 +79,28 @@ window.SpawningManager = {
             return;
         }
 
-        const map = window.MapsData[state.world.currentMapId] || window.MapsData.moonlit_vale;
+        const currentId = state.world.currentMapId;
+        const map = window.MapsData[currentId] || window.MapsData.moonlit_vale;
 
         if (state.combat.stage >= state.combat.maxStages) {
-            this.spawnBossForMap(state.world.currentMapId);
+            this.spawnBossForMap(currentId);
             return;
         }
 
-        const mobsList = map.mobs && map.mobs.length > 0 ? map.mobs : ["goblin"];
-        const randomMobId = mobsList[Math.floor(Math.random() * mobsList.length)];
+        // Build spawn pool: map-specific mobs + universal mobs (excluding pure bosses)
+        const mapMobs = map.mobs && map.mobs.length > 0 ? [...map.mobs] : ["goblin"];
+        const universalMobs = Object.values(window.MobsData || {})
+            .filter(m => m.isUniversal === true && !mapMobs.includes(m.id))
+            .map(m => m.id);
+
+        const combinedPool = [...mapMobs, ...universalMobs];
+        const validPool = combinedPool.filter(id => {
+            const def = window.MobsData[id];
+            return def && !def.isBoss;
+        });
+
+        const pool = validPool.length > 0 ? validPool : mapMobs;
+        const randomMobId = pool[Math.floor(Math.random() * pool.length)];
 
         state.combat.currentMob = this.createMobInstance(randomMobId);
         state.notify();
