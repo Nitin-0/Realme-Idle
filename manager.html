@@ -11,19 +11,24 @@
 
 <div class="mgr-app">
 
+    <!-- MOBILE SIDEBAR BACKDROP -->
+    <div class="mgr-sidebar-backdrop" id="mgrSidebarBackdrop"></div>
+
     <!-- SIDEBAR NAV -->
-    <aside class="mgr-sidebar">
+    <aside class="mgr-sidebar" id="mgrSidebar">
 
         <div class="mgr-brand">
             <span class="mgr-logo">👑</span>
-            <div>
+            <div style="flex:1;">
                 <h2>REALM IDLE</h2>
                 <small>GAME MANAGER v2.0</small>
             </div>
+            <button type="button" class="btn-sidebar-close" id="btnSidebarClose" aria-label="Close menu">✕</button>
         </div>
 
         <nav class="mgr-nav">
             <button class="mgr-nav-btn active" data-mgr-tab="dashboard">📊 Dashboard</button>
+            <button class="mgr-nav-btn" data-mgr-tab="logs">📜 Adventure Logs</button>
             <button class="mgr-nav-btn" data-mgr-tab="classes">👑 Classes & Skills</button>
             <button class="mgr-nav-btn" data-mgr-tab="mobs">👹 Mob & Drop Rates</button>
             <button class="mgr-nav-btn" data-mgr-tab="items">🎒 Items & Equipment</button>
@@ -45,7 +50,10 @@
 
         <!-- HEADER TOPBAR -->
         <header class="mgr-header">
-            <h3 id="mgrHeaderTitle">World Dashboard</h3>
+            <div class="mgr-header-left">
+                <button type="button" id="btnMgrToggleSidebar" class="btn-mgr-hamburger" aria-label="Toggle Navigation">☰</button>
+                <h3 id="mgrHeaderTitle">World Dashboard</h3>
+            </div>
 
             <div class="mgr-header-actions">
                 <span class="mgr-status-badge">🟢 GameAPI Connected</span>
@@ -145,6 +153,58 @@
                             <button type="submit" class="btn-success">💾 Save Game Rules & Sync</button>
                         </div>
                     </form>
+                </div>
+
+                <!-- LIVE ADVENTURE & COMBAT LOGS STREAM -->
+                <div class="mgr-card" style="margin-top: 14px;">
+                    <div class="mgr-card-toolbar">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <h4 style="margin:0;">📜 LIVE ADVENTURE & COMBAT LOGS</h4>
+                            <span class="mgr-badge badge-uncommon" id="dashLogsCount">0 Events</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button type="button" id="btnDashClearLogs" class="btn-xs btn-secondary">🗑️ Clear</button>
+                            <button type="button" id="btnDashViewAllLogs" class="btn-xs btn-primary">🔍 Full Inspector</button>
+                        </div>
+                    </div>
+                    <div class="mgr-logs-stream" id="dashLogsStream">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: ADVENTURE LOGS INSPECTOR -->
+            <div class="mgr-tab-content" id="tab_logs">
+                <div class="mgr-card">
+                    <div class="mgr-card-toolbar">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <h4 style="margin:0;">PLAYER ADVENTURE & COMBAT EVENT LOGS</h4>
+                            <span class="mgr-status-badge">🟢 Real-Time Capture</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button type="button" id="btnExportLogs" class="btn-secondary btn-xs">📥 Export Logs</button>
+                            <button type="button" id="btnClearLogs" class="btn-danger btn-xs">🗑️ Clear All Logs</button>
+                        </div>
+                    </div>
+
+                    <!-- LOG FILTERS & SEARCH -->
+                    <div class="mgr-logs-controls">
+                        <div class="mgr-log-filter-pills" id="logFilterPills">
+                            <button type="button" class="log-filter-pill active" data-log-filter="all">All Events (<span id="countLogAll">0</span>)</button>
+                            <button type="button" class="log-filter-pill filter-death" data-log-filter="death">💀 Defeats & Revivals (<span id="countLogDeath">0</span>)</button>
+                            <button type="button" class="log-filter-pill filter-boss" data-log-filter="boss">🏆 Boss & Clears (<span id="countLogBoss">0</span>)</button>
+                            <button type="button" class="log-filter-pill filter-loot" data-log-filter="loot">🎁 Rare Loot (<span id="countLogLoot">0</span>)</button>
+                            <button type="button" class="log-filter-pill filter-level" data-log-filter="level">⭐ Level Ups (<span id="countLogLevel">0</span>)</button>
+                            <button type="button" class="log-filter-pill filter-travel" data-log-filter="travel">🗺️ Realm Travel (<span id="countLogTravel">0</span>)</button>
+                            <button type="button" class="log-filter-pill filter-system" data-log-filter="system">⚙️ System (<span id="countLogSystem">0</span>)</button>
+                        </div>
+                        <input type="text" id="logSearchInput" class="mgr-search-input" placeholder="🔍 Search event logs (e.g. 'fell in battle', 'Temple', 'Boss', 'Loot')...">
+                    </div>
+
+                    <!-- LOGS FEED -->
+                    <div class="mgr-logs-feed" id="mgrLogsFeed">
+                        <!-- Populated dynamically -->
+                    </div>
                 </div>
             </div>
 

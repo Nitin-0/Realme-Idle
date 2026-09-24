@@ -8,14 +8,18 @@ window.ManagerApp = {
     itemFilter: "all",
     classSearchQuery: "",
     shopSearchQuery: "",
+    activeLogFilter: "all",
+    logSearchQuery: "",
     currentMobDrops: [],
 
     init() {
         this.bindTabs();
         this.bindEvents();
+        this.bindMobileNav();
         this.populateDropdowns();
         this.loadGameRulesForm();
         this.renderDashboard();
+        this.renderLogs();
         this.renderLists();
         this.startDashboardSync();
     },
@@ -44,6 +48,7 @@ window.ManagerApp = {
 
                 const titles = {
                     dashboard: "World Dashboard & Live Status",
+                    logs: "Player Adventure & Combat Logs Inspector",
                     classes: "Hero Classes & Combat Skills Configuration",
                     mobs: "Mob & AI Definitions & Drop Rates Editor",
                     items: "Items, Equipment Rarity & Drop Rates Catalog",
@@ -58,6 +63,7 @@ window.ManagerApp = {
                 }
 
                 if (target === "data") this.refreshJson();
+                if (target === "logs") this.renderLogs();
             });
         });
     },
@@ -561,6 +567,94 @@ window.ManagerApp = {
                 }
             });
         }
+
+        // ==================== ADVENTURE & COMBAT LOGS ====================
+        const logFilterPills = document.querySelectorAll("#logFilterPills .log-filter-pill");
+        logFilterPills.forEach(btn => {
+            btn.addEventListener("click", () => {
+                logFilterPills.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                this.activeLogFilter = btn.dataset.logFilter || "all";
+                this.renderLogs();
+            });
+        });
+
+        const logSearch = document.getElementById("logSearchInput");
+        if (logSearch) {
+            logSearch.addEventListener("input", (e) => {
+                this.logSearchQuery = (e.target.value || "").trim().toLowerCase();
+                this.renderLogs();
+            });
+        }
+
+        const btnClearLogs = document.getElementById("btnClearLogs");
+        if (btnClearLogs) {
+            btnClearLogs.addEventListener("click", () => {
+                if (confirm("Clear all recorded adventure and combat logs?")) {
+                    this.clearLogs();
+                }
+            });
+        }
+
+        const btnDashClearLogs = document.getElementById("btnDashClearLogs");
+        if (btnDashClearLogs) {
+            btnDashClearLogs.addEventListener("click", () => {
+                if (confirm("Clear live adventure logs?")) {
+                    this.clearLogs();
+                }
+            });
+        }
+
+        const btnExportLogs = document.getElementById("btnExportLogs");
+        if (btnExportLogs) {
+            btnExportLogs.addEventListener("click", () => {
+                this.exportLogs();
+            });
+        }
+
+        const btnDashViewAll = document.getElementById("btnDashViewAllLogs");
+        if (btnDashViewAll) {
+            btnDashViewAll.addEventListener("click", () => {
+                const logsTabBtn = document.querySelector('[data-mgr-tab="logs"]');
+                if (logsTabBtn) logsTabBtn.click();
+            });
+        }
+    },
+
+    bindMobileNav() {
+        const btnToggle = document.getElementById("btnMgrToggleSidebar");
+        const sidebar = document.getElementById("mgrSidebar");
+        const backdrop = document.getElementById("mgrSidebarBackdrop");
+        const btnClose = document.getElementById("btnSidebarClose");
+
+        const toggleMenu = (open) => {
+            if (sidebar) sidebar.classList.toggle("mobile-open", open);
+            if (backdrop) backdrop.classList.toggle("active", open);
+        };
+
+        if (btnToggle) {
+            btnToggle.addEventListener("click", () => {
+                const isOpen = sidebar ? sidebar.classList.contains("mobile-open") : false;
+                toggleMenu(!isOpen);
+            });
+        }
+
+        if (btnClose) {
+            btnClose.addEventListener("click", () => toggleMenu(false));
+        }
+
+        if (backdrop) {
+            backdrop.addEventListener("click", () => toggleMenu(false));
+        }
+
+        // Auto-close sidebar on mobile when navigating
+        document.querySelectorAll(".mgr-nav-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                if (window.innerWidth <= 960) {
+                    toggleMenu(false);
+                }
+            });
+        });
     },
 
     /* =========================================================
@@ -1049,6 +1143,231 @@ window.ManagerApp = {
         const area = document.getElementById("txtJsonConfig");
         if (area && window.GameAPI) {
             area.value = window.GameAPI.data.exportAllJSON();
+        }
+    },
+
+    /* =========================================================
+       WORLD DASHBOARD & LIVE STATUS
+    ========================================================= */
+    renderDashboard() {
+        let state = window.gameState;
+        if (!state) {
+            try {
+                const saved = localStorage.getItem("realmIdleRootSave");
+                if (saved) state = JSON.parse(saved);
+            } catch (e) {}
+        }
+        if (!state) return;
+
+        // Current Map
+        const mapEl = document.getElementById("dashMap");
+        if (mapEl) {
+            const mapId = (state.world && state.world.currentMapId) || "moonlit_vale";
+            const mapDef = (window.MapsData && window.MapsData[mapId]) || { name: "Moonlit Vale", roman: "I" };
+            mapEl.textContent = `${mapDef.name} [Realm ${mapDef.roman || 'I'}]`;
+        }
+
+        // Current Weather
+        const weatherEl = document.getElementById("dashWeather");
+        if (weatherEl) {
+            const weatherId = (state.world && state.world.currentWeatherId) || "clear";
+            const weatherDef = (window.WeatherData && window.WeatherData[weatherId]) || { name: "Clear Sky", icon: "☀️" };
+            weatherEl.textContent = `${weatherDef.icon || '☀️'} ${weatherDef.name}`;
+        }
+
+        // World Time
+        const timeEl = document.getElementById("dashTime");
+        if (timeEl) {
+            const hour = (state.world && state.world.worldTime !== undefined) ? state.world.worldTime : 12;
+            const period = (hour >= 6 && hour < 18) ? "Day" : "Night";
+            timeEl.textContent = `${hour}:00 (${period})`;
+        }
+
+        // Hero Info
+        const heroEl = document.getElementById("dashHero");
+        if (heroEl && state.player) {
+            const heroClass = state.player.heroClass || "knight";
+            const heroDef = (window.HeroesData && window.HeroesData[heroClass]) || { name: "Knight" };
+            const gold = (state.player.gold || 0).toLocaleString();
+            const heroName = state.player.name || "Hero";
+            heroEl.textContent = `Lvl ${state.player.level || 1} · ${gold}g (${heroName} - ${heroDef.name})`;
+        }
+
+        // Active Mob Wave
+        const mobNameEl = document.getElementById("dashMobName");
+        const mobHpEl = document.getElementById("dashMobHp");
+        const mobEmojiEl = document.querySelector(".mgr-active-mob .mob-emoji");
+
+        if (state.combat && state.combat.inTemple) {
+            if (mobNameEl) mobNameEl.textContent = "Sanctuary of Revival (Safe Zone)";
+            if (mobHpEl) mobHpEl.textContent = "Hero Recovering · Combat Paused";
+            if (mobEmojiEl) mobEmojiEl.textContent = "🏛️";
+        } else if (state.combat && state.combat.currentMob) {
+            const mob = state.combat.currentMob;
+            const bossTag = mob.isBoss ? " 👑" : "";
+            const stage = state.combat.stage || 1;
+            const maxStages = state.combat.maxStages || 10;
+            if (mobNameEl) mobNameEl.textContent = `${mob.name}${bossTag} (Stage ${stage}/${maxStages})`;
+            if (mobHpEl) mobHpEl.textContent = `${Math.max(0, mob.hp)} / ${mob.maxHp} HP`;
+            if (mobEmojiEl) mobEmojiEl.textContent = mob.icon || "👹";
+        } else {
+            if (mobNameEl) mobNameEl.textContent = "Awaiting Next Encounter...";
+            if (mobHpEl) mobHpEl.textContent = "Ready to engage";
+            if (mobEmojiEl) mobEmojiEl.textContent = "⚔️";
+        }
+
+        // Active Scenarios & Events
+        const eventEl = document.getElementById("dashActiveEvent");
+        if (eventEl) {
+            if (state.world && state.world.activeScenarioId && window.ScenariosData && window.ScenariosData[state.world.activeScenarioId]) {
+                const sc = window.ScenariosData[state.world.activeScenarioId];
+                eventEl.innerHTML = `<span style="color:#ffd700;">🔥 SCENARIO: <strong>${sc.name}</strong></span>`;
+            } else if (state.world && state.world.activeEventId && window.EventsData && window.EventsData[state.world.activeEventId]) {
+                const ev = window.EventsData[state.world.activeEventId];
+                eventEl.innerHTML = `<span style="color:#9b7cff;">⚡ EVENT: <strong>${ev.name}</strong></span>`;
+            } else {
+                eventEl.innerHTML = `<span style="color:#85899f;">No active world events</span>`;
+            }
+        }
+
+        // Live Dashboard Logs
+        this.renderDashboardLogs();
+    },
+
+    renderDashboardLogs() {
+        const stream = document.getElementById("dashLogsStream");
+        const countBadge = document.getElementById("dashLogsCount");
+        const logs = (window.gameState && window.gameState.logs) ? window.gameState.logs : [];
+
+        if (countBadge) {
+            countBadge.textContent = `${logs.length} Event${logs.length === 1 ? '' : 's'}`;
+        }
+
+        if (!stream) return;
+
+        if (logs.length === 0) {
+            stream.innerHTML = `<div class="mgr-log-empty">No adventure events recorded yet. Events like player defeat, boss clears, and rare loot will stream here in real time.</div>`;
+            return;
+        }
+
+        const recent = logs.slice(0, 6);
+        stream.innerHTML = recent.map(log => `
+            <div class="mgr-log-item type-${log.type || 'info'}">
+                <span class="log-icon">${log.icon || 'ℹ️'}</span>
+                <span class="log-time">${log.timeStr || ''}</span>
+                <span class="log-text">${log.text}</span>
+            </div>
+        `).join("");
+    },
+
+    /* =========================================================
+       ADVENTURE LOGS INSPECTOR (DEEP DIVE)
+    ========================================================= */
+    renderLogs() {
+        const feed = document.getElementById("mgrLogsFeed");
+        const logs = (window.gameState && window.gameState.logs) ? window.gameState.logs : [];
+
+        // Update counts on filter pills
+        const setBadge = (id, count) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = count;
+        };
+
+        setBadge("countLogAll", logs.length);
+        setBadge("countLogDeath", logs.filter(l => l.type === "death" || l.type === "revival").length);
+        setBadge("countLogBoss", logs.filter(l => l.type === "boss").length);
+        setBadge("countLogLoot", logs.filter(l => l.type === "loot").length);
+        setBadge("countLogLevel", logs.filter(l => l.type === "level").length);
+        setBadge("countLogTravel", logs.filter(l => l.type === "travel").length);
+        setBadge("countLogSystem", logs.filter(l => l.type === "system" || l.type === "combat").length);
+
+        if (!feed) return;
+
+        let filtered = logs;
+
+        // Apply type filter
+        if (this.activeLogFilter && this.activeLogFilter !== "all") {
+            if (this.activeLogFilter === "death") {
+                filtered = filtered.filter(l => l.type === "death" || l.type === "revival");
+            } else if (this.activeLogFilter === "system") {
+                filtered = filtered.filter(l => l.type === "system" || l.type === "combat");
+            } else {
+                filtered = filtered.filter(l => l.type === this.activeLogFilter);
+            }
+        }
+
+        // Apply search query
+        if (this.logSearchQuery) {
+            const q = this.logSearchQuery;
+            filtered = filtered.filter(l => (l.text && l.text.toLowerCase().includes(q)) || (l.timeStr && l.timeStr.toLowerCase().includes(q)));
+        }
+
+        if (filtered.length === 0) {
+            feed.innerHTML = `<div class="mgr-log-empty">No adventure events match the current filter/search.</div>`;
+            return;
+        }
+
+        feed.innerHTML = filtered.map(log => `
+            <div class="mgr-log-item type-${log.type || 'info'}">
+                <span class="log-icon">${log.icon || 'ℹ️'}</span>
+                <span class="log-time">${log.timeStr || ''}</span>
+                <span class="log-text">${log.text}</span>
+            </div>
+        `).join("");
+    },
+
+    clearLogs() {
+        if (window.gameState && typeof window.gameState.clearLogs === "function") {
+            window.gameState.clearLogs();
+        } else if (window.gameState) {
+            window.gameState.logs = [];
+            window.gameState.save();
+        }
+        this.renderLogs();
+        this.renderDashboardLogs();
+        this.showToast("Adventure and combat event logs cleared.", "info");
+    },
+
+    exportLogs() {
+        const logs = (window.gameState && window.gameState.logs) ? window.gameState.logs : [];
+        const json = JSON.stringify(logs, null, 2);
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `realm_idle_adventure_logs_${Date.now()}.json`;
+        a.click();
+        this.showToast("Exported adventure logs to JSON file!", "success");
+    },
+
+    startDashboardSync() {
+        // Ticker to refresh dashboard stats
+        setInterval(() => {
+            this.renderDashboard();
+        }, 2000);
+
+        // Listen for BroadcastChannel synchronization
+        if (typeof syncChannel !== "undefined" && syncChannel) {
+            syncChannel.onmessage = (e) => {
+                const data = e.data || {};
+                if (data.action === "NEW_LOG" && data.payload) {
+                    if (window.gameState) {
+                        if (!window.gameState.logs) window.gameState.logs = [];
+                        if (!window.gameState.logs.some(l => l.id === data.payload.id)) {
+                            window.gameState.logs.unshift(data.payload);
+                            if (window.gameState.logs.length > 80) window.gameState.logs.pop();
+                        }
+                    }
+                    this.renderLogs();
+                    this.renderDashboardLogs();
+                } else if (data.action === "LOGS_CLEARED") {
+                    if (window.gameState) window.gameState.logs = [];
+                    this.renderLogs();
+                    this.renderDashboardLogs();
+                } else {
+                    this.renderDashboard();
+                }
+            };
         }
     }
 };

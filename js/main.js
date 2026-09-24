@@ -69,6 +69,10 @@ window.MainEngine = {
         window.clearSave = () => this.wipeAllSaveData();
         window.resetGame = () => this.wipeAllSaveData();
         window.startNewAdventure = () => this.wipeAllSaveData();
+        window.clearLogs = () => {
+            if (window.gameState) window.gameState.clearLogs();
+            console.log("%c📜 REALM IDLE: Adventure logs cleared.", "color: #00e676;");
+        };
         console.log("%c👑 REALM IDLE: Type clearSave() or resetGame() in console anytime to wipe storage and restart adventure!", "color: #edc76f; font-weight: bold; font-size: 12px;");
 
         console.log("👑 Realm Idle RPG & GM Engine Initialized!");

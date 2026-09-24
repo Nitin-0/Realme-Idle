@@ -328,6 +328,13 @@ window.CombatManager = {
         state.addGold(bonusGold);
         state.addXp(bonusXp);
 
+        if (state.addLog) {
+            state.addLog(`🏆 REALM CLEARED! You defeated Boss ${bossMob.name}! (+${bonusGold.toLocaleString()}g, +${bonusXp.toLocaleString()} XP)`, "boss", "🏆");
+            if (nextMap) {
+                state.addLog(`🗺️ Unlocked new realm: ${nextMap.name} [Realm ${nextMap.roman || nextMap.realmIndex}]!`, "travel", "🗺️");
+            }
+        }
+
         // Reset stage for future runs
         state.combat.stage = 1;
 

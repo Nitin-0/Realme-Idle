@@ -80,6 +80,11 @@ window.GameAPI = {
         wipeAllDataAndRestart() {
             localStorage.removeItem("realmIdleRootSave");
             window.location.reload();
+        },
+        clearLogs() {
+            if (window.gameState && typeof window.gameState.clearLogs === "function") {
+                window.gameState.clearLogs();
+            }
         }
     },
 

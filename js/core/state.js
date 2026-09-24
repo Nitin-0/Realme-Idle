@@ -106,6 +106,7 @@ window.gameState = {
     },
 
     lastTempleDonation: 0,
+    logs: [],
 
     listeners: [],
 
@@ -314,6 +315,7 @@ window.gameState = {
             if (window.devMode && typeof window.devMode.logToConsole === "function") {
                 window.devMode.logToConsole(`🌟 LEVEL UP! You reached Level ${this.player.level}! (+6 Power, +25 Max HP)`, "success");
             }
+            this.addLog(`⭐ LEVEL UP! Your hero reached Level ${this.player.level}! (+6 Power, +25 Max HP)`, "level", "⭐");
         }
         this.notify();
     },
@@ -330,6 +332,7 @@ window.gameState = {
         this.player.dodge = heroDef.baseDodge;
         this.player.lifesteal = heroDef.baseLifesteal;
         this.player.skills.activeCooldown = 0;
+        this.addLog(`🛡️ Switched class to ${heroDef.name}!`, "class", "🛡️");
         this.notify();
     },
 
@@ -398,6 +401,11 @@ window.gameState = {
         }
         this.lastTempleDonation = tithe;
 
+        this.addLog("💀 Your hero fell in battle... You have awakened at the Temple of Revival.", "death", "💀");
+        if (tithe > 0) {
+            this.addLog(`🏛️ The Priests mended your wounds (50% HP) and accepted ${tithe}g as Temple Tithe.`, "revival", "🏛️");
+        }
+
         this.save();
         this.notify();
     },
@@ -405,6 +413,7 @@ window.gameState = {
     resumeProgression() {
         this.combat.inTemple = false;
         this.combat.autoFight = false;
+        this.addLog("⚔️ Resumed active progression from the Temple of Revival.", "combat", "⚔️");
         if (!this.combat.currentMob && window.SpawningManager) {
             window.SpawningManager.spawnNextMob();
         }
@@ -434,6 +443,43 @@ window.gameState = {
             this.world.unlockedMaps.push(mapId);
             this.save();
             this.notify();
+        }
+    },
+
+    addLog(text, type = "info", icon = "ℹ️", details = null) {
+        if (!this.logs) this.logs = [];
+        const entry = {
+            id: "log_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+            timestamp: Date.now(),
+            timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            type: type,
+            icon: icon,
+            text: text,
+            details: details
+        };
+        this.logs.unshift(entry);
+        if (this.logs.length > 80) this.logs.pop();
+        this.save();
+        this.notify();
+        if (typeof BroadcastChannel !== "undefined") {
+            try {
+                const ch = new BroadcastChannel("realm_idle_sync");
+                ch.postMessage({ action: "NEW_LOG", payload: entry, time: Date.now() });
+                ch.close();
+            } catch (e) {}
+        }
+    },
+
+    clearLogs() {
+        this.logs = [];
+        this.save();
+        this.notify();
+        if (typeof BroadcastChannel !== "undefined") {
+            try {
+                const ch = new BroadcastChannel("realm_idle_sync");
+                ch.postMessage({ action: "LOGS_CLEARED", time: Date.now() });
+                ch.close();
+            } catch (e) {}
         }
     },
 
@@ -556,7 +602,8 @@ window.gameState = {
             journal: this.journal,
             costs: this.costs,
             templeDonation: this.templeDonation,
-            guildIncome: this.guildIncome
+            guildIncome: this.guildIncome,
+            logs: this.logs || []
         }));
     },
 
@@ -590,9 +637,34 @@ window.gameState = {
                 if (data.costs) Object.assign(this.costs, data.costs);
                 if (data.templeDonation) Object.assign(this.templeDonation, data.templeDonation);
                 if (data.guildIncome) Object.assign(this.guildIncome, data.guildIncome);
+                if (data.logs && Array.isArray(data.logs) && data.logs.length > 0) {
+                    this.logs = data.logs;
+                } else if (!this.logs || this.logs.length === 0) {
+                    this.logs = [
+                        {
+                            id: "log_welcome",
+                            timestamp: Date.now(),
+                            timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                            type: "system",
+                            icon: "👑",
+                            text: "Realm Idle Adventure initialized. Welcome, brave hero!"
+                        }
+                    ];
+                }
             } catch (e) {
                 console.log("Save could not be parsed.");
             }
+        } else if (!this.logs || this.logs.length === 0) {
+            this.logs = [
+                {
+                    id: "log_welcome",
+                    timestamp: Date.now(),
+                    timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                    type: "system",
+                    icon: "👑",
+                    text: "Realm Idle Adventure initialized. Welcome, brave hero!"
+                }
+            ];
         }
     }
 };

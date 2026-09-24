@@ -21,6 +21,10 @@ window.InventoryManager = {
             window.devMode.logToConsole(`🎒 Obtained: ${itemDef.icon} ${itemDef.name} [${itemDef.rarity.toUpperCase()}]`, "success");
         }
 
+        if (state.addLog && itemDef.rarity && ["rare", "epic", "legendary"].includes(itemDef.rarity)) {
+            state.addLog(`🎁 RARE LOOT! Found [${itemDef.name}] (${itemDef.rarity.toUpperCase()})!`, "loot", "🎁");
+        }
+
         state.notify();
     },
 

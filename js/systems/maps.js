@@ -37,6 +37,10 @@ window.MapManager = {
             window.SpawningManager.spawnNextMob();
         }
 
+        if (state.addLog) {
+            state.addLog(`🗺️ Traveled to ${map.name} [Realm ${map.roman || map.realmIndex}].`, "travel", "🗺️");
+        }
+
         state.notify();
     }
 };
