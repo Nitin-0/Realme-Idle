@@ -8,9 +8,11 @@ window.ManagerApp = {
     itemFilter: "all",
     classSearchQuery: "",
     shopSearchQuery: "",
+    alchemySearchQuery: "",
     activeLogFilter: "all",
     logSearchQuery: "",
     currentMobDrops: [],
+    currentClassPassives: [],
 
     init() {
         this.bindTabs();
@@ -52,6 +54,7 @@ window.ManagerApp = {
                     classes: "Hero Classes & Combat Skills Configuration",
                     mobs: "Mob & AI Definitions & Drop Rates Editor",
                     items: "Items, Equipment Rarity & Drop Rates Catalog",
+                    alchemy: "Alchemical Laboratory & Potion Brewing Editor",
                     shop: "Merchant Shop Merchandise & Pricing Manager",
                     maps: "Realm Maps & Visual Gradients Editor",
                     weather: "Environmental Weather Phenomena Editor",
@@ -64,6 +67,7 @@ window.ManagerApp = {
 
                 if (target === "data") this.refreshJson();
                 if (target === "logs") this.renderLogs();
+                if (target === "alchemy") this.renderAlchemyList();
             });
         });
     },
@@ -109,6 +113,26 @@ window.ManagerApp = {
                     templeDonation: { enabled: templeEnabled, cost: Math.max(0, templeCost) }
                 });
                 this.showToast("Game Rules & Rewards updated and synced across all tabs!", "success");
+            });
+        }
+
+        const btnGmUnlock = document.getElementById("btnGmUnlockKingdom");
+        if (btnGmUnlock) {
+            btnGmUnlock.addEventListener("click", () => {
+                if (api.player && api.player.setKingdomUnlocked) {
+                    api.player.setKingdomUnlocked(true);
+                    this.showToast("Granted Sovereign Domain! Moonlit Vale III boss cleared & Lv 5 unlocked.", "success");
+                }
+            });
+        }
+
+        const btnGmLock = document.getElementById("btnGmLockKingdom");
+        if (btnGmLock) {
+            btnGmLock.addEventListener("click", () => {
+                if (api.player && api.player.setKingdomUnlocked) {
+                    api.player.setKingdomUnlocked(false);
+                    this.showToast("Relocked Kingdom Domain pending royal decree.", "info");
+                }
             });
         }
 
@@ -244,11 +268,98 @@ window.ManagerApp = {
                         cooldown: parseInt(document.getElementById("classEdit_skillCd").value, 10) || 8,
                         damageMult: parseFloat(document.getElementById("classEdit_skillMult").value) || 2.0,
                         description: document.getElementById("classEdit_skillDesc").value.trim() || "Attacks enemy."
-                    }
+                    },
+                    promotions: [
+                        {
+                            rank: 2,
+                            reqLevel: 10,
+                            title: document.getElementById("classEdit_r2_title")?.value?.trim() || "Veteran",
+                            goldCost: parseInt(document.getElementById("classEdit_r2_gold")?.value, 10) || 500,
+                            materials: (() => {
+                                const res = {};
+                                const raw = document.getElementById("classEdit_r2_mats")?.value || "";
+                                raw.split(",").forEach(p => {
+                                    const [k, v] = p.split(":").map(s => s && s.trim());
+                                    if (k && v !== undefined) res[k] = parseInt(v, 10) || 1;
+                                });
+                                return res;
+                            })(),
+                            bonusStats: (() => {
+                                const res = {};
+                                const raw = document.getElementById("classEdit_r2_stats")?.value || "";
+                                raw.split(",").forEach(p => {
+                                    const [k, v] = p.split(":").map(s => s && s.trim());
+                                    if (k && v !== undefined) res[k] = parseFloat(v) || 0;
+                                });
+                                return res;
+                            })(),
+                            description: "Attained Rank 2 veteran mastery at Level 10."
+                        },
+                        {
+                            rank: 3,
+                            reqLevel: 20,
+                            title: document.getElementById("classEdit_r3_title")?.value?.trim() || "Master",
+                            goldCost: parseInt(document.getElementById("classEdit_r3_gold")?.value, 10) || 2500,
+                            materials: (() => {
+                                const res = {};
+                                const raw = document.getElementById("classEdit_r3_mats")?.value || "";
+                                raw.split(",").forEach(p => {
+                                    const [k, v] = p.split(":").map(s => s && s.trim());
+                                    if (k && v !== undefined) res[k] = parseInt(v, 10) || 1;
+                                });
+                                return res;
+                            })(),
+                            bonusStats: (() => {
+                                const res = {};
+                                const raw = document.getElementById("classEdit_r3_stats")?.value || "";
+                                raw.split(",").forEach(p => {
+                                    const [k, v] = p.split(":").map(s => s && s.trim());
+                                    if (k && v !== undefined) res[k] = parseFloat(v) || 0;
+                                });
+                                return res;
+                            })(),
+                            description: "Ascended to Rank 3 master prestige at Level 20."
+                        }
+                    ],
+                    passives: this.currentClassPassives || []
                 };
                 api.data.saveHeroClass(heroObj);
                 this.renderClassList();
                 this.showToast(`Hero Class '${heroObj.name}' saved and synced!`, "success");
+            });
+        }
+
+        const btnAddPass = document.getElementById("btnClassAddPassive");
+        if (btnAddPass) {
+            btnAddPass.addEventListener("click", () => {
+                const reqLv = parseInt(prompt("Required Hero Level for new divine blessing (e.g. 1, 5, 10, 15, 20):", "5"), 10);
+                if (isNaN(reqLv)) return;
+                const name = prompt("Blessing / Passive Skill Name:", "Blessing of the High Heavens");
+                if (!name) return;
+                const lore = prompt("Divine Lore Text (Must include 'You have been blessed by the gods:'):", "You have been blessed by the gods: The heavens infuse your spirit with divine grace.");
+                if (!lore) return;
+                const bonusRaw = prompt("Stat Bonuses (e.g. attack:20, maxHp:50, defense:10):", "attack:15, maxHp:40");
+                const bonus = {};
+                if (bonusRaw) {
+                    bonusRaw.split(",").forEach(part => {
+                        const [k, v] = part.split(":").map(s => s && s.trim());
+                        if (k && v !== undefined) bonus[k] = parseFloat(v) || 0;
+                    });
+                }
+
+                if (!this.currentClassPassives) this.currentClassPassives = [];
+                this.currentClassPassives.push({
+                    id: `p_${Date.now().toString().slice(-4)}`,
+                    reqLevel: reqLv,
+                    name: name,
+                    icon: "✨",
+                    lore: lore,
+                    bonus: bonus,
+                    description: bonusRaw
+                });
+                this.currentClassPassives.sort((a, b) => a.reqLevel - b.reqLevel);
+                this.renderClassPassivesList();
+                this.showToast(`Added divine passive '${name}'! Remember to click 'Save Class'.`, "success");
             });
         }
 
@@ -388,6 +499,19 @@ window.ManagerApp = {
             btnNewShop.addEventListener("click", () => this.newShopItem());
         }
 
+        const btnResetShop = document.getElementById("btnResetShopData");
+        if (btnResetShop) {
+            btnResetShop.addEventListener("click", () => {
+                if (confirm("Reset merchant shop catalog to the official 19-item SAO progression defaults? This clears custom listings.")) {
+                    if (api.data && api.data.resetShopData) {
+                        api.data.resetShopData();
+                    }
+                    // Refresh from window.ShopData or reload
+                    window.location.reload();
+                }
+            });
+        }
+
         const shopSearch = document.getElementById("shopSearchInput");
         if (shopSearch) {
             shopSearch.addEventListener("input", (e) => {
@@ -407,6 +531,9 @@ window.ManagerApp = {
                     return;
                 }
 
+                const reqMapVal = document.getElementById("shopEdit_reqMap") ? document.getElementById("shopEdit_reqMap").value : "any";
+                const reqDepthVal = document.getElementById("shopEdit_reqDepth") ? (parseInt(document.getElementById("shopEdit_reqDepth").value, 10) || 1) : 1;
+
                 const shopObj = {
                     id: sId,
                     name: sName,
@@ -415,6 +542,8 @@ window.ManagerApp = {
                     itemId: document.getElementById("shopEdit_itemId").value.trim(),
                     costGold: parseInt(document.getElementById("shopEdit_costGold").value, 10) || 100,
                     reqLevel: parseInt(document.getElementById("shopEdit_reqLevel").value, 10) || 1,
+                    reqMap: reqMapVal,
+                    reqDepth: reqDepthVal,
                     matKey: document.getElementById("shopEdit_itemId").value.trim(),
                     matQty: parseInt(document.getElementById("shopEdit_matQty").value, 10) || 1,
                     description: document.getElementById("shopEdit_desc").value.trim()
@@ -460,6 +589,26 @@ window.ManagerApp = {
                 const mobsRaw = document.getElementById("mapEdit_mobs").value.trim();
                 const mobsArr = mobsRaw ? mobsRaw.split(",").map(s => s.trim()).filter(Boolean) : (existing.mobs || ["goblin"]);
 
+                const maxDepthVal = parseInt(document.getElementById("mapEdit_maxDepth")?.value, 10) || 3;
+                const subsRaw = (document.getElementById("mapEdit_depthSubtitles")?.value || "").split("|").map(s => s.trim()).filter(Boolean);
+                const romans = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+                const depthTiers = [];
+                for (let i = 1; i <= maxDepthVal; i++) {
+                    const idx = i - 1;
+                    const subtitle = subsRaw[idx] || (i === 1 ? "Fringe" : (i === 2 ? "Depths" : "Inner Core"));
+                    const statMult = 1 + (i - 1) * 0.45;
+                    const goldMult = 1 + (i - 1) * 0.50;
+                    const xpMult = 1 + (i - 1) * 0.50;
+                    depthTiers.push({
+                        depth: i,
+                        roman: romans[idx] || `${i}`,
+                        subtitle,
+                        statMult: parseFloat(statMult.toFixed(2)),
+                        goldMult: parseFloat(goldMult.toFixed(2)),
+                        xpMult: parseFloat(xpMult.toFixed(2))
+                    });
+                }
+
                 const mapObj = {
                     ...existing,
                     id: mapId,
@@ -469,7 +618,9 @@ window.ManagerApp = {
                     bgGradient: document.getElementById("mapEdit_bgGradient").value.trim(),
                     bossId: bossVal || undefined,
                     mobs: mobsArr,
-                    defaultWeather: existing.defaultWeather || "clear"
+                    defaultWeather: existing.defaultWeather || "clear",
+                    maxDepth: maxDepthVal,
+                    depthTiers: depthTiers
                 };
                 api.data.saveMap(mapObj);
                 this.populateDropdowns();
@@ -549,6 +700,152 @@ window.ManagerApp = {
                 }
             });
         });
+
+        document.querySelectorAll("[data-mgr-event]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const evId = btn.dataset.mgrEvent;
+                if (evId === "stop") {
+                    api.events.stop();
+                    this.showToast("Stopped active world event.", "info");
+                } else {
+                    api.events.start(evId);
+                    this.showToast(`Triggered world event: ${evId}!`, "success");
+                }
+            });
+        });
+
+        const formScen = document.getElementById("formScenarioDesigner");
+        if (formScen) {
+            formScen.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const scId = document.getElementById("scenEdit_id").value.trim();
+                const scName = document.getElementById("scenEdit_name").value.trim();
+                if (!scId || !scName) {
+                    this.showToast("Scenario ID and Name required.", "error");
+                    return;
+                }
+                const scObj = {
+                    id: scId,
+                    name: scName,
+                    duration: parseInt(document.getElementById("scenEdit_duration").value, 10) || 60,
+                    bannerText: document.getElementById("scenEdit_banner").value.trim(),
+                    modifiers: {
+                        playerDmgMult: 1.0,
+                        enemyHpMult: parseFloat(document.getElementById("scenEdit_enemyHp").value) || 1.0,
+                        enemyDmgMult: parseFloat(document.getElementById("scenEdit_enemyDmg").value) || 1.0,
+                        goldMult: parseFloat(document.getElementById("scenEdit_gold").value) || 1.0,
+                        xpMult: parseFloat(document.getElementById("scenEdit_xp").value) || 1.0,
+                        dropMult: parseFloat(document.getElementById("scenEdit_dropMult").value) || 1.0
+                    }
+                };
+                api.data.saveScenario(scObj);
+                this.showToast(`Custom scenario '${scObj.name}' saved & synced!`, "success");
+            });
+        }
+
+        const btnLaunchCustom = document.getElementById("btnLaunchCustomScenario");
+        if (btnLaunchCustom) {
+            btnLaunchCustom.addEventListener("click", () => {
+                const scId = document.getElementById("scenEdit_id").value.trim();
+                if (scId && window.ScenariosData && window.ScenariosData[scId]) {
+                    api.scenarios.run(scId);
+                    this.showToast(`Launched custom scenario '${scId}' live!`, "success");
+                } else {
+                    this.showToast("Save the scenario first before launching.", "warn");
+                }
+            });
+        }
+
+        // ==================== ALCHEMY RECIPES CRUD ====================
+        const btnNewAlch = document.getElementById("btnNewAlchemyRecipe");
+        if (btnNewAlch) {
+            btnNewAlch.addEventListener("click", () => this.newAlchemyRecipe());
+        }
+
+        const alchSearch = document.getElementById("alchemySearchInput");
+        if (alchSearch) {
+            alchSearch.addEventListener("input", (e) => {
+                this.alchemySearchQuery = (e.target.value || "").trim().toLowerCase();
+                this.renderAlchemyList();
+            });
+        }
+
+        const formAlch = document.getElementById("formAlchemyEditor");
+        if (formAlch) {
+            formAlch.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const id = document.getElementById("alchEdit_id").value.trim();
+                const name = document.getElementById("alchEdit_name").value.trim();
+                if (!id || !name) {
+                    this.showToast("Recipe ID and Name are required.", "error");
+                    return;
+                }
+
+                const mats = {};
+                const rawMats = document.getElementById("alchEdit_materials").value.trim();
+                if (rawMats) {
+                    rawMats.split(",").forEach(part => {
+                        const [k, v] = part.split(":").map(s => s && s.trim());
+                        if (k && v !== undefined) mats[k] = parseInt(v, 10) || 1;
+                    });
+                }
+
+                const tier = parseInt(document.getElementById("alchEdit_tier").value, 10) || 1;
+                const tierNames = { 1: "Apprentice Cauldron", 2: "Journeyman Crucible", 3: "Aincrad Alchemical Altar" };
+
+                const recipeObj = {
+                    id: id,
+                    name: name,
+                    icon: document.getElementById("alchEdit_icon").value.trim() || "🧪",
+                    tier: tier,
+                    tierName: tierNames[tier] || `Tier ${tier}`,
+                    reqLevel: parseInt(document.getElementById("alchEdit_reqLevel").value, 10) || 1,
+                    goldCost: parseInt(document.getElementById("alchEdit_goldCost").value, 10) || 0,
+                    materials: mats,
+                    result: {
+                        id: document.getElementById("alchEdit_resultId").value.trim() || "potion_minor",
+                        type: "consumable",
+                        qty: parseInt(document.getElementById("alchEdit_resultQty").value, 10) || 1
+                    },
+                    effect: {
+                        type: document.getElementById("alchEdit_effectType").value,
+                        stat: document.getElementById("alchEdit_effectStat").value,
+                        value: parseFloat(document.getElementById("alchEdit_effectVal").value) || 0,
+                        duration: parseInt(document.getElementById("alchEdit_effectDuration").value, 10) || 60
+                    },
+                    description: document.getElementById("alchEdit_desc").value.trim()
+                };
+
+                api.data.saveAlchemyRecipe(recipeObj);
+                this.renderAlchemyList();
+                this.showToast(`Alchemy Recipe '${recipeObj.name}' saved and synced!`, "success");
+            });
+        }
+
+        const btnDeleteAlch = document.getElementById("btnDeleteAlchemyRecipe");
+        if (btnDeleteAlch) {
+            btnDeleteAlch.addEventListener("click", () => {
+                const id = document.getElementById("alchEdit_id").value.trim();
+                if (!id) return;
+                if (confirm(`Delete alchemy recipe '${id}'?`)) {
+                    api.data.deleteAlchemyRecipe(id);
+                    this.renderAlchemyList();
+                    this.newAlchemyRecipe();
+                    this.showToast(`Deleted recipe ${id}.`, "info");
+                }
+            });
+        }
+
+        const btnBrewTest = document.getElementById("btnBrewTestToPlayer");
+        if (btnBrewTest) {
+            btnBrewTest.addEventListener("click", () => {
+                const id = document.getElementById("alchEdit_id").value.trim();
+                if (id && window.InventoryManager) {
+                    const ok = window.InventoryManager.brewPotion(id);
+                    if (ok) this.showToast(`Brewed test potion '${id}' for player!`, "success");
+                }
+            });
+        }
 
         // ==================== JSON IMPORT/EXPORT ====================
         const btnRefreshJson = document.getElementById("btnMgrRefreshJson");
@@ -790,6 +1087,36 @@ window.ManagerApp = {
         });
     },
 
+    renderClassPassivesList() {
+        const container = document.getElementById("classPassivesContainer");
+        if (!container) return;
+        container.innerHTML = "";
+
+        if (!this.currentClassPassives || this.currentClassPassives.length === 0) {
+            container.innerHTML = `<div style="color:#85899f; font-size:11px; font-style:italic;">No divine passives configured. Click "➕ Add Passive" above.</div>`;
+            return;
+        }
+
+        this.currentClassPassives.forEach((p, idx) => {
+            const row = document.createElement("div");
+            row.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.05); border-radius:6px; padding:6px 10px; font-size:11px;";
+            const bonusStr = p.bonus ? Object.entries(p.bonus).map(([k, v]) => `${k}: +${v}`).join(", ") : (p.description || "None");
+            row.innerHTML = `
+                <div>
+                    <strong style="color:#f2c94c;">Lv.${p.reqLevel || 1} ${p.icon || '✨'} ${p.name}</strong>
+                    <div style="color:#a78bfa; font-size:10px;">${bonusStr}</div>
+                    <div style="color:#85899f; font-size:9px; font-style:italic;">"${p.lore || ''}"</div>
+                </div>
+                <button type="button" class="btn-danger btn-xs" style="padding:2px 6px; font-size:10px;" title="Remove Passive">✕</button>
+            `;
+            row.querySelector("button").addEventListener("click", () => {
+                this.currentClassPassives.splice(idx, 1);
+                this.renderClassPassivesList();
+            });
+            container.appendChild(row);
+        });
+    },
+
     /* =========================================================
        FORM CLEARERS / CREATE TEMPLATES
     ========================================================= */
@@ -834,6 +1161,20 @@ window.ManagerApp = {
         document.getElementById("classEdit_skillCd").value = 8;
         document.getElementById("classEdit_skillMult").value = 2.2;
         document.getElementById("classEdit_skillDesc").value = "Delivers a devastating strike.";
+
+        if (document.getElementById("classEdit_r2_title")) document.getElementById("classEdit_r2_title").value = "Veteran";
+        if (document.getElementById("classEdit_r2_gold")) document.getElementById("classEdit_r2_gold").value = 500;
+        if (document.getElementById("classEdit_r2_mats")) document.getElementById("classEdit_r2_mats").value = "ironOre:15, wood:10";
+        if (document.getElementById("classEdit_r2_stats")) document.getElementById("classEdit_r2_stats").value = "attack:15, defense:20, hp:100";
+
+        if (document.getElementById("classEdit_r3_title")) document.getElementById("classEdit_r3_title").value = "Master";
+        if (document.getElementById("classEdit_r3_gold")) document.getElementById("classEdit_r3_gold").value = 2500;
+        if (document.getElementById("classEdit_r3_mats")) document.getElementById("classEdit_r3_mats").value = "crystal:10, dragonScale:5";
+        if (document.getElementById("classEdit_r3_stats")) document.getElementById("classEdit_r3_stats").value = "attack:40, defense:50, hp:300";
+
+        this.currentClassPassives = [];
+        this.renderClassPassivesList();
+
         const title = document.getElementById("classFormTitle");
         if (title) title.textContent = "CREATE NEW CLASS";
         this.showToast("Ready to configure new hero class.", "info");
@@ -869,7 +1210,9 @@ window.ManagerApp = {
         document.getElementById("shopEdit_costGold").value = 250;
         document.getElementById("shopEdit_reqLevel").value = 1;
         document.getElementById("shopEdit_matQty").value = 1;
-        document.getElementById("shopEdit_desc").value = "Restores 150 HP instantly.";
+        document.getElementById("shopEdit_desc").value = "Restores 180 HP instantly.";
+        if (document.getElementById("shopEdit_reqMap")) document.getElementById("shopEdit_reqMap").value = "any";
+        if (document.getElementById("shopEdit_reqDepth")) document.getElementById("shopEdit_reqDepth").value = 1;
         const title = document.getElementById("shopFormTitle");
         if (title) title.textContent = "CREATE NEW SHOP ITEM";
         this.showToast("Ready to list new shop offering.", "info");
@@ -884,9 +1227,32 @@ window.ManagerApp = {
         document.getElementById("mapEdit_bgGradient").value = "radial-gradient(circle at 50% 42%, #2d184a 0%, #0d0614 100%)";
         document.getElementById("mapEdit_bossId").value = "";
         document.getElementById("mapEdit_mobs").value = "goblin, wolf";
+        if (document.getElementById("mapEdit_maxDepth")) document.getElementById("mapEdit_maxDepth").value = 3;
+        if (document.getElementById("mapEdit_depthSubtitles")) document.getElementById("mapEdit_depthSubtitles").value = "Fringe Clearing | Deep Thicket | Heart";
         const title = document.getElementById("mapFormTitle");
         if (title) title.textContent = "CREATE NEW REALM MAP";
         this.showToast("Ready to design new realm map.", "info");
+    },
+
+    newAlchemyRecipe() {
+        const randId = `alch_${Date.now().toString().slice(-4)}`;
+        document.getElementById("alchEdit_id").value = randId;
+        document.getElementById("alchEdit_name").value = "New Elixir of Power";
+        document.getElementById("alchEdit_icon").value = "🧪";
+        document.getElementById("alchEdit_tier").value = "1";
+        document.getElementById("alchEdit_reqLevel").value = 1;
+        document.getElementById("alchEdit_goldCost").value = 50;
+        document.getElementById("alchEdit_materials").value = "wood:2, ironOre:1";
+        document.getElementById("alchEdit_resultId").value = "potion_minor";
+        document.getElementById("alchEdit_resultQty").value = 1;
+        document.getElementById("alchEdit_effectType").value = "heal";
+        document.getElementById("alchEdit_effectStat").value = "attack";
+        document.getElementById("alchEdit_effectVal").value = 80;
+        document.getElementById("alchEdit_effectDuration").value = 60;
+        document.getElementById("alchEdit_desc").value = "Brewed using sacred herbs and minerals.";
+        const title = document.getElementById("alchFormTitle");
+        if (title) title.textContent = "CREATE NEW ALCHEMY RECIPE";
+        this.showToast("Ready to configure new alchemy recipe.", "info");
     },
 
     /* =========================================================
@@ -899,6 +1265,7 @@ window.ManagerApp = {
         this.renderShopList();
         this.renderMapList();
         this.renderWeatherList();
+        this.renderAlchemyList();
     },
 
     renderClassList() {
@@ -935,9 +1302,34 @@ window.ManagerApp = {
                     document.getElementById("classEdit_skillMult").value = h.skill.damageMult || h.skill.dmgMultiplier || 2.0;
                     document.getElementById("classEdit_skillDesc").value = h.skill.description || h.skill.desc || "";
                 }
+
+                const p2 = (h.promotions && h.promotions.find(p => p.rank === 2)) || null;
+                const p3 = (h.promotions && h.promotions.find(p => p.rank === 3)) || null;
+
+                if (document.getElementById("classEdit_r2_title")) {
+                    document.getElementById("classEdit_r2_title").value = p2 ? p2.title : "Veteran";
+                    document.getElementById("classEdit_r2_gold").value = p2 ? (p2.goldCost || 500) : 500;
+                    document.getElementById("classEdit_r2_mats").value = p2 && p2.materials ? Object.entries(p2.materials).map(([k, v]) => `${k}:${v}`).join(", ") : "ironOre:15, wood:10";
+                    document.getElementById("classEdit_r2_stats").value = p2 && p2.bonusStats ? Object.entries(p2.bonusStats).map(([k, v]) => `${k}:${v}`).join(", ") : "attack:15, defense:20, hp:100";
+                }
+                if (document.getElementById("classEdit_r3_title")) {
+                    document.getElementById("classEdit_r3_title").value = p3 ? p3.title : "Master";
+                    document.getElementById("classEdit_r3_gold").value = p3 ? (p3.goldCost || 2500) : 2500;
+                    document.getElementById("classEdit_r3_mats").value = p3 && p3.materials ? Object.entries(p3.materials).map(([k, v]) => `${k}:${v}`).join(", ") : "crystal:10, dragonScale:5";
+                    document.getElementById("classEdit_r3_stats").value = p3 && p3.bonusStats ? Object.entries(p3.bonusStats).map(([k, v]) => `${k}:${v}`).join(", ") : "attack:40, defense:50, hp:300";
+                }
+
+                this.currentClassPassives = JSON.parse(JSON.stringify(h.passives || []));
+                this.renderClassPassivesList();
             });
             classListEl.appendChild(item);
         });
+
+        if ((!this.currentClassPassives || this.currentClassPassives.length === 0) && Object.values(window.HeroesData).length > 0) {
+            const first = Object.values(window.HeroesData)[0];
+            this.currentClassPassives = JSON.parse(JSON.stringify(first.passives || []));
+            this.renderClassPassivesList();
+        }
     },
 
     renderMobList() {
@@ -1026,23 +1418,44 @@ window.ManagerApp = {
 
         const q = this.shopSearchQuery;
         window.ShopData.forEach(s => {
-            if (q && !s.name.toLowerCase().includes(q) && !s.id.toLowerCase().includes(q) && !s.category.toLowerCase().includes(q)) return;
+            const it = (s.itemId && window.ItemsData && window.ItemsData[s.itemId]) ||
+                       (s.matKey && window.MaterialsData && window.MaterialsData[s.matKey]) ||
+                       (s.matKey && window.ItemsData && window.ItemsData[s.matKey]) || {};
+
+            const displayName = (s.name && s.name !== "undefined") ? s.name : (it.name || s.id || "Shop Item");
+            const displayIcon = (s.icon && s.icon !== "undefined") ? s.icon : (it.icon || "🛍️");
+            const displayCat = (s.category && s.category !== "undefined") ? s.category : (it.slot || it.type || (s.matKey ? "material" : "item"));
+            const cost = s.costGold || s.cost || it.baseValue || 100;
+            const reqLv = s.reqLevel || 1;
+            const reqMap = s.reqMap || "any";
+            const reqDepth = s.reqDepth || 1;
+            const desc = s.description || s.desc || it.description || "";
+
+            if (q && !displayName.toLowerCase().includes(q) && !s.id.toLowerCase().includes(q) && !displayCat.toLowerCase().includes(q)) return;
+
+            const mapBadge = reqMap !== "any" ? `[${reqMap} D${reqDepth}]` : `[Universal]`;
 
             const item = document.createElement("div");
             item.className = "mgr-list-item";
-            item.innerHTML = `<span>${s.icon} <strong>${s.name}</strong> <small style="color:#85899f;">[${s.category}]</small></span> <small style="color:#edc76f;">✦ ${s.costGold}g · Lv.${s.reqLevel || 1}</small>`;
+            item.innerHTML = `<span>${displayIcon} <strong>${displayName}</strong> <small style="color:#85899f;">${mapBadge}</small></span> <small style="color:#edc76f;">✦ ${cost}g · Lv.${reqLv}</small>`;
             item.addEventListener("click", () => {
                 const title = document.getElementById("shopFormTitle");
-                if (title) title.textContent = `EDIT LISTING: ${s.name.toUpperCase()}`;
-                document.getElementById("shopEdit_id").value = s.id;
-                document.getElementById("shopEdit_name").value = s.name;
-                document.getElementById("shopEdit_category").value = s.category;
-                document.getElementById("shopEdit_icon").value = s.icon;
+                if (title) title.textContent = `EDIT LISTING: ${displayName.toUpperCase()}`;
+                document.getElementById("shopEdit_id").value = s.id || "";
+                document.getElementById("shopEdit_name").value = displayName;
+                document.getElementById("shopEdit_category").value = displayCat;
+                document.getElementById("shopEdit_icon").value = displayIcon;
                 document.getElementById("shopEdit_itemId").value = s.itemId || s.matKey || "";
-                document.getElementById("shopEdit_costGold").value = s.costGold;
-                document.getElementById("shopEdit_reqLevel").value = s.reqLevel || 1;
+                document.getElementById("shopEdit_costGold").value = cost;
+                document.getElementById("shopEdit_reqLevel").value = reqLv;
                 document.getElementById("shopEdit_matQty").value = s.matQty || 1;
-                document.getElementById("shopEdit_desc").value = s.description || s.desc || "";
+                document.getElementById("shopEdit_desc").value = desc;
+                if (document.getElementById("shopEdit_reqMap")) {
+                    document.getElementById("shopEdit_reqMap").value = reqMap;
+                }
+                if (document.getElementById("shopEdit_reqDepth")) {
+                    document.getElementById("shopEdit_reqDepth").value = reqDepth;
+                }
             });
             shopListEl.appendChild(item);
         });
@@ -1066,6 +1479,14 @@ window.ManagerApp = {
                 document.getElementById("mapEdit_bgGradient").value = m.bgGradient;
                 document.getElementById("mapEdit_bossId").value = m.bossId || "";
                 document.getElementById("mapEdit_mobs").value = Array.isArray(m.mobs) ? m.mobs.join(", ") : "";
+
+                if (document.getElementById("mapEdit_maxDepth")) {
+                    document.getElementById("mapEdit_maxDepth").value = m.maxDepth || 3;
+                }
+                if (document.getElementById("mapEdit_depthSubtitles")) {
+                    const subtitles = (m.depthTiers || []).map(t => t.subtitle).join(" | ");
+                    document.getElementById("mapEdit_depthSubtitles").value = subtitles || "Fringe Clearing | Deep Thicket | Heart";
+                }
             });
             mapListEl.appendChild(item);
         });
@@ -1099,6 +1520,20 @@ window.ManagerApp = {
                 bossSelect.appendChild(opt);
             });
             if (curVal) bossSelect.value = curVal;
+        }
+
+        // Shop Req Map dropdown
+        const shopMapSelect = document.getElementById("shopEdit_reqMap");
+        if (shopMapSelect && window.MapsData) {
+            const curVal = shopMapSelect.value;
+            shopMapSelect.innerHTML = `<option value="any">Any Realm (Unlocked by Level)</option>`;
+            Object.values(window.MapsData).forEach(m => {
+                const opt = document.createElement("option");
+                opt.value = m.id;
+                opt.textContent = `${m.name} [Realm ${m.roman || m.realmIndex}]`;
+                shopMapSelect.appendChild(opt);
+            });
+            if (curVal) shopMapSelect.value = curVal;
         }
     },
 
@@ -1136,6 +1571,55 @@ window.ManagerApp = {
                 document.getElementById("weatherEdit_xp").value = w.xpMult;
             });
             weatherListEl.appendChild(item);
+        });
+    },
+
+    renderAlchemyList() {
+        const listEl = document.getElementById("mgrAlchemyList");
+        if (!listEl || !window.AlchemyData) return;
+        listEl.innerHTML = "";
+
+        const q = this.alchemySearchQuery;
+        const recipes = Array.isArray(window.AlchemyData) ? window.AlchemyData : Object.values(window.AlchemyData);
+
+        recipes.forEach(rec => {
+            if (q && !rec.name.toLowerCase().includes(q) && !rec.id.toLowerCase().includes(q) && !(rec.tierName && rec.tierName.toLowerCase().includes(q))) return;
+
+            const item = document.createElement("div");
+            item.className = "mgr-list-item";
+            const tierBadgeClass = rec.tier === 3 ? "badge-legendary" : (rec.tier === 2 ? "badge-rare" : "badge-common");
+            const matCount = rec.materials ? Object.keys(rec.materials).length : 0;
+
+            item.innerHTML = `
+                <span>${rec.icon || '🧪'} <strong>${rec.name}</strong> <span class="mgr-badge ${tierBadgeClass}">T${rec.tier || 1} · Lv.${rec.reqLevel || 1}</span></span>
+                <small style="color:#edc76f;">✦ ${rec.goldCost || 0}g · ${matCount} mats</small>
+            `;
+
+            item.addEventListener("click", () => {
+                const title = document.getElementById("alchFormTitle");
+                if (title) title.textContent = `EDIT RECIPE: ${rec.name.toUpperCase()}`;
+                if (document.getElementById("alchEdit_id")) document.getElementById("alchEdit_id").value = rec.id;
+                if (document.getElementById("alchEdit_name")) document.getElementById("alchEdit_name").value = rec.name;
+                if (document.getElementById("alchEdit_icon")) document.getElementById("alchEdit_icon").value = rec.icon || "🧪";
+                if (document.getElementById("alchEdit_tier")) document.getElementById("alchEdit_tier").value = rec.tier || 1;
+                if (document.getElementById("alchEdit_reqLevel")) document.getElementById("alchEdit_reqLevel").value = rec.reqLevel || 1;
+                if (document.getElementById("alchEdit_goldCost")) document.getElementById("alchEdit_goldCost").value = rec.goldCost || 0;
+                if (document.getElementById("alchEdit_materials")) {
+                    document.getElementById("alchEdit_materials").value = rec.materials ? Object.entries(rec.materials).map(([k, v]) => `${k}:${v}`).join(", ") : "";
+                }
+                if (document.getElementById("alchEdit_resultId")) document.getElementById("alchEdit_resultId").value = (rec.result && rec.result.id) || "potion_minor";
+                if (document.getElementById("alchEdit_resultQty")) document.getElementById("alchEdit_resultQty").value = (rec.result && rec.result.qty) || 1;
+
+                if (rec.effect) {
+                    if (document.getElementById("alchEdit_effectType")) document.getElementById("alchEdit_effectType").value = rec.effect.type || "heal";
+                    if (document.getElementById("alchEdit_effectStat")) document.getElementById("alchEdit_effectStat").value = rec.effect.stat || "attack";
+                    if (document.getElementById("alchEdit_effectVal")) document.getElementById("alchEdit_effectVal").value = (rec.effect.value !== undefined) ? rec.effect.value : 0;
+                    if (document.getElementById("alchEdit_effectDuration")) document.getElementById("alchEdit_effectDuration").value = rec.effect.duration || 60;
+                }
+                if (document.getElementById("alchEdit_desc")) document.getElementById("alchEdit_desc").value = rec.description || "";
+            });
+
+            listEl.appendChild(item);
         });
     },
 
@@ -1227,6 +1711,33 @@ window.ManagerApp = {
                 eventEl.innerHTML = `<span style="color:#9b7cff;">⚡ EVENT: <strong>${ev.name}</strong></span>`;
             } else {
                 eventEl.innerHTML = `<span style="color:#85899f;">No active world events</span>`;
+            }
+        }
+
+        // Active Scenarios & Events in Event tab monitor
+        const scNameEl = document.getElementById("mgrActiveScenarioName");
+        const scDescEl = document.getElementById("mgrActiveScenarioDetails");
+        if (scNameEl && scDescEl) {
+            if (state.world && state.world.activeScenarioId && window.ScenariosData && window.ScenariosData[state.world.activeScenarioId]) {
+                const sc = window.ScenariosData[state.world.activeScenarioId];
+                scNameEl.innerHTML = `<span style="color:#f2c94c;">${sc.icon || '🔥'} ${sc.name}</span>`;
+                scDescEl.textContent = sc.description || `HP: x${sc.enemyHpMult || 1}, Dmg: x${sc.enemyDmgMult || 1}, Drops: x${sc.dropMult || 1}`;
+            } else {
+                scNameEl.textContent = "None";
+                scDescEl.textContent = "No scenario active. Enemies have standard parameters.";
+            }
+        }
+
+        const evNameEl = document.getElementById("mgrActiveEventName");
+        const evDescEl = document.getElementById("mgrActiveEventDetails");
+        if (evNameEl && evDescEl) {
+            if (state.world && state.world.activeEventId && window.EventsData && window.EventsData[state.world.activeEventId]) {
+                const ev = window.EventsData[state.world.activeEventId];
+                evNameEl.innerHTML = `<span style="color:#60a5fa;">${ev.icon || '⚡'} ${ev.name}</span>`;
+                evDescEl.textContent = ev.description || `Gold: x${ev.goldMult || 1}, Drop Rate: x${ev.dropMult || 1}`;
+            } else {
+                evNameEl.textContent = "None";
+                evDescEl.textContent = "No world event active. Standard realm drops & weather apply.";
             }
         }
 

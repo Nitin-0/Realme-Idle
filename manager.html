@@ -32,6 +32,7 @@
             <button class="mgr-nav-btn" data-mgr-tab="classes">👑 Classes & Skills</button>
             <button class="mgr-nav-btn" data-mgr-tab="mobs">👹 Mob & Drop Rates</button>
             <button class="mgr-nav-btn" data-mgr-tab="items">🎒 Items & Equipment</button>
+            <button class="mgr-nav-btn" data-mgr-tab="alchemy">⚗️ Alchemy Recipes</button>
             <button class="mgr-nav-btn" data-mgr-tab="shop">🛒 Shop Catalog</button>
             <button class="mgr-nav-btn" data-mgr-tab="maps">🗺️ Map & Realm Editor</button>
             <button class="mgr-nav-btn" data-mgr-tab="weather">🌧️ Weather Editor</button>
@@ -146,6 +147,18 @@
                                     <input type="number" id="cfg_templeDonationCost" value="50" min="0" max="100000">
                                 </div>
                                 <small style="color: #85899f; font-size: 10px;">When hero dies, priests mend wounds (50% HP) and deduct this donation tithe (if player has sufficient gold).</small>
+                            </div>
+
+                            <!-- KINGDOM DOMAIN SOVEREIGNTY GRANT -->
+                            <div style="background: rgba(255,255,255,0.03); padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); grid-column: span 2;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <strong style="color: #f2c94c; font-size: 13px;">👑 Kingdom Domain Sovereignty Grant</strong>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button type="button" id="btnGmUnlockKingdom" class="btn-success btn-xs">⚡ Grant Sovereign Domain (Lv 5 + Boss Defeated)</button>
+                                        <button type="button" id="btnGmLockKingdom" class="btn-danger btn-xs">🔒 Relock Domain</button>
+                                    </div>
+                                </div>
+                                <small style="color: #85899f; font-size: 10px;">Kingdom Domain normally unlocks after hero reaches Level 5 and vanquishes the Boss of Moonlit Vale III ("He vanished foul beast from this forest so king granted him small land"). Click buttons to override live.</small>
                             </div>
                         </div>
 
@@ -312,6 +325,65 @@
                             <div class="form-group">
                                 <label>Skill Description:</label>
                                 <input type="text" id="classEdit_skillDesc" value="Slams enemy with heavy shield for massive damage and stuns briefly.">
+                            </div>
+
+                            <h5 style="margin: 12px 0 6px 0; color: #edc76f; font-size: 11px; letter-spacing: 1px;">VOCATION ASCENSION PROMOTIONS (LEVEL 10 & 20 MILESTONES)</h5>
+
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; margin-bottom: 8px;">
+                                <strong style="color: #60a5fa; font-size: 12px;">Rank 2 Milestone (Required Level: 10)</strong>
+                                <div class="form-row" style="margin-top: 6px;">
+                                    <div class="form-group">
+                                        <label>Rank 2 Title:</label>
+                                        <input type="text" id="classEdit_r2_title" value="Veteran">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Gold Cost:</label>
+                                        <input type="number" id="classEdit_r2_gold" value="500">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Required Materials (e.g. ironOre:15, wood:10):</label>
+                                        <input type="text" id="classEdit_r2_mats" value="ironOre:15, wood:10" placeholder="e.g. ironOre:15, wood:10">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Bonus Stats (e.g. attack:15, defense:20, hp:100):</label>
+                                        <input type="text" id="classEdit_r2_stats" value="attack:15, defense:20, hp:100" placeholder="e.g. attack:15, defense:20, hp:100">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; margin-bottom: 8px;">
+                                <strong style="color: #a78bfa; font-size: 12px;">Rank 3 Milestone (Required Level: 20)</strong>
+                                <div class="form-row" style="margin-top: 6px;">
+                                    <div class="form-group">
+                                        <label>Rank 3 Title:</label>
+                                        <input type="text" id="classEdit_r3_title" value="Master">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Gold Cost:</label>
+                                        <input type="number" id="classEdit_r3_gold" value="2500">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Required Materials (e.g. crystal:10, dragonScale:5):</label>
+                                        <input type="text" id="classEdit_r3_mats" value="crystal:10, dragonScale:5" placeholder="e.g. crystal:10, dragonScale:5">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Bonus Stats (e.g. attack:40, defense:50, hp:300):</label>
+                                        <input type="text" id="classEdit_r3_stats" value="attack:40, defense:50, hp:300" placeholder="e.g. attack:40, defense:50, hp:300">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 style="margin: 12px 0 6px 0; color: #edc76f; font-size: 11px; letter-spacing: 1px;">DIVINE PASSIVES & BLESSINGS ("BLESSED BY THE GODS")</h5>
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 11px; color: #85899f;">Passives awarded on hero level milestones</span>
+                                    <button type="button" id="btnClassAddPassive" class="btn-success btn-xs">➕ Add Passive</button>
+                                </div>
+                                <div id="classPassivesContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; padding-right: 4px;"></div>
                             </div>
 
                             <div class="form-actions">
@@ -553,7 +625,10 @@
                     <div class="mgr-card">
                         <div class="mgr-card-toolbar">
                             <h4 style="margin:0;">SHOP MERCHANDISE</h4>
-                            <button type="button" id="btnNewShopItem" class="btn-success btn-xs">➕ New Listing</button>
+                            <div style="display:flex; gap:6px;">
+                                <button type="button" id="btnResetShopData" class="btn-warning btn-xs" title="Restore official progressive catalog">↺ Restore Defaults</button>
+                                <button type="button" id="btnNewShopItem" class="btn-success btn-xs">➕ New Listing</button>
+                            </div>
                         </div>
                         <input type="text" id="shopSearchInput" class="mgr-search-input" placeholder="🔍 Search shop catalog...">
                         <div class="mgr-list" id="mgrShopList"></div>
@@ -609,6 +684,24 @@
                                 <div class="form-group">
                                     <label>Required Hero Level:</label>
                                     <input type="number" id="shopEdit_reqLevel" value="1">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Required Realm Map (Progression Unlock):</label>
+                                    <select id="shopEdit_reqMap">
+                                        <option value="any">Any Realm (Unlocked by Level)</option>
+                                        <option value="moonlit_vale">Moonlit Vale (Realm I)</option>
+                                        <option value="ashen_wastes">Ashen Wastes (Realm II)</option>
+                                        <option value="bloodthorn_forest">Bloodthorn Forest (Realm III)</option>
+                                        <option value="frostpeak">Frostpeak Citadel (Realm IV)</option>
+                                        <option value="infernal_depths">Infernal Depths (Realm V)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Required Map Depth (1, 2, 3...):</label>
+                                    <input type="number" id="shopEdit_reqDepth" value="1" min="1" max="10">
                                 </div>
                             </div>
 
@@ -679,6 +772,17 @@
                                 </div>
                             </div>
 
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Max Depth Tiers (Versions e.g. 3):</label>
+                                    <input type="number" id="mapEdit_maxDepth" value="3" min="1" max="10">
+                                </div>
+                                <div class="form-group">
+                                    <label>Depth Subtitles (Separated by | e.g. Fringe | Deep Thicket | Heart):</label>
+                                    <input type="text" id="mapEdit_depthSubtitles" value="Fringe Clearing | Deep Thicket | Heart" placeholder="e.g. Fringe Clearing | Deep Thicket | Heart">
+                                </div>
+                            </div>
+
                             <div class="form-actions">
                                 <button type="submit" class="btn-success">💾 Save Map</button>
                                 <button type="button" id="btnDeleteMap" class="btn-danger">🗑️ Delete Map</button>
@@ -738,14 +842,287 @@
 
             <!-- TAB 5: SCENARIOS & EVENTS -->
             <div class="mgr-tab-content" id="tab_events">
-                <div class="mgr-card">
-                    <h4>ONE-CLICK SCENARIOS & WORLD EVENTS</h4>
-                    <div class="mgr-btn-grid">
-                        <button data-mgr-scenario="dragon_invasion" class="btn-danger">🔥 Run Dragon Siege Invasion</button>
-                        <button data-mgr-scenario="blood_moon_surge" class="btn-warn">🔴 Run Blood Moon Surge</button>
-                        <button data-mgr-scenario="frostpeak_blizzard" class="btn-warn">❄️ Run Frostpeak Blizzard</button>
-                        <button data-mgr-scenario="goblin_horde" class="btn-warn">👹 Run Goblin Horde Siege</button>
-                        <button data-mgr-scenario="stop" class="btn-secondary">🛑 Stop Active Scenario</button>
+                <!-- ACTIVE SCENARIOS & EVENTS LIVE MONITOR -->
+                <div class="mgr-card" style="margin-bottom: 14px;">
+                    <div class="mgr-card-toolbar">
+                        <h4 style="margin:0;">⚡ LIVE SCENARIO & EVENT STATUS (CROSS-TAB SYNC)</h4>
+                        <span id="mgrEventsLiveTag" style="font-size:11px; color:#4ade80;">Active</span>
+                    </div>
+                    <div class="mgr-grid-2" style="margin-top: 10px;">
+                        <div style="background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong style="color:#edc76f; font-size:12px;">🎭 ACTIVE SCENARIO:</strong>
+                                <span id="mgrActiveScenarioName" style="color:#eae7f5; font-weight:bold;">None</span>
+                            </div>
+                            <div style="margin-top:6px; font-size:11px; color:#85899f;" id="mgrActiveScenarioDetails">
+                                No scenario active. Enemies have standard parameters.
+                            </div>
+                            <div style="margin-top:8px;">
+                                <button type="button" class="btn-secondary btn-xs" data-mgr-scenario="stop">🛑 Stop Active Scenario</button>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong style="color:#60a5fa; font-size:12px;">🌧️ ACTIVE WORLD EVENT:</strong>
+                                <span id="mgrActiveEventName" style="color:#eae7f5; font-weight:bold;">None</span>
+                            </div>
+                            <div style="margin-top:6px; font-size:11px; color:#85899f;" id="mgrActiveEventDetails">
+                                No world event active. Standard realm drops & weather apply.
+                            </div>
+                            <div style="margin-top:8px;">
+                                <button type="button" class="btn-secondary btn-xs" data-mgr-event="stop">🛑 Stop Active Event</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mgr-grid-2">
+                    <!-- SCENARIOS TRIGGER GRID -->
+                    <div class="mgr-card">
+                        <div class="mgr-card-toolbar">
+                            <h4 style="margin:0;">🚀 ONE-CLICK WORLD SCENARIOS</h4>
+                            <span style="font-size:10px; color:#edc76f;">Live broadcast to player</span>
+                        </div>
+                        <div class="mgr-btn-grid" style="margin-top: 10px;">
+                            <button data-mgr-scenario="black_moon_calamity" class="btn-danger" style="text-align:left;">
+                                <strong>🌑 Black Moon Calamity</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">Monsters x2 HP, x2.5 Atk · +250% Gold/XP, +200% Drops (60s)</small>
+                            </button>
+                            <button data-mgr-scenario="rain_of_abundance" class="btn-success" style="text-align:left;">
+                                <strong>🌧️ Rain of Abundance</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">Treasure Torrent: +300% Gold, +250% Drops, +150% XP (60s)</small>
+                            </button>
+                            <button data-mgr-scenario="celestial_titan_awakening" class="btn-warn" style="text-align:left;">
+                                <strong>⚡ Celestial Titan Awakening</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">Starforged Titan Astraeus Raid (90s)</small>
+                            </button>
+                            <button data-mgr-scenario="infernal_eruption" class="btn-danger" style="text-align:left;">
+                                <strong>🌋 Infernal Eruption</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">Hellfire surge: Ashfall + Infernal Fire Demons (75s)</small>
+                            </button>
+                            <button data-mgr-scenario="dragon_invasion" class="btn-danger" style="text-align:left;">
+                                <strong>🔥 Dragon Siege Invasion</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">Ignis the Red Drake assault on the Realm</small>
+                            </button>
+                            <button data-mgr-scenario="blood_moon_surge" class="btn-warn" style="text-align:left;">
+                                <strong>🔴 Blood Moon Surge</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">Aggressive nocturnal fiends swarm the realm</small>
+                            </button>
+                            <button data-mgr-scenario="frostpeak_blizzard" class="btn-warn" style="text-align:left;">
+                                <strong>❄️ Frostpeak Blizzard</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">Glacial howling winds with frost golems</small>
+                            </button>
+                            <button data-mgr-scenario="goblin_horde" class="btn-warn" style="text-align:left;">
+                                <strong>👹 Goblin Horde Siege</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">Rapid swarm of ravenous goblins</small>
+                            </button>
+                            <button data-mgr-scenario="stop" class="btn-secondary" style="grid-column: span 2;">
+                                🛑 Emergency Stop Active Scenario
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- WORLD EVENTS TRIGGER GRID -->
+                    <div class="mgr-card">
+                        <div class="mgr-card-toolbar">
+                            <h4 style="margin:0;">⚡ TRIGGER WORLD EVENTS</h4>
+                            <span style="font-size:10px; color:#60a5fa;">Real-time sync</span>
+                        </div>
+                        <div class="mgr-btn-grid" style="margin-top: 10px;">
+                            <button data-mgr-event="black_moon" class="btn-danger" style="text-align:left;">
+                                <strong>🌑 Black Moon Eclipse</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">All monsters stronger (+100% HP, +150% Atk, +200% Drops)</small>
+                            </button>
+                            <button data-mgr-event="rain_of_fortune" class="btn-success" style="text-align:left;">
+                                <strong>🌧️ Rain of Fortune</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">+300% Gold Income & +250% Material/Potion Drops</small>
+                            </button>
+                            <button data-mgr-event="solar_eclipse" class="btn-warn" style="text-align:left;">
+                                <strong>☀️ Solar Eclipse</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">Enemy Dmg +80%, Crit +15%, Gold +180%</small>
+                            </button>
+                            <button data-mgr-event="blood_fog" class="btn-danger" style="text-align:left;">
+                                <strong>🌫️ Crimson Blood Fog</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">Lifesteal +15%, Enemy Dmg +60%, XP +200%</small>
+                            </button>
+                            <button data-mgr-event="starfall_cataclysm" class="btn-warn" style="text-align:left;">
+                                <strong>🌠 Starfall Cataclysm</strong><br>
+                                <small style="font-size:10px; opacity:0.85;">+400% Gold/XP, +350% Drops, High Monster Scaling</small>
+                            </button>
+                            <button data-mgr-event="stop" class="btn-secondary">
+                                🛑 Stop World Event
+                            </button>
+                        </div>
+
+                        <!-- SCENARIO DESIGNER -->
+                        <h4 style="margin-top: 16px;">🎨 CUSTOM SCENARIO DESIGNER</h4>
+                        <form id="formScenarioDesigner" class="mgr-form" style="margin-top: 8px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Scenario ID:</label>
+                                    <input type="text" id="scenEdit_id" value="custom_blood_moon" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Name:</label>
+                                    <input type="text" id="scenEdit_name" value="Custom Blood Moon Surge" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Duration (Seconds):</label>
+                                    <input type="number" id="scenEdit_duration" value="60">
+                                </div>
+                                <div class="form-group">
+                                    <label>Drop Rate Mult (e.g. 2.5):</label>
+                                    <input type="number" step="0.1" id="scenEdit_dropMult" value="2.5">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Enemy HP Mult:</label>
+                                    <input type="number" step="0.1" id="scenEdit_enemyHp" value="2.0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Enemy Dmg Mult:</label>
+                                    <input type="number" step="0.1" id="scenEdit_enemyDmg" value="2.0">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Gold Mult:</label>
+                                    <input type="number" step="0.1" id="scenEdit_gold" value="3.0">
+                                </div>
+                                <div class="form-group">
+                                    <label>XP Mult:</label>
+                                    <input type="number" step="0.1" id="scenEdit_xp" value="3.0">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Banner Narrative Text:</label>
+                                <input type="text" id="scenEdit_banner" value="🌑 The Black Moon blazes! Monsters grow fierce but drop immense treasure!">
+                            </div>
+                            <div class="form-actions" style="margin-top: 10px;">
+                                <button type="submit" class="btn-success">💾 Save Custom Scenario</button>
+                                <button type="button" id="btnLaunchCustomScenario" class="btn-primary">🚀 Launch Live Now</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: ALCHEMY RECIPES -->
+            <div class="mgr-tab-content" id="tab_alchemy">
+                <div class="mgr-grid-2">
+                    <div class="mgr-card">
+                        <div class="mgr-card-toolbar">
+                            <h4 style="margin:0;">ALCHEMICAL RECIPES CATALOG</h4>
+                            <button type="button" id="btnNewAlchemyRecipe" class="btn-success btn-xs">➕ New Recipe</button>
+                        </div>
+                        <div style="margin: 8px 0;">
+                            <input type="text" id="alchemySearchInput" placeholder="🔍 Search recipes by name or tier..." style="width: 100%; padding: 8px 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 12px;">
+                        </div>
+                        <div class="mgr-list" id="mgrAlchemyList" style="max-height: 520px; overflow-y: auto;"></div>
+                    </div>
+
+                    <div class="mgr-card">
+                        <h4 id="alchFormTitle">CREATE / EDIT ALCHEMY RECIPE</h4>
+                        <form id="formAlchemyEditor" class="mgr-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Recipe ID Key:</label>
+                                    <input type="text" id="alchEdit_id" required placeholder="e.g. alch_pot_minor">
+                                </div>
+                                <div class="form-group">
+                                    <label>Recipe Name:</label>
+                                    <input type="text" id="alchEdit_name" required placeholder="e.g. Minor Healing Draught">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Icon Emoji:</label>
+                                    <input type="text" id="alchEdit_icon" value="🧪">
+                                </div>
+                                <div class="form-group">
+                                    <label>Alchemy Tier (1: Apprentice, 2: Journeyman, 3: Aincrad):</label>
+                                    <select id="alchEdit_tier">
+                                        <option value="1">Tier 1: Apprentice Cauldron (Lv. 1)</option>
+                                        <option value="2">Tier 2: Journeyman Crucible (Lv. 10)</option>
+                                        <option value="3">Tier 3: Aincrad Alchemical Altar (Lv. 25)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Required Hero Level:</label>
+                                    <input type="number" id="alchEdit_reqLevel" value="1" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Brewing Gold Cost:</label>
+                                    <input type="number" id="alchEdit_goldCost" value="40" min="0">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Required Materials (e.g. wood:2, ironOre:1, crystal:1):</label>
+                                <input type="text" id="alchEdit_materials" value="wood:2" placeholder="e.g. wood:2, ironOre:1">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Result Consumable ID:</label>
+                                    <input type="text" id="alchEdit_resultId" value="potion_minor" placeholder="e.g. potion_minor">
+                                </div>
+                                <div class="form-group">
+                                    <label>Result Quantity:</label>
+                                    <input type="number" id="alchEdit_resultQty" value="1" min="1">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Effect Type:</label>
+                                    <select id="alchEdit_effectType">
+                                        <option value="heal">Instant Heal (HP)</option>
+                                        <option value="heal_pct">Full Heal (100% HP)</option>
+                                        <option value="buff">Temporary Combat Buff</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Effect Stat (for Buffs):</label>
+                                    <select id="alchEdit_effectStat">
+                                        <option value="attack">Attack Power</option>
+                                        <option value="defense">Defense</option>
+                                        <option value="critChance">Crit Chance</option>
+                                        <option value="dodge">Dodge Probability</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Effect Value (Amount or %):</label>
+                                    <input type="number" step="0.01" id="alchEdit_effectVal" value="80">
+                                </div>
+                                <div class="form-group">
+                                    <label>Buff Duration (Seconds):</label>
+                                    <input type="number" id="alchEdit_effectDuration" value="60">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Description / Lore:</label>
+                                <textarea id="alchEdit_desc" rows="3" placeholder="Recipe lore and effect explanation..."></textarea>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-success">💾 Save Recipe</button>
+                                <button type="button" id="btnDeleteAlchemyRecipe" class="btn-danger">🗑️ Delete Recipe</button>
+                                <button type="button" id="btnBrewTestToPlayer" class="btn-primary">🧪 Brew & Send to Player</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -776,6 +1153,7 @@
 <script src="js/data/weather.js"></script>
 <script src="js/data/events.js"></script>
 <script src="js/data/items.js"></script>
+<script src="js/data/alchemy.js"></script>
 <script src="js/data/scenarios.js"></script>
 
 <script src="js/core/state.js"></script>

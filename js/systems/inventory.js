@@ -4,21 +4,27 @@
 
 window.InventoryManager = {
     addItem(itemId, customOpts = {}) {
-        const itemDef = window.ItemsData[itemId];
+        let itemDef = null;
+        if (typeof itemId === "object" && itemId !== null) {
+            itemDef = itemId;
+        } else {
+            itemDef = window.ItemsData ? window.ItemsData[itemId] : null;
+        }
         if (!itemDef) return;
 
         const state = window.gameState;
-        state.player.inventory.push({
+        const newItem = {
             ...itemDef,
-            upgradeLevel: customOpts.upgradeLevel || 0,
-            instanceId: Date.now() + "_" + Math.random().toString(36).substr(2, 6)
-        });
+            upgradeLevel: customOpts.upgradeLevel || itemDef.upgradeLevel || 0,
+            instanceId: itemDef.instanceId || (Date.now() + "_" + Math.random().toString(36).substr(2, 6))
+        };
+        state.player.inventory.push(newItem);
 
         // Record in Monster/Item Journal
-        if (window.JournalManager) window.JournalManager.recordItem(itemId);
+        if (window.JournalManager && typeof itemId === "string") window.JournalManager.recordItem(itemId);
 
         if (window.devMode && typeof window.devMode.logToConsole === "function") {
-            window.devMode.logToConsole(`🎒 Obtained: ${itemDef.icon} ${itemDef.name} [${itemDef.rarity.toUpperCase()}]`, "success");
+            window.devMode.logToConsole(`🎒 Obtained: ${itemDef.icon || '🗡️'} ${itemDef.name} [${(itemDef.rarity || 'common').toUpperCase()}]`, "success");
         }
 
         if (state.addLog && itemDef.rarity && ["rare", "epic", "legendary"].includes(itemDef.rarity)) {
@@ -30,10 +36,16 @@ window.InventoryManager = {
 
     getSellPrice(item) {
         if (!item) return 0;
-        const rarity = window.RarityData[item.rarity] || window.RarityData.common;
-        const base = item.baseValue || 50;
-        const upgMult = 1 + (item.upgradeLevel || 0) * 0.5;
-        return Math.floor(base * rarity.sellMult * upgMult);
+        const rarities = window.RarityData || {};
+        const rarity = rarities[item.rarity] || { sellMult: 1, sell: 18 };
+        if (item.baseValue) {
+            const upgMult = 1 + (item.upgradeLevel || 0) * 0.5;
+            return Math.floor(item.baseValue * (rarity.sellMult || 1) * upgMult);
+        }
+        // Rolled forge items
+        const baseSell = rarity.sell || 18;
+        const ilvl = item.ilvl || 1;
+        return Math.floor(baseSell * (1 + ilvl * 0.25));
     },
 
     getUpgradeCost(item) {
@@ -131,25 +143,40 @@ window.InventoryManager = {
         const itemDef = window.ItemsData[potionId];
         if (!itemDef || !itemDef.effect) return false;
 
-        state.player.potions[potionId]--;
-
+        const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
         const effect = itemDef.effect;
-        if (effect.type === "heal") {
-            const healed = Math.min(effect.amount, state.player.maxHp - state.player.hp);
-            state.player.hp = Math.min(state.player.maxHp, state.player.hp + effect.amount);
-            if (window.CombatManager) window.CombatManager.showDamagePopup(`+${healed} HP`, false, false, "heal");
-        } else if (effect.type === "heal_pct") {
-            state.player.hp = state.player.maxHp;
-            if (window.CombatManager) window.CombatManager.showDamagePopup(`MAX HP RESTORED!`, false, false, "heal");
+
+        if (effect.type === "heal" || effect.type === "heal_pct") {
+            if (state.player.hp >= effMaxHp) {
+                if (window.CombatManager) window.CombatManager.showDamagePopup("HP FULL!", false, false, "heal");
+                return false;
+            }
+
+            state.player.potions[potionId]--;
+
+            if (effect.type === "heal") {
+                const healVal = effect.amount !== undefined ? effect.amount : (effect.value !== undefined ? effect.value : 50);
+                const healed = Math.max(1, Math.min(healVal, effMaxHp - state.player.hp));
+                state.player.hp = Math.min(effMaxHp, state.player.hp + healVal);
+                if (window.CombatManager) window.CombatManager.showDamagePopup(`+${healed} HP`, false, false, "heal");
+                if (state.addLog) state.addLog(`Quaffed ${itemDef.name}. Recovered ${healed} HP!`, "combat", "🧪");
+            } else if (effect.type === "heal_pct") {
+                const healed = Math.max(1, effMaxHp - state.player.hp);
+                state.player.hp = effMaxHp;
+                if (window.CombatManager) window.CombatManager.showDamagePopup(`+${healed} HP (FULL)`, false, false, "heal");
+                if (state.addLog) state.addLog(`Quaffed ${itemDef.name}. Fully restored HP! (+${healed} HP)`, "combat", "💖");
+            }
         } else if (effect.type === "buff") {
-            state.player.activeBuffs = state.player.activeBuffs.filter(b => b.name !== itemDef.name);
+            state.player.potions[potionId]--;
+            state.player.activeBuffs = (state.player.activeBuffs || []).filter(b => b.name !== itemDef.name);
             state.player.activeBuffs.push({
                 name: itemDef.name,
                 stat: effect.stat,
-                bonus: effect.value,
-                duration: effect.duration
+                bonus: effect.value !== undefined ? effect.value : (effect.bonus !== undefined ? effect.bonus : 10),
+                duration: effect.duration || 60
             });
-            if (window.CombatManager) window.CombatManager.showDamagePopup(`🧪 ${itemDef.name} Active!`, false, false, "potion");
+            if (window.CombatManager) window.CombatManager.showDamagePopup(`🧪 ${itemDef.name}!`, false, false, "potion");
+            if (state.addLog) state.addLog(`Consumed ${itemDef.name}! Active combat buff applied.`, "combat", "🧪");
         }
 
         state.notify();
@@ -163,27 +190,79 @@ window.InventoryManager = {
         if (index === -1) return;
 
         const item = state.player.inventory[index];
-        const slot = item.slot;
+        let slot = item.slot || 'trinket';
+        if (slot === 'ring') slot = 'trinket';
 
         // Unequip currently equipped item if present
         if (state.player.equipment[slot]) {
             state.player.inventory.push(state.player.equipment[slot]);
+        } else if (slot === 'trinket' && state.player.equipment.ring) {
+            state.player.inventory.push(state.player.equipment.ring);
+            state.player.equipment.ring = null;
         }
 
         // Equip new item & remove from inventory
         state.player.equipment[slot] = item;
         state.player.inventory.splice(index, 1);
+        if (state.addLog) {
+            state.addLog(`Equipped [${item.name}].`, "loot", "🗡️");
+        }
         state.notify();
     },
 
     unequipSlot(slot) {
         const state = window.gameState;
-        const current = state.player.equipment[slot];
+        if (slot === 'ring') slot = 'trinket';
+        const current = state.player.equipment[slot] || (slot === 'trinket' ? state.player.equipment.ring : null);
         if (!current) return;
 
         state.player.inventory.push(current);
         state.player.equipment[slot] = null;
+        if (slot === 'trinket') state.player.equipment.ring = null;
+        if (state.addLog) {
+            state.addLog(`Unequipped [${current.name}].`, "loot", "📦");
+        }
         state.notify();
+    },
+
+    forge(tierIdx) {
+        const state = window.gameState;
+        const forgeTiers = window.ForgeData || [
+            { tier: 'common', name: 'Basic Forge', icon: '🔨', cost: 250, pool: ['common', 'common', 'rare'], desc: 'Mostly common gear with a chance at something Rare.' },
+            { tier: 'rare', name: 'Master Forge', icon: '⚒️', cost: 1600, pool: ['rare', 'rare', 'epic'], desc: 'Reliable Rare equipment. Occasionally Epic.' },
+            { tier: 'legendary', name: 'Aincrad Forge', icon: '🔥', cost: 9000, pool: ['epic', 'epic', 'legendary'], desc: 'Epic guaranteed. A chance at a Legendary relic.' }
+        ];
+
+        const f = forgeTiers[tierIdx];
+        if (!f) return false;
+
+        const reqLv = f.reqLevel || 1;
+        if ((state.player.level || 1) < reqLv) {
+            alert(`🔒 Locked! Requires Hero Level ${reqLv} to use the ${f.name}!`);
+            return false;
+        }
+
+        if (!state.canAfford(f.cost)) {
+            alert("Not enough gold to forge!");
+            return false;
+        }
+
+        state.spendGold(f.cost);
+
+        const pool = f.pool;
+        const rarity = pool[Math.floor(Math.random() * pool.length)];
+        const ilvl = (state.player.level || 1) + (state.combat?.stage || 1) + (tierIdx * 2);
+        const item = window.rollItem ? window.rollItem(rarity, null, ilvl) : null;
+
+        if (item) {
+            this.addItem(item);
+            if (state.addLog) {
+                state.addLog(`The forge blazes... you receive [${item.name}] (${item.rarity.toUpperCase()})!`, "loot", "🔥");
+            }
+        }
+
+        state.notify();
+        return true;
     },
 
     addMaterial(matKey, amount) {
@@ -229,17 +308,93 @@ window.InventoryManager = {
         if (window.QuestManager) window.QuestManager.checkProgress("craft", itemId);
     },
 
+    brewPotion(recipeId) {
+        const state = window.gameState;
+        const recipe = (window.AlchemyRecipes || []).find(r => r.id === recipeId);
+        const notifyMsg = (msg) => {
+            if (typeof alert !== "undefined") {
+                try { alert(msg); } catch (e) {}
+            }
+            if (state && typeof state.addLog === "function") {
+                state.addLog(msg, "system", "⚠️");
+            }
+        };
+
+        if (!recipe) {
+            notifyMsg("Recipe not found!");
+            return false;
+        }
+
+        const reqLv = recipe.reqLevel || 1;
+        if ((state.player.level || 1) < reqLv) {
+            notifyMsg(`🔒 Locked! Requires Hero Level ${reqLv} to use the ${recipe.tierName || 'Alchemical Table'}!`);
+            return false;
+        }
+
+        if (recipe.goldCost && !state.canAfford(recipe.goldCost)) {
+            notifyMsg(`Cannot afford brewing cost! Requires ${recipe.goldCost.toLocaleString()}g.`);
+            return false;
+        }
+
+        if (recipe.materials) {
+            for (const [mat, reqQty] of Object.entries(recipe.materials)) {
+                const currentQty = (state.player.materials && state.player.materials[mat]) || 0;
+                if (currentQty < reqQty) {
+                    notifyMsg(`Missing ingredient: need ${reqQty}x ${mat} (you have ${currentQty})!`);
+                    return false;
+                }
+            }
+        }
+
+        // Deduct gold and materials
+        if (recipe.goldCost) state.spendGold(recipe.goldCost);
+        if (recipe.materials) {
+            for (const [mat, reqQty] of Object.entries(recipe.materials)) {
+                state.player.materials[mat] -= reqQty;
+            }
+        }
+
+        // Add result
+        const resultId = recipe.result?.id || recipe.id;
+        const qty = recipe.result?.qty || 1;
+        if (!state.player.potions) state.player.potions = {};
+        state.player.potions[resultId] = (state.player.potions[resultId] || 0) + qty;
+
+        if (state.addLog) {
+            state.addLog(`⚗️ Brewed ${qty}x [${recipe.name}] at the ${recipe.tierName}!`, "craft", "⚗️");
+        }
+
+        if (window.CombatManager) {
+            window.CombatManager.showDamagePopup(`⚗️ Brewed: ${recipe.name}!`, false, false, "potion");
+        }
+
+        state.save();
+        state.notify();
+        return true;
+    },
+
     rollLootDrop(mob) {
         if (!mob) return;
         const state = window.gameState;
 
+        let dropMult = 1.0;
+        if (state.world.activeEventId && window.EventsData && window.EventsData[state.world.activeEventId]) {
+            dropMult *= (window.EventsData[state.world.activeEventId].dropMult || 1.0);
+        }
+        if (state.world.activeScenarioId && window.ScenariosData && window.ScenariosData[state.world.activeScenarioId]) {
+            dropMult *= (window.ScenariosData[state.world.activeScenarioId].modifiers?.dropMult || 1.0);
+        }
+
         // If mob specifies explicit dropTable
         if (mob.dropTable && mob.dropTable.length > 0) {
-            if (Math.random() <= (mob.dropChance || 0.5)) {
+            const effectiveChance = Math.min(1.0, (mob.dropChance || 0.5) * dropMult);
+            if (Math.random() <= effectiveChance) {
                 mob.dropTable.forEach(entry => {
-                    if (Math.random() <= entry.chance) {
+                    const entryChance = Math.min(1.0, entry.chance * dropMult);
+                    if (Math.random() <= entryChance) {
                         if (entry.type === "material") {
-                            const qty = Math.floor(Math.random() * (entry.max - entry.min + 1)) + entry.min;
+                            const baseQty = Math.floor(Math.random() * (entry.max - entry.min + 1)) + entry.min;
+                            const qty = Math.max(1, Math.round(baseQty * Math.max(1, dropMult * 0.8)));
                             this.addMaterial(entry.key, qty);
                         } else if (entry.type === "consumable") {
                             state.player.potions[entry.id] = (state.player.potions[entry.id] || 0) + 1;
@@ -255,17 +410,18 @@ window.InventoryManager = {
 
         // Fallback default loot roll
         const roll = Math.random();
-        if (roll < 0.60) {
+        if (roll < Math.min(0.95, 0.60 * dropMult)) {
             const mats = ["ironOre", "wood", "crystal"];
             if (mob.level > 20) mats.push("dragonScale");
             if (mob.level > 40) mats.push("shadowEssence");
 
             const droppedMat = mats[Math.floor(Math.random() * mats.length)];
-            const qty = Math.floor(Math.random() * 3) + 1;
+            const baseQty = Math.floor(Math.random() * 3) + 1;
+            const qty = Math.max(1, Math.round(baseQty * Math.max(1, dropMult * 0.8)));
             this.addMaterial(droppedMat, qty);
         }
 
-        if (roll < 0.18) {
+        if (roll < Math.min(0.60, 0.18 * dropMult)) {
             const possibleItems = Object.keys(window.ItemsData).filter(k => window.ItemsData[k].type === "equipment");
             const droppedId = possibleItems[Math.floor(Math.random() * possibleItems.length)];
             this.addItem(droppedId);

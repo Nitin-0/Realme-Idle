@@ -26,7 +26,16 @@ window.gameState = {
         equipment: {
             weapon: null,
             armor: null,
+            trinket: null,
             ring: null
+        },
+        upgrades: {
+            attack: 0,
+            defense: 0,
+            hp: 0,
+            crit: 0,
+            income: 0,
+            life: 0
         },
         inventory: [],
         materials: {
@@ -48,7 +57,9 @@ window.gameState = {
             activeCooldown: 0,
             autoCast: true
         },
-        activeBuffs: []
+        activeBuffs: [],
+        classRanks: { knight: 1, rogue: 1, mage: 1, paladin: 1 },
+        moonlitVale3Cleared: false
     },
 
     world: {
@@ -59,7 +70,9 @@ window.gameState = {
         activeEventTimer: 0,
         activeScenarioId: null,
         activeScenarioTimer: 0,
-        unlockedMaps: ["moonlit_vale"]
+        unlockedMaps: ["moonlit_vale"],
+        mapDepths: { moonlit_vale: 1 },
+        unlockedDepths: { moonlit_vale: 1 }
     },
 
     combat: {
@@ -161,14 +174,254 @@ window.gameState = {
         return res;
     },
 
+    getClassPromotionsBonus(statKey) {
+        let total = 0;
+        const heroClass = this.player.heroClass;
+        const currentRank = (this.player.classRanks && this.player.classRanks[heroClass]) || 1;
+        const heroDef = window.HeroesData ? window.HeroesData[heroClass] : null;
+        if (!heroDef || !heroDef.promotions || currentRank <= 1) return 0;
+
+        heroDef.promotions.forEach(p => {
+            if (p.rank <= currentRank) {
+                const b = p.bonus || p.bonusStats;
+                if (!b) return;
+                if (b[statKey] !== undefined) total += b[statKey];
+                else if (statKey === "attack" && b.atk !== undefined) total += b.atk;
+                else if (statKey === "defense" && b.def !== undefined) total += b.def;
+                else if (statKey === "maxHp" && b.hp !== undefined) total += b.hp;
+                else if (statKey === "critChance" && b.crit !== undefined) total += (b.crit > 1 ? b.crit / 100 : b.crit);
+            }
+        });
+        return total;
+    },
+
+    getClassPassivesBonus(statKey) {
+        let total = 0;
+        const heroClass = this.player.heroClass;
+        const heroLevel = this.player.level || 1;
+        const heroDef = window.HeroesData ? window.HeroesData[heroClass] : null;
+        if (!heroDef || !heroDef.passives) return 0;
+
+        heroDef.passives.forEach(p => {
+            if (p.reqLevel <= heroLevel) {
+                const b = p.bonus || {};
+                if (b[statKey] !== undefined) total += b[statKey];
+                else if (statKey === "attack" && b.atk !== undefined) total += b.atk;
+                else if (statKey === "defense" && b.def !== undefined) total += b.def;
+                else if (statKey === "maxHp" && b.hp !== undefined) total += b.hp;
+                else if (statKey === "critChance" && b.crit !== undefined) total += (b.crit > 1 ? b.crit / 100 : b.crit);
+                else if (statKey === "dodge" && b.eva !== undefined) total += b.eva;
+                else if (statKey === "lifesteal" && b.vamp !== undefined) total += b.vamp;
+            }
+        });
+        return total;
+    },
+
+    isKingdomDomainUnlocked() {
+        const lvlMet = (this.player.level || 1) >= 5;
+        const bossMet = !!this.player.moonlitVale3Cleared ||
+                        (this.world.unlockedMaps && this.world.unlockedMaps.includes("ashen_wastes")) ||
+                        (this.getMapMaxUnlockedDepth && this.getMapMaxUnlockedDepth("moonlit_vale") > 3);
+        return lvlMet && bossMet;
+    },
+
+    getStatBreakdown(statKey) {
+        let base = 0;
+        const gearItems = [];
+        let passives = 0;
+        let promotions = 0;
+        let upgrades = 0;
+        let total = 0;
+        let isPct = false;
+
+        if (statKey === "attack") {
+            base = this.player.power;
+            if (this.player.upgrades && this.player.upgrades.attack) {
+                upgrades = this.player.upgrades.attack * 8;
+            }
+            promotions = this.getClassPromotionsBonus("attack");
+            passives = this.getClassPassivesBonus("attack");
+            Object.entries(this.player.equipment).forEach(([slot, item]) => {
+                if (item) {
+                    const eff = this.getItemEffectiveStats(item);
+                    const val = eff.attack || eff.atk || 0;
+                    if (val > 0) {
+                        gearItems.push({
+                            slot: slot.toUpperCase(),
+                            name: item.name || slot,
+                            value: Math.round(val)
+                        });
+                    }
+                }
+            });
+            total = this.getEffectiveAttack();
+        } else if (statKey === "defense") {
+            base = this.player.defense;
+            if (this.player.upgrades && this.player.upgrades.defense) {
+                upgrades = this.player.upgrades.defense * 4;
+            }
+            promotions = this.getClassPromotionsBonus("defense");
+            passives = this.getClassPassivesBonus("defense");
+            Object.entries(this.player.equipment).forEach(([slot, item]) => {
+                if (item) {
+                    const eff = this.getItemEffectiveStats(item);
+                    const val = eff.defense || eff.def || 0;
+                    if (val > 0) {
+                        gearItems.push({
+                            slot: slot.toUpperCase(),
+                            name: item.name || slot,
+                            value: Math.round(val)
+                        });
+                    }
+                }
+            });
+            total = this.getEffectiveDefense();
+        } else if (statKey === "maxHp") {
+            base = this.player.maxHp;
+            if (this.player.upgrades && this.player.upgrades.hp) {
+                upgrades = this.player.upgrades.hp * 30;
+            }
+            promotions = this.getClassPromotionsBonus("maxHp");
+            passives = this.getClassPassivesBonus("maxHp");
+            Object.entries(this.player.equipment).forEach(([slot, item]) => {
+                if (item) {
+                    const eff = this.getItemEffectiveStats(item);
+                    const val = eff.hp || 0;
+                    if (val > 0) {
+                        gearItems.push({
+                            slot: slot.toUpperCase(),
+                            name: item.name || slot,
+                            value: Math.round(val)
+                        });
+                    }
+                }
+            });
+            total = this.getEffectiveMaxHp();
+        } else if (statKey === "critChance") {
+            isPct = true;
+            base = Math.round(this.player.critChance * 100);
+            if (this.player.upgrades && this.player.upgrades.crit) {
+                upgrades = Math.round(this.player.upgrades.crit * 1);
+            }
+            promotions = Math.round(this.getClassPromotionsBonus("critChance") * 100);
+            passives = Math.round(this.getClassPassivesBonus("critChance") * 100);
+            Object.entries(this.player.equipment).forEach(([slot, item]) => {
+                if (item) {
+                    const eff = this.getItemEffectiveStats(item);
+                    const raw = eff.critChance || (eff.crit ? (eff.crit > 1 ? eff.crit / 100 : eff.crit) : 0);
+                    if (raw > 0) {
+                        gearItems.push({
+                            slot: slot.toUpperCase(),
+                            name: item.name || slot,
+                            value: Math.round(raw * 100)
+                        });
+                    }
+                }
+            });
+            total = Math.round(this.getEffectiveCritChance() * 100);
+        } else if (statKey === "dodge") {
+            isPct = true;
+            base = Math.round(this.player.dodge * 100);
+            if (this.player.upgrades && this.player.upgrades.defense) {
+                upgrades = Math.round(this.player.upgrades.defense * 0.2);
+            }
+            promotions = Math.round(this.getClassPromotionsBonus("dodge") * 100);
+            passives = Math.round(this.getClassPassivesBonus("dodge") * 100);
+            Object.entries(this.player.equipment).forEach(([slot, item]) => {
+                if (item) {
+                    const eff = this.getItemEffectiveStats(item);
+                    const raw = eff.dodge || eff.eva || 0;
+                    if (raw > 0) {
+                        gearItems.push({
+                            slot: slot.toUpperCase(),
+                            name: item.name || slot,
+                            value: Math.round(raw * 100)
+                        });
+                    }
+                }
+            });
+            total = Math.round(this.getEffectiveDodge() * 100);
+        } else if (statKey === "lifesteal") {
+            isPct = true;
+            base = Math.round(this.player.lifesteal * 100);
+            if (this.player.upgrades && this.player.upgrades.life) {
+                upgrades = Math.round(this.player.upgrades.life * 1);
+            }
+            promotions = Math.round(this.getClassPromotionsBonus("lifesteal") * 100);
+            passives = Math.round(this.getClassPassivesBonus("lifesteal") * 100);
+            Object.entries(this.player.equipment).forEach(([slot, item]) => {
+                if (item) {
+                    const eff = this.getItemEffectiveStats(item);
+                    const raw = eff.lifesteal || eff.vamp || 0;
+                    if (raw > 0) {
+                        gearItems.push({
+                            slot: slot.toUpperCase(),
+                            name: item.name || slot,
+                            value: Math.round(raw * 100)
+                        });
+                    }
+                }
+            });
+            total = Math.round(this.getEffectiveLifesteal() * 100);
+        }
+
+        // Build detailed tooltip detailing where every point comes from
+        const parts = [`Base Class: ${base}${isPct ? '%' : ''}`];
+        gearItems.forEach(g => {
+            parts.push(`${g.name} [${g.slot}]: +${g.value}${isPct ? '%' : ''}`);
+        });
+        if (passives > 0) parts.push(`Divine Passives: +${passives}${isPct ? '%' : ''}`);
+        if (promotions > 0) parts.push(`Rank Mastery: +${promotions}${isPct ? '%' : ''}`);
+        if (upgrades > 0) parts.push(`Upgrades: +${upgrades}${isPct ? '%' : ''}`);
+        parts.push(`Total: ${total}${isPct ? '%' : ''}`);
+
+        const tooltip = parts.join("  |  ");
+
+        // Format separated display string: e.g. 258+12+12
+        let displayStr = `${base}${isPct ? '%' : ''}`;
+        if (gearItems.length > 0 || passives > 0 || promotions > 0 || upgrades > 0) {
+            const extraAdditions = [];
+            gearItems.forEach(g => extraAdditions.push(`${g.value}${isPct ? '%' : ''}`));
+            const otherBonus = passives + promotions + upgrades;
+            if (otherBonus > 0) {
+                extraAdditions.push(`${otherBonus}${isPct ? '%' : ''}`);
+            }
+            displayStr = `${base}${isPct ? '%' : ''} + ${extraAdditions.join(" + ")} (= ${total}${isPct ? '%' : ''})`;
+        }
+
+        return {
+            base,
+            gearItems,
+            passives,
+            promotions,
+            upgrades,
+            total,
+            isPct,
+            tooltip,
+            displayStr
+        };
+    },
+
     getEffectiveAttack() {
         let att = this.player.power;
+
+        // Permanent Upgrades (Whetstone Rites: +8 Atk per lv)
+        if (this.player.upgrades && this.player.upgrades.attack) {
+            att += this.player.upgrades.attack * 8;
+        }
+
+        // Class Promotion Mastery Bonus
+        att += this.getClassPromotionsBonus("attack");
+
+        // Class Divine Passives Bonus ("Blessed by the Gods")
+        att += this.getClassPassivesBonus("attack");
 
         // Add equipment attack (with upgrade scaling)
         Object.values(this.player.equipment).forEach(item => {
             if (item) {
                 const eff = this.getItemEffectiveStats(item);
                 if (eff.attack) att += eff.attack;
+                if (eff.atk) att += eff.atk;
             }
         });
 
@@ -189,10 +442,23 @@ window.gameState = {
 
     getEffectiveDefense() {
         let def = this.player.defense;
+
+        // Permanent Upgrades (Armor Plating: +4 Def per lv)
+        if (this.player.upgrades && this.player.upgrades.defense) {
+            def += this.player.upgrades.defense * 4;
+        }
+
+        // Class Promotion Mastery Bonus
+        def += this.getClassPromotionsBonus("defense");
+
+        // Class Divine Passives Bonus ("Blessed by the Gods")
+        def += this.getClassPassivesBonus("defense");
+
         Object.values(this.player.equipment).forEach(item => {
             if (item) {
                 const eff = this.getItemEffectiveStats(item);
                 if (eff.defense) def += eff.defense;
+                if (eff.def) def += eff.def;
             }
         });
 
@@ -205,10 +471,23 @@ window.gameState = {
 
     getEffectiveCritChance() {
         let crit = this.player.critChance;
+
+        // Permanent Upgrades (Precision Drills: +1% Crit per lv)
+        if (this.player.upgrades && this.player.upgrades.crit) {
+            crit += this.player.upgrades.crit * 0.01;
+        }
+
+        // Class Promotion Mastery Bonus
+        crit += this.getClassPromotionsBonus("critChance");
+
+        // Class Divine Passives Bonus ("Blessed by the Gods")
+        crit += this.getClassPassivesBonus("critChance");
+
         Object.values(this.player.equipment).forEach(item => {
             if (item) {
                 const eff = this.getItemEffectiveStats(item);
                 if (eff.critChance) crit += eff.critChance;
+                if (eff.crit) crit += (eff.crit > 1 ? eff.crit / 100 : eff.crit);
             }
         });
         // Mage Tower (+2% crit per level)
@@ -223,6 +502,18 @@ window.gameState = {
 
     getEffectiveDodge() {
         let dodge = this.player.dodge;
+
+        // Permanent Upgrades (Armor Plating: +0.2% Dodge per lv)
+        if (this.player.upgrades && this.player.upgrades.defense) {
+            dodge += this.player.upgrades.defense * 0.002;
+        }
+
+        // Class Promotion Mastery Bonus
+        dodge += this.getClassPromotionsBonus("dodge");
+
+        // Class Divine Passives Bonus ("Blessed by the Gods")
+        dodge += this.getClassPassivesBonus("dodge");
+
         Object.values(this.player.equipment).forEach(item => {
             if (item) {
                 const eff = this.getItemEffectiveStats(item);
@@ -239,6 +530,18 @@ window.gameState = {
 
     getEffectiveLifesteal() {
         let ls = this.player.lifesteal;
+
+        // Permanent Upgrades (Vampiric Rune: +1% Lifesteal per lv)
+        if (this.player.upgrades && this.player.upgrades.life) {
+            ls += this.player.upgrades.life * 0.01;
+        }
+
+        // Class Promotion Mastery Bonus
+        ls += this.getClassPromotionsBonus("lifesteal");
+
+        // Class Divine Passives Bonus ("Blessed by the Gods")
+        ls += this.getClassPassivesBonus("lifesteal");
+
         Object.values(this.player.equipment).forEach(item => {
             if (item) {
                 const eff = this.getItemEffectiveStats(item);
@@ -246,6 +549,176 @@ window.gameState = {
             }
         });
         return Math.min(0.50, ls);
+    },
+
+    getEffectiveMaxHp() {
+        let hp = this.player.maxHp;
+
+        // Permanent Upgrades (Vitality Training: +30 Max HP per lv)
+        if (this.player.upgrades && this.player.upgrades.hp) {
+            hp += this.player.upgrades.hp * 30;
+        }
+
+        // Class Promotion Mastery Bonus
+        hp += this.getClassPromotionsBonus("maxHp");
+
+        // Class Divine Passives Bonus ("Blessed by the Gods")
+        hp += this.getClassPassivesBonus("maxHp");
+
+        Object.values(this.player.equipment).forEach(item => {
+            if (item) {
+                const eff = this.getItemEffectiveStats(item);
+                if (eff.hp) hp += eff.hp;
+            }
+        });
+
+        return Math.floor(hp);
+    },
+
+    /* =========================
+       MAP DEPTH / VERSION HELPERS
+    ========================= */
+    getMapCurrentDepth(mapId = this.world.currentMapId) {
+        if (!this.world.mapDepths) this.world.mapDepths = {};
+        return this.world.mapDepths[mapId] || 1;
+    },
+
+    getMapMaxUnlockedDepth(mapId = this.world.currentMapId) {
+        if (!this.world.unlockedDepths) this.world.unlockedDepths = {};
+        return this.world.unlockedDepths[mapId] || 1;
+    },
+
+    getDepthTier(mapId = this.world.currentMapId, depth = null) {
+        const d = depth || this.getMapCurrentDepth(mapId);
+        const map = window.MapsData ? window.MapsData[mapId] : null;
+        if (map && map.depthTiers && map.depthTiers[d - 1]) {
+            return map.depthTiers[d - 1];
+        }
+        const romans = ["I", "II", "III", "IV", "V"];
+        const subNames = ["Fringe", "Deep Thicket", "Abyssal Heart", "Sanctum Depth", "Core"];
+        return {
+            depth: d,
+            roman: romans[d - 1] || `${d}`,
+            subtitle: subNames[d - 1] || `Depth ${d}`,
+            statMult: 1 + (d - 1) * 0.45,
+            goldMult: 1 + (d - 1) * 0.50,
+            xpMult: 1 + (d - 1) * 0.50
+        };
+    },
+
+    getCurrentDepthMultiplier(mapId = this.world.currentMapId) {
+        const tier = this.getDepthTier(mapId);
+        return {
+            statMult: tier.statMult || 1.0,
+            goldMult: tier.goldMult || 1.0,
+            xpMult: tier.xpMult || 1.0
+        };
+    },
+
+    setMapDepth(mapId, depth) {
+        const map = window.MapsData ? window.MapsData[mapId] : null;
+        if (!map) return;
+        const maxUnlocked = this.getMapMaxUnlockedDepth(mapId);
+        const targetDepth = Math.max(1, Math.min(depth, maxUnlocked));
+
+        if (!this.world.mapDepths) this.world.mapDepths = {};
+        this.world.mapDepths[mapId] = targetDepth;
+        this.combat.stage = 1;
+
+        const tier = this.getDepthTier(mapId, targetDepth);
+        if (this.addLog) {
+            this.addLog(`🌲 Delved into ${map.name} ${tier.roman} (${tier.subtitle})!`, "travel", "🌲");
+        }
+
+        if (window.SpawningManager) window.SpawningManager.spawnNextMob();
+        this.notify();
+    },
+
+    unlockNextDepth(mapId = this.world.currentMapId) {
+        const map = window.MapsData ? window.MapsData[mapId] : null;
+        const maxLimit = (map && map.maxDepth) || 3;
+        const currentUnlocked = this.getMapMaxUnlockedDepth(mapId);
+
+        if (currentUnlocked < maxLimit) {
+            const next = currentUnlocked + 1;
+            if (!this.world.unlockedDepths) this.world.unlockedDepths = {};
+            this.world.unlockedDepths[mapId] = next;
+            this.save();
+            return next;
+        }
+        return null;
+    },
+
+    /* =========================
+       CLASS PROMOTION & ASCENSION
+    ========================= */
+    getClassRank(classId = this.player.heroClass) {
+        if (!this.player.classRanks) this.player.classRanks = {};
+        return this.player.classRanks[classId] || 1;
+    },
+
+    getNextClassPromotion(classId = this.player.heroClass) {
+        const rank = this.getClassRank(classId);
+        const heroDef = window.HeroesData ? window.HeroesData[classId] : null;
+        if (!heroDef || !heroDef.promotions) return null;
+        return heroDef.promotions.find(p => p.rank === rank + 1) || null;
+    },
+
+    canPromoteClass(classId = this.player.heroClass) {
+        const promo = this.getNextClassPromotion(classId);
+        if (!promo) return { can: false, reason: "Max Rank already attained!" };
+
+        if ((this.player.level || 1) < promo.reqLevel) {
+            return { can: false, reason: `Requires Hero Level ${promo.reqLevel}!` };
+        }
+
+        if (promo.goldCost && !this.canAfford(promo.goldCost)) {
+            return { can: false, reason: `Requires ${promo.goldCost.toLocaleString()} gold!` };
+        }
+
+        if (promo.materials) {
+            for (const [mat, qty] of Object.entries(promo.materials)) {
+                const have = (this.player.materials && this.player.materials[mat]) || 0;
+                if (have < qty) {
+                    return { can: false, reason: `Need ${qty}x ${mat} (Have ${have})!` };
+                }
+            }
+        }
+
+        return { can: true, promo };
+    },
+
+    promoteClass(classId = this.player.heroClass) {
+        const check = this.canPromoteClass(classId);
+        if (!check.can) {
+            alert(check.reason);
+            return false;
+        }
+
+        const promo = check.promo;
+        if (promo.goldCost) this.spendGold(promo.goldCost);
+
+        if (promo.materials) {
+            for (const [mat, qty] of Object.entries(promo.materials)) {
+                this.player.materials[mat] -= qty;
+            }
+        }
+
+        if (!this.player.classRanks) this.player.classRanks = {};
+        this.player.classRanks[classId] = promo.rank;
+
+        const heroDef = window.HeroesData ? window.HeroesData[classId] : { name: "Hero" };
+        if (this.addLog) {
+            this.addLog(`⭐ VOCATION ASCENDED! ${heroDef.name} promoted to Rank ${promo.rank} [${promo.title}]! (${promo.description})`, "level", "⭐");
+        }
+
+        if (window.CombatManager) {
+            window.CombatManager.showDamagePopup(`⭐ PROMOTED: ${promo.title}!`, false, false, "crit");
+        }
+
+        this.save();
+        this.notify();
+        return true;
     },
 
     addGold(amount) {
@@ -309,13 +782,25 @@ window.gameState = {
             this.player.level++;
             this.player.power += 6;
             this.player.maxHp += 25;
-            this.player.hp = this.player.maxHp;
+            this.player.hp = this.getEffectiveMaxHp();
             this.player.xpToNext = Math.floor(this.player.xpToNext * 1.4);
 
             if (window.devMode && typeof window.devMode.logToConsole === "function") {
                 window.devMode.logToConsole(`🌟 LEVEL UP! You reached Level ${this.player.level}! (+6 Power, +25 Max HP)`, "success");
             }
             this.addLog(`⭐ LEVEL UP! Your hero reached Level ${this.player.level}! (+6 Power, +25 Max HP)`, "level", "⭐");
+
+            // Check divine passives unlocked at this new level
+            const heroDef = window.HeroesData ? window.HeroesData[this.player.heroClass] : null;
+            if (heroDef && heroDef.passives) {
+                const newPassives = heroDef.passives.filter(p => p.reqLevel === this.player.level);
+                newPassives.forEach(p => {
+                    this.addLog(`✨ BLESSING OF THE GODS! ${p.lore}`, "blessing", "✨");
+                    if (window.CombatManager) {
+                        window.CombatManager.showDamagePopup(`✨ Blessed: ${p.name}!`, false, false, "blessing");
+                    }
+                });
+            }
         }
         this.notify();
     },
@@ -379,7 +864,7 @@ window.gameState = {
         this.combat.stage = 1;
         this.combat.inTemple = false;
         this.combat.autoFight = false;
-        this.player.hp = this.player.maxHp;
+        this.player.hp = this.getEffectiveMaxHp();
 
         if (window.SpawningManager) window.SpawningManager.spawnNextMob();
         this.save();
@@ -390,7 +875,7 @@ window.gameState = {
         this.combat.autoFight = false;
         this.combat.inTemple = true;
         this.combat.currentMob = null;
-        this.player.hp = Math.max(1, Math.floor(this.player.maxHp * 0.5));
+        this.player.hp = Math.max(1, Math.floor(this.getEffectiveMaxHp() * 0.5));
 
         // Temple Donation / Tithe on Death
         let tithe = 0;
@@ -624,8 +1109,15 @@ window.gameState = {
                     if (!this.player.activeBuffs) {
                         this.player.activeBuffs = [];
                     }
+                    if (!this.player.classRanks) {
+                        this.player.classRanks = { knight: 1, rogue: 1, mage: 1, paladin: 1 };
+                    }
                 }
-                if (data.world) Object.assign(this.world, data.world);
+                if (data.world) {
+                    Object.assign(this.world, data.world);
+                    if (!this.world.mapDepths) this.world.mapDepths = { moonlit_vale: 1 };
+                    if (!this.world.unlockedDepths) this.world.unlockedDepths = { moonlit_vale: 1 };
+                }
                 if (data.combat) {
                     if (data.combat.stage) this.combat.stage = data.combat.stage;
                     if (data.combat.inTemple !== undefined) this.combat.inTemple = data.combat.inTemple;

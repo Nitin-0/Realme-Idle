@@ -414,6 +414,19 @@ window.MainEngine = {
             });
         }
 
+        const btnVicDeeper = document.getElementById("btnVictoryGoDeeper");
+        if (btnVicDeeper) {
+            btnVicDeeper.addEventListener("click", () => {
+                this.hideVictoryModal();
+                if (this.victoryDetails && this.victoryDetails.currentMapId && this.victoryDetails.nextDepthNum) {
+                    state.setMapDepth(this.victoryDetails.currentMapId, this.victoryDetails.nextDepthNum);
+                    state.combat.stage = 1;
+                    if (window.CombatEngine) window.CombatEngine.respawnEnemy();
+                    this.updateUI();
+                }
+            });
+        }
+
         const btnVicStay = document.getElementById("btnVictoryStay");
         if (btnVicStay) {
             btnVicStay.addEventListener("click", () => {
@@ -516,8 +529,13 @@ window.MainEngine = {
             const state = window.gameState;
             if (state.guildIncome && state.guildIncome.enabled !== false) {
                 const baseRate = (state.guildIncome.goldPerSecond !== undefined) ? state.guildIncome.goldPerSecond : (state.costs.goldPerSecond || 3);
+                const upgradeBonus = (state.player.upgrades && state.player.upgrades.income) ? state.player.upgrades.income * 2.5 : 0;
+                let gearGps = 0;
+                Object.values(state.player.equipment).forEach(item => {
+                    if (item && item.stats && item.stats.gold) gearGps += item.stats.gold;
+                });
                 const treasuryBonus = 1 + (state.kingdom.treasury - 1) * 0.10;
-                const actualEarned = Math.floor(baseRate * treasuryBonus);
+                const actualEarned = Math.floor((baseRate + upgradeBonus + gearGps) * treasuryBonus);
                 if (actualEarned > 0) {
                     state.addGold(actualEarned);
                 }
@@ -543,8 +561,12 @@ window.MainEngine = {
         if (document.getElementById("gold")) document.getElementById("gold").textContent = Math.floor(state.player.gold).toLocaleString();
         if (document.getElementById("power")) document.getElementById("power").textContent = state.getEffectiveAttack().toLocaleString();
 
-        if (document.getElementById("realm")) document.getElementById("realm").textContent = map.roman;
-        if (document.getElementById("realmName")) document.getElementById("realmName").textContent = map.name;
+        const curDepth = state.getMapCurrentDepth ? state.getMapCurrentDepth(map.id) : 1;
+        const curTier = state.getDepthTier ? state.getDepthTier(map.id, curDepth) : { roman: "I", subtitle: "" };
+        const depthSuffix = curTier.subtitle ? ` (${curTier.subtitle})` : '';
+
+        if (document.getElementById("realm")) document.getElementById("realm").textContent = `${map.roman || 1}.${curTier.roman}`;
+        if (document.getElementById("realmName")) document.getElementById("realmName").textContent = `${map.name} ${curTier.roman}${depthSuffix}`;
 
         if (document.getElementById("heroClassIcon")) document.getElementById("heroClassIcon").textContent = heroDef.icon;
         if (document.getElementById("heroClassName")) document.getElementById("heroClassName").textContent = heroDef.name;
@@ -567,9 +589,83 @@ window.MainEngine = {
         const xpPercent = Math.min(100, Math.max(0, (state.player.xp / state.player.xpToNext) * 100));
         if (document.getElementById("xpFill")) document.getElementById("xpFill").style.width = xpPercent + "%";
 
+        // Update Weather Chip in HUD
+        const weatherChip = document.getElementById("hudWeatherChip");
+        if (weatherChip) {
+            const wId = state.world.currentWeatherId || "clear";
+            const wDef = (window.WeatherData && window.WeatherData[wId]) || { name: "Clear Sky", icon: "☀️", playerDmgMult: 1, goldMult: 1 };
+            const wIconEl = document.getElementById("hudWeatherIcon");
+            const wNameEl = document.getElementById("hudWeatherName");
+            const wDetailEl = document.getElementById("hudWeatherDetail");
+            const wBadgeEl = document.getElementById("hudWeatherBadge");
+            if (wIconEl) wIconEl.textContent = wDef.icon || "☀️";
+            if (wNameEl) wNameEl.textContent = wDef.name || "Clear Sky";
+            if (wDetailEl) {
+                const parts = [];
+                if (wDef.goldMult && wDef.goldMult !== 1) parts.push(`Gold x${wDef.goldMult}`);
+                if (wDef.playerDmgMult && wDef.playerDmgMult !== 1) parts.push(`Dmg x${wDef.playerDmgMult}`);
+                if (wDef.enemyDmgMult && wDef.enemyDmgMult !== 1) parts.push(`Enemy x${wDef.enemyDmgMult}`);
+                wDetailEl.textContent = parts.length > 0 ? parts.join(" · ") : "Standard Realm Climate";
+            }
+            if (wBadgeEl) {
+                const mult = wDef.goldMult || wDef.playerDmgMult || 1.0;
+                wBadgeEl.textContent = `${mult.toFixed(1)}x`;
+                wBadgeEl.className = mult > 1 ? "chip-badge badge-success" : (mult < 1 ? "chip-badge badge-danger" : "chip-badge");
+            }
+            weatherChip.title = `Weather: ${wDef.name}\nPlayer Dmg: x${wDef.playerDmgMult || 1}\nEnemy Dmg: x${wDef.enemyDmgMult || 1}\nGold: x${wDef.goldMult || 1}`;
+        }
+
+        // Update Scenario / Event Chip in HUD
+        const scenChip = document.getElementById("hudScenarioChip");
+        if (scenChip) {
+            const scId = state.world.activeScenarioId;
+            const evId = state.world.activeEventId;
+            const scDef = (scId && window.ScenariosData) ? window.ScenariosData[scId] : null;
+            const evDef = (evId && window.EventsData) ? window.EventsData[evId] : null;
+
+            const scIconEl = document.getElementById("hudScenarioIcon");
+            const scNameEl = document.getElementById("hudScenarioName");
+            const scDetailEl = document.getElementById("hudScenarioDetail");
+            const scBadgeEl = document.getElementById("hudScenarioBadge");
+
+            scenChip.classList.remove("active-cataclysm", "active-fortune", "active-celestial");
+
+            if (scDef) {
+                if (scIconEl) scIconEl.textContent = scDef.name.includes("BLACK MOON") ? "🌑" : (scDef.name.includes("RAIN") ? "🌧️" : (scDef.name.includes("TITAN") ? "⚡" : "🔥"));
+                if (scNameEl) scNameEl.textContent = scDef.name;
+                const mods = scDef.modifiers || {};
+                if (scDetailEl) scDetailEl.textContent = `HP x${mods.enemyHpMult || 1} · Drops x${mods.dropMult || 1} · Gold x${mods.goldMult || 1}`;
+                if (scBadgeEl) {
+                    scBadgeEl.textContent = "CALAMITY";
+                    scBadgeEl.className = "chip-badge badge-danger";
+                }
+                scenChip.classList.add(scDef.name.includes("RAIN") ? "active-fortune" : (scDef.name.includes("TITAN") ? "active-celestial" : "active-cataclysm"));
+                scenChip.title = `Active Scenario: ${scDef.name}\n${scDef.description || ''}`;
+            } else if (evDef) {
+                if (scIconEl) scIconEl.textContent = evDef.icon || "⚡";
+                if (scNameEl) scNameEl.textContent = evDef.name;
+                if (scDetailEl) scDetailEl.textContent = `Drops x${evDef.dropMult || 1} · Gold x${evDef.goldMult || 1}`;
+                if (scBadgeEl) {
+                    scBadgeEl.textContent = "EVENT";
+                    scBadgeEl.className = "chip-badge badge-success";
+                }
+                scenChip.classList.add(evDef.name.includes("Rain") ? "active-fortune" : "active-cataclysm");
+                scenChip.title = `World Event: ${evDef.name}\n${evDef.description || ''}`;
+            } else {
+                if (scIconEl) scIconEl.textContent = "✨";
+                if (scNameEl) scNameEl.textContent = "Peaceful Realm";
+                if (scDetailEl) scDetailEl.textContent = "Standard Monster Encounters";
+                if (scBadgeEl) {
+                    scBadgeEl.textContent = "Active";
+                    scBadgeEl.className = "chip-badge";
+                }
+                scenChip.title = "No active world calamities. Standard realm parameters apply.";
+            }
+        }
+
         // Arena Stage Tracker Bar
         const stageRealmEl = document.getElementById("arenaRealmName");
-        if (stageRealmEl) stageRealmEl.textContent = map.name;
+        if (stageRealmEl) stageRealmEl.textContent = `${map.name} ${curTier.roman}`;
 
         const stageNumEl = document.getElementById("arenaStageNum");
         if (stageNumEl) stageNumEl.textContent = state.combat.stage || 1;
@@ -606,12 +702,15 @@ window.MainEngine = {
         }
 
         // Hero HP Sync
-        if (document.getElementById("playerHpCard")) document.getElementById("playerHpCard").textContent = Math.max(0, Math.floor(state.player.hp)).toLocaleString();
-        if (document.getElementById("playerMaxHpCard")) document.getElementById("playerMaxHpCard").textContent = Math.floor(state.player.maxHp).toLocaleString();
-        if (document.getElementById("playerHpText")) document.getElementById("playerHpText").textContent = Math.max(0, Math.floor(state.player.hp)).toLocaleString();
-        if (document.getElementById("playerMaxHpText")) document.getElementById("playerMaxHpText").textContent = Math.floor(state.player.maxHp).toLocaleString();
+        const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : state.player.maxHp;
+        if (state.player.hp > effMaxHp) state.player.hp = effMaxHp;
 
-        const playerHpPct = Math.max(0, Math.min(100, (state.player.hp / state.player.maxHp) * 100));
+        if (document.getElementById("playerHpCard")) document.getElementById("playerHpCard").textContent = Math.max(0, Math.floor(state.player.hp)).toLocaleString();
+        if (document.getElementById("playerMaxHpCard")) document.getElementById("playerMaxHpCard").textContent = Math.floor(effMaxHp).toLocaleString();
+        if (document.getElementById("playerHpText")) document.getElementById("playerHpText").textContent = Math.max(0, Math.floor(state.player.hp)).toLocaleString();
+        if (document.getElementById("playerMaxHpText")) document.getElementById("playerMaxHpText").textContent = Math.floor(effMaxHp).toLocaleString();
+
+        const playerHpPct = Math.max(0, Math.min(100, (state.player.hp / effMaxHp) * 100));
         if (document.getElementById("playerHpFill")) document.getElementById("playerHpFill").style.width = playerHpPct + "%";
 
         // Stats Breakdown Strip
@@ -689,7 +788,7 @@ window.MainEngine = {
         ["weapon", "armor", "ring"].forEach(slot => {
             const el = document.getElementById(`eqSlot_${slot}`);
             if (el) {
-                const item = state.player.equipment[slot];
+                const item = state.player.equipment[slot] || (slot === "ring" ? (state.player.equipment.ring || state.player.equipment.trinket) : null);
                 if (item) {
                     const upgStr = item.upgradeLevel ? ` <span class="eq-upg">+${item.upgradeLevel}</span>` : "";
                     el.innerHTML = `<span class="eq-icon">${item.icon}</span> <span class="eq-name ${item.rarity}">${item.name}${upgStr}</span>`;
@@ -705,6 +804,49 @@ window.MainEngine = {
         });
 
         // Kingdom Buildings UI
+        const kingdomUnlocked = state.isKingdomDomainUnlocked ? state.isKingdomDomainUnlocked() : true;
+        const kingdomLockedState = document.getElementById("kingdomLockedState");
+        const kingdomUnlockedState = document.getElementById("kingdomUnlockedState");
+        const kingdomStatusTag = document.getElementById("kingdomStatusTag");
+
+        if (kingdomLockedState && kingdomUnlockedState) {
+            if (!kingdomUnlocked) {
+                kingdomLockedState.style.display = "block";
+                kingdomUnlockedState.style.display = "none";
+                if (kingdomStatusTag) {
+                    kingdomStatusTag.textContent = "🔒 ROYAL CHARTER LOCKED";
+                    kingdomStatusTag.style.color = "#ff4d6d";
+                }
+
+                const heroLvl = state.player.level || 1;
+                const lvlMet = heroLvl >= 5;
+                const bossMet = !!state.player.moonlitVale3Cleared ||
+                                (state.world.unlockedMaps && state.world.unlockedMaps.includes("ashen_wastes")) ||
+                                (state.getMapMaxUnlockedDepth && state.getMapMaxUnlockedDepth("moonlit_vale") > 3);
+
+                const reqLvlEl = document.getElementById("reqKingdomLevel");
+                const lblLvlEl = document.getElementById("lblKingdomLevel");
+                if (reqLvlEl && lblLvlEl) {
+                    reqLvlEl.className = `charter-req-chip ${lvlMet ? 'met' : 'unmet'}`;
+                    lblLvlEl.textContent = `Lv. ${heroLvl} / 5 ${lvlMet ? '✓' : ''}`;
+                }
+
+                const reqBossEl = document.getElementById("reqKingdomBoss");
+                const lblBossEl = document.getElementById("lblKingdomBoss");
+                if (reqBossEl && lblBossEl) {
+                    reqBossEl.className = `charter-req-chip ${bossMet ? 'met' : 'unmet'}`;
+                    lblBossEl.textContent = bossMet ? 'Vanquished ✓' : 'Awaiting Battle';
+                }
+            } else {
+                kingdomLockedState.style.display = "none";
+                kingdomUnlockedState.style.display = "block";
+                if (kingdomStatusTag) {
+                    kingdomStatusTag.textContent = "👑 SOVEREIGN DOMAIN";
+                    kingdomStatusTag.style.color = "#f2c94c";
+                }
+            }
+        }
+
         ["castle", "treasury", "blacksmith", "mageTower", "barracks"].forEach(bldg => {
             const lvlEl = document.getElementById(`bldgLvl_${bldg}`);
             const costEl = document.getElementById(`bldgCost_${bldg}`);
@@ -714,7 +856,7 @@ window.MainEngine = {
             if (window.KingdomManager && costEl) {
                 const cost = window.KingdomManager.getBuildingCost(bldg);
                 costEl.textContent = "✦ " + cost.toLocaleString();
-                if (btnEl) btnEl.disabled = !state.canAfford(cost);
+                if (btnEl) btnEl.disabled = !kingdomUnlocked || !state.canAfford(cost);
             }
         });
 
@@ -746,8 +888,13 @@ window.MainEngine = {
                 guildPill.textContent = "+0/s (Off)";
             } else {
                 const baseRate = (state.guildIncome && state.guildIncome.goldPerSecond !== undefined) ? state.guildIncome.goldPerSecond : (state.costs.goldPerSecond || 3);
+                const upgradeBonus = (state.player.upgrades && state.player.upgrades.income) ? state.player.upgrades.income * 2.5 : 0;
+                let gearGps = 0;
+                Object.values(state.player.equipment).forEach(item => {
+                    if (item && item.stats && item.stats.gold) gearGps += item.stats.gold;
+                });
                 const treasuryBonus = 1 + (state.kingdom.treasury - 1) * 0.10;
-                const totalRate = Math.floor(baseRate * treasuryBonus);
+                const totalRate = Math.floor((baseRate + upgradeBonus + gearGps) * treasuryBonus);
                 guildPill.textContent = `+${totalRate}/s`;
             }
         }
@@ -790,6 +937,37 @@ window.MainEngine = {
             });
         }
 
+        const depthChipsContainer = document.getElementById("mapDepthChips");
+        if (depthChipsContainer && window.MapsData) {
+            depthChipsContainer.innerHTML = "";
+            const curMapId = state.world.currentMapId;
+            const curMapDef = window.MapsData[curMapId];
+            const maxUnlockedDepth = state.getMapMaxUnlockedDepth(curMapId);
+            const activeDepth = state.getMapCurrentDepth(curMapId);
+            const depthTiers = (curMapDef && curMapDef.depthTiers) || [
+                { depth: 1, roman: "I", subtitle: "Fringe Clearing" },
+                { depth: 2, roman: "II", subtitle: "Deep Thicket" },
+                { depth: 3, roman: "III", subtitle: "Heart" }
+            ];
+
+            for (let d = 1; d <= maxUnlockedDepth; d++) {
+                const tier = depthTiers.find(t => t.depth === d) || { depth: d, roman: `${d}`, subtitle: `Tier ${d}` };
+                const chip = document.createElement("button");
+                chip.type = "button";
+                const isCurrent = (d === activeDepth);
+                chip.className = `map-depth-chip ${isCurrent ? 'active' : ''}`;
+                chip.innerHTML = `<strong>${tier.roman}</strong> · ${tier.subtitle} ${isCurrent ? '⚔' : ''}`;
+                chip.title = isCurrent ? `Currently delving in Tier ${tier.roman}` : `Delve into ${curMapDef ? curMapDef.name : ''} Tier ${tier.roman} (${tier.subtitle})`;
+                if (!isCurrent) {
+                    chip.addEventListener("click", () => {
+                        state.setMapDepth(curMapId, d);
+                        this.updateUI();
+                    });
+                }
+                depthChipsContainer.appendChild(chip);
+            }
+        }
+
         if (document.getElementById("damageUpgrade")) document.getElementById("damageUpgrade").disabled = !state.canAfford(state.costs.damageCost);
         if (document.getElementById("incomeUpgrade")) document.getElementById("incomeUpgrade").disabled = !state.canAfford(state.costs.incomeCost);
         if (document.getElementById("nextRealm")) document.getElementById("nextRealm").disabled = !state.canAfford(state.costs.realmCost);
@@ -812,14 +990,160 @@ window.MainEngine = {
         if (document.getElementById("charSheetDesc")) document.getElementById("charSheetDesc").textContent = heroDef.description;
         if (document.getElementById("charSheetPerks")) document.getElementById("charSheetPerks").textContent = `Class Perk: ${heroDef.perks || "None"}`;
 
-        if (document.getElementById("charStatAttack")) document.getElementById("charStatAttack").textContent = state.getEffectiveAttack().toLocaleString();
-        if (document.getElementById("charStatDefense")) document.getElementById("charStatDefense").textContent = state.getEffectiveDefense().toLocaleString();
-        if (document.getElementById("charStatCrit")) document.getElementById("charStatCrit").textContent = Math.round(state.getEffectiveCritChance() * 100) + "%";
+        const updateStatDisplay = (id, statKey, fallbackVal) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (state.getStatBreakdown) {
+                const b = state.getStatBreakdown(statKey);
+                el.textContent = b.displayStr;
+                el.title = b.tooltip;
+                if (b.gearItems.length > 0 || b.passives > 0 || b.promotions > 0 || b.upgrades > 0) {
+                    el.classList.add("has-breakdown");
+                } else {
+                    el.classList.remove("has-breakdown");
+                }
+            } else {
+                el.textContent = fallbackVal;
+            }
+        };
+
+        updateStatDisplay("charStatAttack", "attack", state.getEffectiveAttack().toLocaleString());
+        updateStatDisplay("charStatDefense", "defense", state.getEffectiveDefense().toLocaleString());
+        updateStatDisplay("charStatCrit", "critChance", Math.round(state.getEffectiveCritChance() * 100) + "%");
         if (document.getElementById("charStatCritDmg")) document.getElementById("charStatCritDmg").textContent = `${state.player.critDmg}x`;
-        if (document.getElementById("charStatDodge")) document.getElementById("charStatDodge").textContent = Math.round(state.getEffectiveDodge() * 100) + "%";
-        if (document.getElementById("charStatLifesteal")) document.getElementById("charStatLifesteal").textContent = Math.round(state.getEffectiveLifesteal() * 100) + "%";
-        if (document.getElementById("charStatHp")) document.getElementById("charStatHp").textContent = `${Math.floor(state.player.hp)} / ${Math.floor(state.player.maxHp)}`;
-        if (document.getElementById("charStatGps")) document.getElementById("charStatGps").textContent = `${state.costs.goldPerSecond * (1 + (state.kingdom.treasury - 1) * 0.10)}g / sec`;
+        updateStatDisplay("charStatDodge", "dodge", Math.round(state.getEffectiveDodge() * 100) + "%");
+        updateStatDisplay("charStatLifesteal", "lifesteal", Math.round(state.getEffectiveLifesteal() * 100) + "%");
+
+        const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : state.player.maxHp;
+        const hpEl = document.getElementById("charStatHp");
+        if (hpEl) {
+            if (state.getStatBreakdown) {
+                const bHp = state.getStatBreakdown("maxHp");
+                hpEl.textContent = `${Math.floor(state.player.hp)} / ${bHp.displayStr}`;
+                hpEl.title = `Current HP: ${Math.floor(state.player.hp)}  |  ${bHp.tooltip}`;
+                hpEl.classList.add("has-breakdown");
+            } else {
+                hpEl.textContent = `${Math.floor(state.player.hp)} / ${Math.floor(effMaxHp)}`;
+            }
+        }
+        if (document.getElementById("charStatGps")) {
+            const baseRate = (state.guildIncome && state.guildIncome.goldPerSecond !== undefined) ? state.guildIncome.goldPerSecond : (state.costs.goldPerSecond || 3);
+            const upgradeBonus = (state.player.upgrades && state.player.upgrades.income) ? state.player.upgrades.income * 2.5 : 0;
+            let gearGps = 0;
+            Object.values(state.player.equipment).forEach(item => {
+                if (item && item.stats && item.stats.gold) gearGps += item.stats.gold;
+            });
+            const treasuryBonus = 1 + (state.kingdom.treasury - 1) * 0.10;
+            const totalRate = Math.floor((baseRate + upgradeBonus + gearGps) * treasuryBonus);
+            document.getElementById("charStatGps").textContent = `${totalRate}g / sec`;
+        }
+
+        // Render Class Promotion & Ascension Card
+        const promoCard = document.getElementById("classPromotionCard");
+        if (promoCard && state.getNextClassPromotion) {
+            const curClass = state.player.heroClass;
+            const curRank = state.getClassRank(curClass);
+            const nextPromo = state.getNextClassPromotion(curClass);
+            const check = state.canPromoteClass(curClass);
+
+            if (!nextPromo) {
+                promoCard.innerHTML = `
+                    <div class="promo-header">
+                        <span class="promo-trophy">👑</span>
+                        <div>
+                            <h4>Pinnacle Vocation Mastered (Rank ${curRank})</h4>
+                            <p class="muted">You have attained the pinnacle of ${heroDef.name} mastery. All class rank attributes and perks are maximized.</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const reqLvMet = (state.player.level || 1) >= nextPromo.reqLevel;
+                const goldMet = state.canAfford(nextPromo.goldCost || 0);
+
+                let matsHtml = '';
+                if (nextPromo.materials) {
+                    matsHtml = Object.entries(nextPromo.materials).map(([mat, need]) => {
+                        const have = (state.player.materials && state.player.materials[mat]) || 0;
+                        const ok = have >= need;
+                        const matLabels = {
+                            ironOre: "⛏️ Iron Ore",
+                            wood: "🪵 Hardwood",
+                            crystal: "💎 Crystal",
+                            dragonScale: "🐉 Dragon Scale",
+                            shadowEssence: "🔮 Shadow Essence"
+                        };
+                        const label = matLabels[mat] || mat;
+                        return `<div class="promo-req-item ${ok ? 'met' : 'unmet'}">
+                            <span>${label}:</span> <strong>${have} / ${need}</strong> <span class="req-icon">${ok ? '✓' : '✗'}</span>
+                        </div>`;
+                    }).join('');
+                }
+
+                let bonusStatsHtml = '';
+                if (nextPromo.bonusStats) {
+                    bonusStatsHtml = Object.entries(nextPromo.bonusStats).map(([st, val]) => {
+                        const statLabels = {
+                            attack: "⚔ Attack",
+                            defense: "🛡 Defense",
+                            hp: "❤ Max HP",
+                            critChance: "🎯 Crit Rate",
+                            dodge: "💨 Dodge",
+                            lifesteal: "🩸 Lifesteal"
+                        };
+                        const isPct = st.toLowerCase().includes('crit') || st.toLowerCase().includes('dodge') || st.toLowerCase().includes('lifesteal');
+                        const displayVal = (typeof val === 'number' && isPct && val < 1) ? `+${Math.round(val * 100)}%` : (isPct ? `+${val}%` : `+${val}`);
+                        return `<span class="promo-stat-pill">${statLabels[st] || st}: ${displayVal}</span>`;
+                    }).join(' ');
+                }
+
+                promoCard.innerHTML = `
+                    <div class="promo-header">
+                        <span class="promo-badge">Rank ${curRank} ➜ ${nextPromo.rank}</span>
+                        <div>
+                            <h4>${nextPromo.title} <small style="color:var(--gold); font-size:12px;">(Rank ${nextPromo.rank} Milestone)</small></h4>
+                            <p class="muted" style="margin:2px 0 0; font-size:13px;">${nextPromo.description || 'Ascend vocation to gain powerful permanent attributes.'}</p>
+                        </div>
+                    </div>
+
+                    <div class="promo-body">
+                        <div class="promo-section">
+                            <span class="promo-section-title">PERMANENT STAT BONUSES:</span>
+                            <div class="promo-stats-row">${bonusStatsHtml || '<span class="muted">Enhanced combat mastery</span>'}</div>
+                        </div>
+
+                        <div class="promo-section">
+                            <span class="promo-section-title">ASCENSION REQUIREMENTS:</span>
+                            <div class="promo-req-grid">
+                                <div class="promo-req-item ${reqLvMet ? 'met' : 'unmet'}">
+                                    <span>Hero Level:</span> <strong>Lv. ${state.player.level} / ${nextPromo.reqLevel}</strong> <span class="req-icon">${reqLvMet ? '✓' : '✗'}</span>
+                                </div>
+                                <div class="promo-req-item ${goldMet ? 'met' : 'unmet'}">
+                                    <span>Gold:</span> <strong>${(nextPromo.goldCost || 0).toLocaleString()}g</strong> <span class="req-icon">${goldMet ? '✓' : '✗'}</span>
+                                </div>
+                                ${matsHtml}
+                            </div>
+                        </div>
+
+                        <div class="promo-actions">
+                            <button type="button" class="btn btn-gold btn-promote" id="btnPromoteClass" ${check.can ? '' : 'disabled'}>
+                                ${check.can ? `⭐ Ascend to ${nextPromo.title}` : `🔒 Locked (${check.reason})`}
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                const btnPromote = document.getElementById("btnPromoteClass");
+                if (btnPromote && check.can) {
+                    btnPromote.addEventListener("click", () => {
+                        const ok = state.promoteClass(curClass);
+                        if (ok) {
+                            this.renderCharacterView();
+                            this.updateUI();
+                        }
+                    });
+                }
+            }
+        }
 
         // Render Class Hall Picker Cards
         const grid = document.getElementById("classesGrid");
@@ -853,12 +1177,214 @@ window.MainEngine = {
                 grid.appendChild(card);
             });
         }
+
+        // Render Divine Blessings & Passives ("Blessed by the Gods")
+        this.renderDivineBlessings();
+    },
+
+    renderDivineBlessings() {
+        const list = document.getElementById("divineBlessingsList");
+        const countBadge = document.getElementById("divineBlessingsCount");
+        if (!list) return;
+
+        const state = window.gameState;
+        const heroDef = window.HeroesData ? window.HeroesData[state.player.heroClass] : null;
+        const passives = (heroDef && heroDef.passives) || [];
+        const playerLevel = state.player.level || 1;
+
+        let unlockedCount = 0;
+        list.innerHTML = "";
+
+        if (passives.length === 0) {
+            list.innerHTML = `<div class="empty-state" style="padding:16px; color:#8f89a8;">No divine blessings recorded for this vocation.</div>`;
+            if (countBadge) countBadge.textContent = "0 BLESSINGS";
+            return;
+        }
+
+        passives.forEach(p => {
+            const isUnlocked = playerLevel >= p.reqLevel;
+            if (isUnlocked) unlockedCount++;
+
+            const card = document.createElement("div");
+            card.className = `divine-blessing-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+
+            let bonusPills = "";
+            if (p.bonus) {
+                const statLabels = {
+                    attack: "⚔ Attack",
+                    atk: "⚔ Attack",
+                    defense: "🛡 Defense",
+                    def: "🛡 Defense",
+                    maxHp: "❤ Max HP",
+                    hp: "❤ Max HP",
+                    critChance: "🎯 Crit",
+                    crit: "🎯 Crit",
+                    dodge: "💨 Dodge",
+                    eva: "💨 Dodge",
+                    lifesteal: "🩸 Lifesteal",
+                    vamp: "🩸 Lifesteal"
+                };
+                bonusPills = Object.entries(p.bonus).map(([k, v]) => {
+                    const isPct = k.toLowerCase().includes("crit") || k.toLowerCase().includes("dodge") || k.toLowerCase().includes("lifesteal") || k.toLowerCase().includes("eva") || k.toLowerCase().includes("vamp");
+                    const disp = (isPct && v < 1) ? `+${Math.round(v * 100)}%` : (isPct ? `+${v}%` : `+${v}`);
+                    return `<span class="blessing-stat-pill">${statLabels[k] || k}: ${disp}</span>`;
+                }).join(" ");
+            }
+
+            card.innerHTML = `
+                <div class="blessing-card-header">
+                    <div class="blessing-title-box">
+                        <span class="blessing-icon">${p.icon || '✨'}</span>
+                        <div>
+                            <h4>${p.name} <small class="blessing-level-tag">${isUnlocked ? `✓ Unlocked (Lv. ${p.reqLevel})` : `🔒 Unlocks at Hero Lv. ${p.reqLevel}`}</small></h4>
+                            <div class="blessing-lore">${p.lore || ''}</div>
+                        </div>
+                    </div>
+                    <span class="blessing-status-badge ${isUnlocked ? 'badge-active' : 'badge-locked'}">
+                        ${isUnlocked ? 'ACTIVE' : `LVL ${p.reqLevel}`}
+                    </span>
+                </div>
+                <div class="blessing-footer">
+                    <div class="blessing-bonus-row">${bonusPills || p.description || ''}</div>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+
+        if (countBadge) {
+            countBadge.textContent = `${unlockedCount} / ${passives.length} UNLOCKED`;
+        }
     },
 
     renderInventoryView() {
         this.renderMaterialsBar();
+        this.renderEquipment();
         this.renderInventory();
+        this.renderForge();
+        this.renderAlchemy();
         this.renderCrafting();
+    },
+
+    renderAlchemy() {
+        const grid = document.getElementById("alchemyGrid");
+        if (!grid) return;
+
+        const state = window.gameState;
+        const recipes = window.AlchemyRecipes || [];
+        const playerLevel = state.player.level || 1;
+
+        grid.innerHTML = "";
+
+        if (recipes.length === 0) {
+            grid.innerHTML = `<div class="empty-state" style="padding:16px; color:#8f89a8;">No alchemical recipes discovered.</div>`;
+            return;
+        }
+
+        const tiers = [
+            { tier: 1, name: "Apprentice Cauldron", minLv: 1, desc: "Introductory potions and minor elixirs" },
+            { tier: 2, name: "Journeyman Crucible", minLv: 10, desc: "Potent battle draughts and stone concoctions" },
+            { tier: 3, name: "Aincrad Alchemical Altar", minLv: 25, desc: "Mythical divine nectars and dragonheart draughts" }
+        ];
+
+        tiers.forEach(t => {
+            const tierRecipes = recipes.filter(r => (r.tier || 1) === t.tier);
+            if (tierRecipes.length === 0) return;
+
+            const isTierLocked = playerLevel < t.minLv;
+
+            const tierSection = document.createElement("div");
+            tierSection.className = `alch-tier-section ${isTierLocked ? 'tier-locked' : ''}`;
+            tierSection.innerHTML = `
+                <div class="alch-tier-header">
+                    <div>
+                        <h3 class="alch-tier-title">
+                            ${t.tier === 1 ? '🧪' : (t.tier === 2 ? '⚗️' : '🔥')} ${t.name}
+                            ${isTierLocked ? `<span class="alch-lock-badge">🔒 Locked until Hero Lv. ${t.minLv}</span>` : `<span class="alch-unlocked-badge">✓ Unlocked (Lv. ${t.minLv}+)</span>`}
+                        </h3>
+                        <p class="alch-tier-desc">${t.desc}</p>
+                    </div>
+                </div>
+                <div class="alch-cards-grid" id="alchGridTier_${t.tier}"></div>
+            `;
+            grid.appendChild(tierSection);
+
+            const tierCardsGrid = tierSection.querySelector(`#alchGridTier_${t.tier}`);
+
+            tierRecipes.forEach(recipe => {
+                const reqLv = recipe.reqLevel || t.minLv;
+                const isRecipeLocked = playerLevel < reqLv;
+
+                const goldMet = state.canAfford(recipe.goldCost || 0);
+                let matsMet = true;
+
+                let matsHtml = "";
+                if (recipe.materials) {
+                    matsHtml = Object.entries(recipe.materials).map(([mat, need]) => {
+                        const have = (state.player.materials && state.player.materials[mat]) || 0;
+                        const ok = have >= need;
+                        if (!ok) matsMet = false;
+                        const matLabels = {
+                            ironOre: "⛏️ Iron",
+                            wood: "🪵 Wood",
+                            crystal: "💎 Crystal",
+                            dragonScale: "🐉 Dragon Scale",
+                            shadowEssence: "🔮 Shadow Essence"
+                        };
+                        return `<span class="alch-ingredient ${ok ? 'ok' : 'missing'}">${matLabels[mat] || mat}: ${have}/${need}</span>`;
+                    }).join(" · ");
+                }
+
+                const canBrew = !isRecipeLocked && goldMet && matsMet;
+
+                const resultId = recipe.result?.id || recipe.id;
+                const ownedQty = (state.player.potions && state.player.potions[resultId]) || 0;
+
+                const card = document.createElement("div");
+                card.className = `alch-recipe-card ${isRecipeLocked ? 'locked' : ''}`;
+                card.innerHTML = `
+                    <div class="alch-recipe-top">
+                        <span class="alch-recipe-icon">${recipe.icon || '🧪'}</span>
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h4>${recipe.name}</h4>
+                                <span class="alch-owned-badge">Pouch: <strong>${ownedQty}</strong></span>
+                            </div>
+                            <p class="alch-recipe-desc">${recipe.description || ''}</p>
+                        </div>
+                    </div>
+
+                    <div class="alch-cost-box">
+                        <div class="alch-cost-gold ${goldMet ? 'ok' : 'missing'}">
+                            <span>Cost:</span> <strong>${(recipe.goldCost || 0).toLocaleString()}g</strong>
+                        </div>
+                        <div class="alch-cost-mats">
+                            ${matsHtml || '<em>No ingredients required</em>'}
+                        </div>
+                    </div>
+
+                    <div class="alch-card-actions">
+                        <button type="button" class="btn alch-brew-btn ${canBrew ? 'btn-gold' : 'btn-disabled'}" ${canBrew ? '' : 'disabled'}>
+                            ${isRecipeLocked ? `🔒 Locked (Lv. ${reqLv})` : (canBrew ? `⚗️ Brew Potion` : (!goldMet ? 'Need Gold' : 'Missing Mats'))}
+                        </button>
+                    </div>
+                `;
+
+                const brewBtn = card.querySelector(".alch-brew-btn");
+                if (brewBtn && canBrew) {
+                    brewBtn.addEventListener("click", () => {
+                        if (window.InventoryManager) {
+                            const success = window.InventoryManager.brewPotion(recipe.id);
+                            if (success) {
+                                this.renderInventoryView();
+                                this.updateUI();
+                            }
+                        }
+                    });
+                }
+
+                tierCardsGrid.appendChild(card);
+            });
+        });
     },
 
     renderMaterialsBar() {
@@ -875,118 +1401,122 @@ window.MainEngine = {
         `;
     },
 
+    renderEquipment() {
+        const state = window.gameState;
+        const grid = document.getElementById("equipGrid");
+        if (!grid) return;
+        grid.innerHTML = "";
+
+        const slots = [
+            { id: "weapon", name: "Weapon" },
+            { id: "armor", name: "Armor" },
+            { id: "trinket", name: "Trinket" }
+        ];
+
+        slots.forEach(s => {
+            const item = state.player.equipment[s.id] || (s.id === "trinket" ? state.player.equipment.ring : null);
+            const card = document.createElement("div");
+
+            if (item) {
+                const rar = (window.RarityData && window.RarityData[item.rarity]) || { color: "#8b5cf6", name: "Common" };
+                const statStr = window.formatItemStatLine ? window.formatItemStatLine(item) : "";
+                card.className = "slot-card filled";
+                card.style.setProperty("--rc", rar.color);
+                card.innerHTML = `
+                    <div class="slot-name">${s.name}</div>
+                    <div class="item-name" style="color: ${rar.color};">${item.name}</div>
+                    <div class="item-stats">${statStr || "No bonus stats"}</div>
+                    <button class="btn btn-ghost sm" onclick="window.InventoryManager.unequipSlot('${s.id}')">Unequip</button>
+                `;
+            } else {
+                card.className = "slot-card";
+                card.innerHTML = `
+                    <div class="slot-name">${s.name}</div>
+                    <div class="empty">— empty —</div>
+                    <button class="btn btn-ghost sm" disabled>Unequip</button>
+                `;
+            }
+            grid.appendChild(card);
+        });
+    },
+
     renderInventory() {
         const state = window.gameState;
-        const grid = document.getElementById("inventoryGrid");
+        const bagCountEl = document.getElementById("bagCount");
+        const grid = document.getElementById("bagGrid");
         if (!grid) return;
+
+        const items = state.player.inventory || [];
+        if (bagCountEl) {
+            bagCountEl.textContent = `${items.length} Item${items.length === 1 ? '' : 's'}`;
+        }
 
         grid.innerHTML = "";
 
-        let items = state.player.inventory;
-        if (this.currentInvFilter === "equipment") {
-            items = items.filter(i => i.type === "equipment" || (!i.type && i.slot));
-        } else if (this.currentInvFilter === "consumable") {
-            items = items.filter(i => i.type === "consumable");
-        }
-
         if (items.length === 0) {
-            grid.innerHTML = `<div class="empty-inv-msg">Backpack is empty in this category. Defeat enemies or visit the Shop!</div>`;
-        }
-
-        items.forEach(item => {
-            const isSelected = (this.selectedInventoryItemInstanceId === item.instanceId);
-            const rarity = window.RarityData[item.rarity] || window.RarityData.common;
-            const upg = item.upgradeLevel ? `+${item.upgradeLevel}` : "";
-
-            const slotEl = document.createElement("div");
-            slotEl.className = `inv-slot ${item.rarity} ${isSelected ? 'selected' : ''}`;
-            slotEl.style.borderColor = rarity.border;
-            slotEl.innerHTML = `
-                <div class="inv-slot-icon">${item.icon}</div>
-                <div class="inv-slot-name">${item.name}</div>
-                ${upg ? `<div class="inv-slot-upg">${upg}</div>` : ''}
-            `;
-            slotEl.onclick = () => {
-                this.selectedInventoryItemInstanceId = item.instanceId;
-                this.renderInventory();
-                this.renderItemDetails(item);
-            };
-            grid.appendChild(slotEl);
-        });
-
-        // Also check if selected item is equipped
-        let selectedItem = state.player.inventory.find(i => i.instanceId === this.selectedInventoryItemInstanceId);
-        if (!selectedItem) {
-            for (const eq of Object.values(state.player.equipment)) {
-                if (eq && eq.instanceId === this.selectedInventoryItemInstanceId) {
-                    selectedItem = eq;
-                    break;
-                }
-            }
-        }
-
-        this.renderItemDetails(selectedItem);
-    },
-
-    renderItemDetails(item) {
-        const panel = document.getElementById("itemDetailsPanel");
-        if (!panel) return;
-
-        if (!item) {
-            panel.innerHTML = `<div class="empty-select-hint">Select an item from your backpack to inspect, equip, upgrade, or sell.</div>`;
+            grid.innerHTML = `<div class="empty-bag">Your inventory is empty. Forge gear or defeat monsters to acquire loot!</div>`;
             return;
         }
 
-        const state = window.gameState;
-        const rarity = window.RarityData[item.rarity] || window.RarityData.common;
-        const effStats = state.getItemEffectiveStats(item);
-        const upgCost = window.InventoryManager ? window.InventoryManager.getUpgradeCost(item) : null;
-        const sellPrice = window.InventoryManager ? window.InventoryManager.getSellPrice(item) : 0;
+        items.forEach(item => {
+            const rar = (window.RarityData && window.RarityData[item.rarity]) || { color: "#8b5cf6", name: "Common" };
+            const statStr = window.formatItemStatLine ? window.formatItemStatLine(item) : (item.description || "");
+            const price = window.InventoryManager ? window.InventoryManager.getSellPrice(item) : 20;
+            const isEquippable = item.type === "equipment" || (!item.type && (item.slot || item.stats));
 
-        let statLines = [];
-        for (const [st, val] of Object.entries(effStats)) {
-            statLines.push(`<span>${st.toUpperCase()}: <strong>+${val}</strong></span>`);
-        }
+            const card = document.createElement("div");
+            card.className = "item";
+            card.style.setProperty("--rc", rar.color);
 
-        const isEquipped = Object.values(state.player.equipment).some(eq => eq && eq.instanceId === item.instanceId);
+            const actionBtn = isEquippable
+                ? `<button class="btn btn-purple sm" onclick="window.InventoryManager.equipItem('${item.instanceId}')">Equip</button>`
+                : `<button class="btn btn-gold sm" onclick="window.InventoryManager.usePotion('${item.id}')">Use</button>`;
 
-        panel.innerHTML = `
-            <div class="detail-header" style="border-left: 4px solid ${rarity.color};">
-                <span class="detail-icon">${item.icon}</span>
-                <div>
-                    <h4 style="color: ${rarity.color}">${item.name} ${item.upgradeLevel ? `(+${item.upgradeLevel})` : ''}</h4>
-                    <small class="rarity-tag" style="color: ${rarity.color}">${rarity.name.toUpperCase()} · ${item.slot ? item.slot.toUpperCase() : 'CONSUMABLE'}</small>
+            card.innerHTML = `
+                <div class="item-top">
+                    <span class="item-name">${item.name}</span>
+                    <span class="item-rar">${(rar.name || item.rarity || 'Common').toUpperCase()}</span>
                 </div>
-            </div>
+                <div class="item-stats">${statStr}</div>
+                <div class="item-actions">
+                    ${actionBtn}
+                    <button class="btn btn-ghost sm" onclick="window.InventoryManager.sellItem('${item.instanceId}')">Sell ${price.toLocaleString()}g</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    },
 
-            <div class="detail-stats">
-                ${statLines.join("")}
-                ${item.description ? `<p class="item-desc">${item.description}</p>` : ''}
-            </div>
+    renderForge() {
+        const state = window.gameState;
+        const grid = document.getElementById("forgeGrid");
+        if (!grid) return;
 
-            <div class="detail-actions">
-                ${item.slot ? (
-                    isEquipped ?
-                    `<button class="btn-action-unequip" onclick="window.GameAPI.inventory.unequipSlot('${item.slot}')">UNEQUIP</button>` :
-                    `<button class="btn-action-equip" onclick="window.GameAPI.inventory.equipItem('${item.instanceId}')">EQUIP</button>`
-                ) : (
-                    `<button class="btn-action-use" onclick="window.InventoryManager.usePotion('${item.id}')">USE CONSUMABLE</button>`
-                )}
+        const tiers = window.ForgeData || [
+            { tier: 'common', name: 'Basic Forge', icon: '🔨', cost: 250, reqLevel: 1, desc: 'Mostly common gear with a chance at something Rare.' },
+            { tier: 'rare', name: 'Master Forge', icon: '⚒️', cost: 1600, reqLevel: 10, desc: 'Reliable Rare equipment. Occasionally Epic. Unlocks at Hero Lv. 10.' },
+            { tier: 'legendary', name: 'Aincrad Forge', icon: '🔥', cost: 9000, reqLevel: 25, desc: 'Epic guaranteed. A chance at a Legendary relic. Unlocks at Hero Lv. 25.' }
+        ];
 
-                ${item.slot && upgCost ? `
-                    <button class="btn-action-upgrade" onclick="window.GameAPI.inventory.upgradeItem('${item.instanceId}')">
-                        🔨 UPGRADE (+1)
-                        <small>✦ ${upgCost.gold.toLocaleString()}g + ${upgCost.matQty}x ${upgCost.matKey}</small>
-                    </button>
-                ` : ''}
+        grid.innerHTML = "";
+        tiers.forEach((t, idx) => {
+            const reqLv = t.reqLevel || 1;
+            const isLocked = (state.player.level || 1) < reqLv;
+            const canAfford = state.canAfford(t.cost);
+            const btnClass = idx === 1 ? "btn-purple" : "btn-gold";
 
-                ${!isEquipped ? `
-                    <button class="btn-action-sell" onclick="window.GameAPI.inventory.sellItem('${item.instanceId}')">
-                        💰 SELL FOR ${sellPrice.toLocaleString()}g
-                    </button>
-                ` : ''}
-            </div>
-        `;
+            const card = document.createElement("div");
+            card.className = `forge-card ${isLocked ? 'locked-forge' : ''}`;
+            card.innerHTML = `
+                <div class="fi">${isLocked ? '🔒' : t.icon}</div>
+                <h4>${t.name}</h4>
+                <p>${isLocked ? `<span style="color:#ff8a9b;font-weight:700;">🔒 Locked (Requires Hero Lv. ${reqLv})</span><br><small style="color:#8f89a8;">Reach Level ${reqLv} to unlock this forge tier.</small>` : t.desc}</p>
+                <button class="btn ${btnClass} sm" ${isLocked || !canAfford ? 'disabled' : ''} onclick="window.InventoryManager.forge(${idx})">
+                    ${isLocked ? `🔒 Locked (Lv ${reqLv})` : `Forge · ${t.cost.toLocaleString()}g`}
+                </button>
+            `;
+            grid.appendChild(card);
+        });
     },
 
     renderCrafting() {
@@ -1025,47 +1555,113 @@ window.MainEngine = {
     },
 
     renderShop() {
-        const grid = document.getElementById("shopGrid");
         const state = window.gameState;
-        if (!grid || !window.ShopData) return;
 
-        grid.innerHTML = "";
+        // 1. Permanent Upgrades List
+        const shopListEl = document.getElementById("shopList");
+        if (shopListEl && window.UpgradesData) {
+            shopListEl.innerHTML = "";
+            window.UpgradesData.forEach(u => {
+                const currentLv = (state.player.upgrades && state.player.upgrades[u.id]) || 0;
+                const cost = window.getUpgradeCost ? window.getUpgradeCost(u.id) : u.base;
+                const canAfford = state.canAfford(cost);
 
-        let items = window.ShopData;
-        if (this.currentShopFilter !== "all") {
-            items = items.filter(s => s.category === this.currentShopFilter);
+                const row = document.createElement("div");
+                row.className = "shop-row";
+                row.innerHTML = `
+                    <div class="sr-icon">${u.icon}</div>
+                    <div class="sr-body">
+                        <div class="sr-name">
+                            <span>${u.name}</span>
+                            <span class="sr-lvl">LV ${currentLv}</span>
+                        </div>
+                        <div class="sr-desc">${u.desc}</div>
+                    </div>
+                    <button class="btn btn-gold sm sr-buy" ${!canAfford ? 'disabled' : ''} onclick="window.buyUpgrade('${u.id}')">
+                        ✦ ${cost.toLocaleString()}g
+                    </button>
+                `;
+                shopListEl.appendChild(row);
+            });
         }
 
-        items.forEach(shopItem => {
-            let name = shopItem.name;
-            let icon = shopItem.icon;
-            let color = "#e0dede";
+        // 2. Merchant Supplies & Potions Grid
+        const grid = document.getElementById("shopGrid");
+        if (grid && window.ShopData) {
+            grid.innerHTML = "";
 
-            if (shopItem.itemId && window.ItemsData[shopItem.itemId]) {
-                const it = window.ItemsData[shopItem.itemId];
-                name = it.name;
-                icon = it.icon;
-                const r = window.RarityData[it.rarity] || window.RarityData.common;
-                color = r.color;
+            let items = window.ShopData;
+            if (this.currentShopFilter && this.currentShopFilter !== "all") {
+                items = items.filter(s => s.category === this.currentShopFilter);
             }
 
-            const canLevel = state.player.level >= (shopItem.reqLevel || 1);
-            const canAfford = state.canAfford(shopItem.costGold);
+            items.forEach(shopItem => {
+                const it = (shopItem.itemId && window.ItemsData && window.ItemsData[shopItem.itemId]) || null;
+                const name = shopItem.name || (it ? it.name : shopItem.id);
+                const icon = shopItem.icon || (it ? it.icon : "🛍️");
+                const desc = shopItem.description || shopItem.desc || (it ? it.description : "");
+                let color = "#e0dede";
 
-            const card = document.createElement("div");
-            card.className = "shop-card";
-            card.innerHTML = `
-                <div class="shop-card-icon">${icon}</div>
-                <div class="shop-card-info">
-                    <strong style="color: ${color}">${name}</strong>
-                    <small>Req Lvl: ${shopItem.reqLevel || 1} · ✦ ${shopItem.costGold.toLocaleString()}g</small>
-                </div>
-                <button class="btn-buy" ${!canLevel || !canAfford ? 'disabled' : ''} onclick="window.GameAPI.shop.buyItem('${shopItem.id}')">
-                    BUY
-                </button>
-            `;
-            grid.appendChild(card);
-        });
+                if (it && it.rarity && window.RarityData && window.RarityData[it.rarity]) {
+                    color = window.RarityData[it.rarity].color;
+                } else if (shopItem.category === "material") {
+                    color = "#4ade80";
+                } else if (shopItem.category === "consumable") {
+                    color = "#60a5fa";
+                }
+
+                const reqMapId = shopItem.reqMap || "any";
+                const reqDepth = shopItem.reqDepth || 1;
+                const isUniversal = !reqMapId || reqMapId === "any";
+                const isMapUnlocked = isUniversal ||
+                                      (state.world && state.world.unlockedMaps && state.world.unlockedMaps.includes(reqMapId)) ||
+                                      (state.player && state.player.unlockedMaps && state.player.unlockedMaps.includes(reqMapId));
+                const curMaxDepth = isUniversal ? 99 : ((state.getMapMaxUnlockedDepth) ? state.getMapMaxUnlockedDepth(reqMapId) : 1);
+                const isDepthUnlocked = isUniversal || (curMaxDepth >= reqDepth);
+                const isAreaUnlocked = isMapUnlocked && isDepthUnlocked;
+
+                const mapDef = (window.MapsData && window.MapsData[reqMapId]) || { name: "Realm" };
+                const romans = ["I", "II", "III", "IV", "V"];
+                const depthRoman = romans[reqDepth - 1] || `${reqDepth}`;
+
+                const canLevel = (state.player.level || 1) >= (shopItem.reqLevel || 1);
+                const canAfford = state.canAfford(shopItem.costGold);
+
+                const card = document.createElement("div");
+                card.className = `shop-card ${!isAreaUnlocked ? 'realm-locked' : (!canLevel ? 'level-locked' : '')}`;
+
+                let lockNotice = "";
+                let buyBtnText = "BUY";
+                let btnDisabled = false;
+
+                if (!isAreaUnlocked) {
+                    lockNotice = `<div class="shop-lock-tag">🔒 Unlocks: ${mapDef.name} ${depthRoman}</div>`;
+                    buyBtnText = `🔒 Locked (${mapDef.name} ${depthRoman})`;
+                    btnDisabled = true;
+                } else if (!canLevel) {
+                    lockNotice = `<div class="shop-lock-tag">🔒 Requires Hero Lv. ${shopItem.reqLevel}</div>`;
+                    buyBtnText = `Lv. ${shopItem.reqLevel} Required`;
+                    btnDisabled = true;
+                } else if (!canAfford) {
+                    buyBtnText = "Need Gold";
+                    btnDisabled = true;
+                }
+
+                card.innerHTML = `
+                    <div class="shop-card-icon">${icon}</div>
+                    <div class="shop-card-info">
+                        <strong style="color: ${color}">${name}</strong>
+                        <small>✦ ${shopItem.costGold.toLocaleString()}g · Req Lv. ${shopItem.reqLevel || 1}</small>
+                        ${desc ? `<div class="shop-item-desc">${desc}</div>` : ''}
+                        ${lockNotice}
+                    </div>
+                    <button class="btn-buy" ${btnDisabled ? 'disabled' : ''} onclick="window.GameAPI.shop.buyItem('${shopItem.id}')">
+                        ${buyBtnText}
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
     },
 
     /* =========================================================
@@ -1282,7 +1878,36 @@ window.MainEngine = {
             document.getElementById("vicRewardXp").textContent = `⭐ +${details.xp.toLocaleString()} XP`;
         }
         if (document.getElementById("vicRewardNext")) {
-            document.getElementById("vicRewardNext").textContent = details.nextMap ? `🗺️ Unlocked: ${details.nextMap}!` : `✨ Realm Fully Conquered!`;
+            if (details.nextDepth && details.nextMap) {
+                document.getElementById("vicRewardNext").textContent = `🗺️ Unlocked: ${details.nextDepth} & Realm: ${details.nextMap}!`;
+            } else if (details.nextDepth) {
+                document.getElementById("vicRewardNext").textContent = `🌲 Unlocked Deeper Tier: ${details.nextDepth}!`;
+            } else if (details.nextMap) {
+                document.getElementById("vicRewardNext").textContent = `🗺️ Unlocked Next Realm: ${details.nextMap}!`;
+            } else {
+                document.getElementById("vicRewardNext").textContent = `✨ Realm Fully Conquered!`;
+            }
+        }
+
+        const btnDeeper = document.getElementById("btnVictoryGoDeeper");
+        if (btnDeeper) {
+            if (details.nextDepth) {
+                btnDeeper.style.display = "block";
+                const sub = details.nextDepthTier ? ` (${details.nextDepthTier.subtitle})` : '';
+                btnDeeper.textContent = `🌲 Delve Deeper: ${details.nextDepth}${sub}`;
+            } else {
+                btnDeeper.style.display = "none";
+            }
+        }
+
+        const btnTravel = document.getElementById("btnVictoryTravel");
+        if (btnTravel) {
+            if (details.nextMapId) {
+                btnTravel.style.display = "block";
+                btnTravel.textContent = `🗺️ Travel to Next Realm (${details.nextMap})`;
+            } else {
+                btnTravel.style.display = details.nextDepth ? "none" : "block";
+            }
         }
 
         modal.classList.add("visible");

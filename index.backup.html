@@ -4,10 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Realm Idle RPG — Aincrad</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    <title>Realm Idle RPG</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="js/debug/debug.css">
 </head>
@@ -57,27 +54,6 @@
             </div>
 
         </section>
-
-        <!-- ONGOING WEATHER & ACTIVE SCENARIO STRIP -->
-        <div class="world-status-strip" id="worldStatusStrip">
-            <div class="world-status-chip weather-chip" id="hudWeatherChip" title="Active Environmental Weather">
-                <span class="chip-icon" id="hudWeatherIcon">☀️</span>
-                <div class="chip-content">
-                    <span class="chip-label" id="hudWeatherName">Clear Sky</span>
-                    <span class="chip-detail" id="hudWeatherDetail">Standard Realm Climate</span>
-                </div>
-                <span class="chip-badge" id="hudWeatherBadge">1.0x</span>
-            </div>
-
-            <div class="world-status-chip scenario-chip" id="hudScenarioChip" title="Active World Scenario or Event">
-                <span class="chip-icon" id="hudScenarioIcon">✨</span>
-                <div class="chip-content">
-                    <span class="chip-label" id="hudScenarioName">Peaceful Realm</span>
-                    <span class="chip-detail" id="hudScenarioDetail">Standard Monster Encounters</span>
-                </div>
-                <span class="chip-badge" id="hudScenarioBadge">Active</span>
-            </div>
-        </div>
 
         <!-- PLAYER XP & HEALTH BARS -->
         <div class="bars-container">
@@ -254,96 +230,66 @@
             </section>
 
             <!-- KINGDOM BUILDINGS SECTION -->
-            <section class="kingdom-panel" id="kingdomPanel">
+            <section class="kingdom-panel">
                 <div class="panel-header">
                     <h2>Kingdom Domain</h2>
-                    <span id="kingdomStatusTag">SOVEREIGN DOMAIN</span>
+                    <span>INFRASTRUCTURE</span>
                 </div>
 
-                <!-- LOCKED STATE WITH ROYAL CHARTER LORE -->
-                <div class="kingdom-locked-state" id="kingdomLockedState" style="display:none;">
-                    <div class="kingdom-charter-card">
-                        <div class="charter-crest">📜 👑 🏰</div>
-                        <h3 class="charter-title">Imperial Domain Grant: Sovereign Lands Pending</h3>
-                        <p class="charter-lore">
-                            <em>"Long has Moonlit Vale suffered under foul predatory beasts prowling its ancient depths. The High King has issued a royal decree: only the stalwart champion who reaches Level 5 and vanishes the prime foul beast from Moonlit Vale III shall be granted sovereign lands to establish their dominion."</em>
-                        </p>
-                        <div class="charter-reqs">
-                            <div class="charter-req-chip" id="reqKingdomLevel">
-                                <span>⚜️ Hero Level 5+:</span> <strong id="lblKingdomLevel">Lv. 1 / 5</strong>
-                            </div>
-                            <div class="charter-req-chip" id="reqKingdomBoss">
-                                <span>🐺 Vanquish Moonlit Vale III Boss:</span> <strong id="lblKingdomBoss">Incomplete</strong>
-                            </div>
+                <div class="kingdom-grid">
+                    <div class="bldg-card">
+                        <div class="bldg-icon">🏰</div>
+                        <div class="bldg-info">
+                            <strong>Castle (Lv. <span id="bldgLvl_castle">1</span>)</strong>
+                            <small>+25 Max HP per level</small>
                         </div>
-                    </div>
-                </div>
-
-                <!-- UNLOCKED STATE WITH ROYAL DECREE BANNER & BUILDINGS -->
-                <div class="kingdom-unlocked-state" id="kingdomUnlockedState">
-                    <div class="kingdom-decree-banner">
-                        <span class="decree-icon">👑</span>
-                        <div>
-                            <strong>Royal Decree of Sovereign Domain</strong>
-                            <p><em>Having banished the foul beasts from this forest, the High King granted him sovereign land to establish his citadel and command the realm's infrastructure.</em></p>
-                        </div>
+                        <button class="bldg-btn" id="btnBldg_castle" data-bldg-upgrade="castle">
+                            UPGRADE <span id="bldgCost_castle">✦ 200</span>
+                        </button>
                     </div>
 
-                    <div class="kingdom-grid">
-                        <div class="bldg-card">
-                            <div class="bldg-icon">🏰</div>
-                            <div class="bldg-info">
-                                <strong>Castle (Lv. <span id="bldgLvl_castle">1</span>)</strong>
-                                <small>+25 Max HP per level</small>
-                            </div>
-                            <button class="bldg-btn" id="btnBldg_castle" data-bldg-upgrade="castle">
-                                UPGRADE <span id="bldgCost_castle">✦ 200</span>
-                            </button>
+                    <div class="bldg-card">
+                        <div class="bldg-icon">💰</div>
+                        <div class="bldg-info">
+                            <strong>Treasury (Lv. <span id="bldgLvl_treasury">1</span>)</strong>
+                            <small>+10% Gold Income per level</small>
                         </div>
+                        <button class="bldg-btn" id="btnBldg_treasury" data-bldg-upgrade="treasury">
+                            UPGRADE <span id="bldgCost_treasury">✦ 300</span>
+                        </button>
+                    </div>
 
-                        <div class="bldg-card">
-                            <div class="bldg-icon">💰</div>
-                            <div class="bldg-info">
-                                <strong>Treasury (Lv. <span id="bldgLvl_treasury">1</span>)</strong>
-                                <small>+10% Gold Income per level</small>
-                            </div>
-                            <button class="bldg-btn" id="btnBldg_treasury" data-bldg-upgrade="treasury">
-                                UPGRADE <span id="bldgCost_treasury">✦ 300</span>
-                            </button>
+                    <div class="bldg-card">
+                        <div class="bldg-icon">⚒️</div>
+                        <div class="bldg-info">
+                            <strong>Blacksmith (Lv. <span id="bldgLvl_blacksmith">1</span>)</strong>
+                            <small>+5% Attack & Gear Mult</small>
                         </div>
+                        <button class="bldg-btn" id="btnBldg_blacksmith" data-bldg-upgrade="blacksmith">
+                            UPGRADE <span id="bldgCost_blacksmith">✦ 400</span>
+                        </button>
+                    </div>
 
-                        <div class="bldg-card">
-                            <div class="bldg-icon">⚒️</div>
-                            <div class="bldg-info">
-                                <strong>Blacksmith (Lv. <span id="bldgLvl_blacksmith">1</span>)</strong>
-                                <small>+5% Attack & Gear Mult</small>
-                            </div>
-                            <button class="bldg-btn" id="btnBldg_blacksmith" data-bldg-upgrade="blacksmith">
-                                UPGRADE <span id="bldgCost_blacksmith">✦ 400</span>
-                            </button>
+                    <div class="bldg-card">
+                        <div class="bldg-icon">🔮</div>
+                        <div class="bldg-info">
+                            <strong>Mage Tower (Lv. <span id="bldgLvl_mageTower">1</span>)</strong>
+                            <small>+2% Crit Chance per level</small>
                         </div>
+                        <button class="bldg-btn" id="btnBldg_mageTower" data-bldg-upgrade="mageTower">
+                            UPGRADE <span id="bldgCost_mageTower">✦ 500</span>
+                        </button>
+                    </div>
 
-                        <div class="bldg-card">
-                            <div class="bldg-icon">🔮</div>
-                            <div class="bldg-info">
-                                <strong>Mage Tower (Lv. <span id="bldgLvl_mageTower">1</span>)</strong>
-                                <small>+2% Crit Chance per level</small>
-                            </div>
-                            <button class="bldg-btn" id="btnBldg_mageTower" data-bldg-upgrade="mageTower">
-                                UPGRADE <span id="bldgCost_mageTower">✦ 500</span>
-                            </button>
+                    <div class="bldg-card">
+                        <div class="bldg-icon">🛡️</div>
+                        <div class="bldg-info">
+                            <strong>Barracks (Lv. <span id="bldgLvl_barracks">1</span>)</strong>
+                            <small>+5% Base Attack per level</small>
                         </div>
-
-                        <div class="bldg-card">
-                            <div class="bldg-icon">🛡️</div>
-                            <div class="bldg-info">
-                                <strong>Barracks (Lv. <span id="bldgLvl_barracks">1</span>)</strong>
-                                <small>+5% Base Attack per level</small>
-                            </div>
-                            <button class="bldg-btn" id="btnBldg_barracks" data-bldg-upgrade="barracks">
-                                UPGRADE <span id="bldgCost_barracks">✦ 350</span>
-                            </button>
-                        </div>
+                        <button class="bldg-btn" id="btnBldg_barracks" data-bldg-upgrade="barracks">
+                            UPGRADE <span id="bldgCost_barracks">✦ 350</span>
+                        </button>
                     </div>
                 </div>
             </section>
@@ -446,11 +392,6 @@
                             <div class="unlocked-realms-chips" id="unlockedRealmsChips"></div>
                         </div>
 
-                        <div class="map-depth-box" id="mapDepthBox">
-                            <small>AREA DEPTH / VERSIONS (TIERS):</small>
-                            <div class="map-depth-chips" id="mapDepthChips"></div>
-                        </div>
-
                     </div>
 
                 </div>
@@ -499,24 +440,6 @@
                 </div>
             </section>
 
-            <!-- CLASS PROMOTION & ASCENSION (LEVEL 10 & 20 MILESTONES) -->
-            <section class="panel" id="classPromotionPanel" style="margin-top: 14px;">
-                <div class="panel-header">
-                    <h2>Vocation Ascension</h2>
-                    <span id="classPromotionTag">PROMOTION MILESTONE</span>
-                </div>
-                <div class="promotion-card" id="classPromotionCard"></div>
-            </section>
-
-            <!-- DIVINE BLESSINGS & PASSIVES ("BLESSED BY THE GODS") -->
-            <section class="panel" id="divineBlessingsPanel" style="margin-top: 14px;">
-                <div class="panel-header">
-                    <h2>Divine Blessings ("Blessed by the Gods")</h2>
-                    <span id="divineBlessingsCount">PASSIVE SKILLS</span>
-                </div>
-                <div class="divine-blessings-list" id="divineBlessingsList"></div>
-            </section>
-
             <!-- ADMIN-MANAGED CLASS SELECTION -->
             <section class="panel" style="margin-top: 14px;">
                 <div class="panel-header">
@@ -535,46 +458,31 @@
             <!-- MATERIALS OVERVIEW BAR -->
             <div class="materials-bar" id="materialsBar"></div>
 
-            <!-- EQUIPMENT: EQUIPPED GEAR -->
             <section class="panel">
                 <div class="panel-header">
-                    <h2>Equipment</h2>
-                    <span>EQUIPPED GEAR</span>
+                    <h2>Backpack & Vault</h2>
+                    <div class="inv-filter-bar">
+                        <button class="inv-filter-btn active" data-inv-filter="all">All</button>
+                        <button class="inv-filter-btn" data-inv-filter="equipment">Equipment</button>
+                        <button class="inv-filter-btn" data-inv-filter="consumable">Consumables</button>
+                    </div>
                 </div>
-                <div class="equip-grid" id="equipGrid"></div>
+
+                <div class="inv-container-grid">
+                    <div class="inv-slots-grid" id="inventoryGrid"></div>
+
+                    <!-- ITEM INSPECT / FORGE ACTION CARD -->
+                    <div class="inv-details-card" id="itemDetailsPanel">
+                        <div class="empty-select-hint">Select an item from your backpack to inspect, equip, upgrade, or
+                            sell.</div>
+                    </div>
+                </div>
             </section>
 
-            <!-- INVENTORY: BAG -->
+            <!-- CRAFTING FORGE -->
             <section class="panel" style="margin-top: 14px;">
                 <div class="panel-header">
-                    <h2>Inventory</h2>
-                    <span id="bagCount">0 Items</span>
-                </div>
-                <div class="bag-grid" id="bagGrid"></div>
-            </section>
-
-            <!-- FORGE: ROLL GEAR -->
-            <section class="panel" style="margin-top: 14px;">
-                <div class="panel-header">
-                    <h2>Forge</h2>
-                    <span>SPEND GOLD · ROLL GEAR</span>
-                </div>
-                <div class="forge-grid" id="forgeGrid"></div>
-            </section>
-
-            <!-- ALCHEMY LABORATORY: BREW POTIONS & ELIXIRS -->
-            <section class="panel" style="margin-top: 14px;">
-                <div class="panel-header">
-                    <h2>Alchemy Laboratory</h2>
-                    <span>BREW POTIONS & ELIXIRS (TIER LEVEL LOCKED)</span>
-                </div>
-                <div class="alchemy-grid" id="alchemyGrid"></div>
-            </section>
-
-            <!-- BLACKSMITH CRAFTING RECIPES -->
-            <section class="panel" style="margin-top: 14px;">
-                <div class="panel-header">
-                    <h2>Blacksmith Crafting Recipes</h2>
+                    <h2>Blacksmith Crafting Forge</h2>
                     <span>COMBINE MATERIALS & RECIPES</span>
                 </div>
                 <div class="crafting-grid" id="craftingGrid"></div>
@@ -585,19 +493,9 @@
         <!-- ==================== TAB PAGE 4: REALM SHOP ==================== -->
         <div class="game-tab-page" id="tab_shop">
 
-            <!-- PERMANENT STAT UPGRADES -->
             <section class="panel">
                 <div class="panel-header">
-                    <h2>Realm Shop</h2>
-                    <span>PERMANENT UPGRADES</span>
-                </div>
-                <div class="shop-list" id="shopList"></div>
-            </section>
-
-            <!-- MERCHANT SUPPLIES & POTIONS -->
-            <section class="panel" style="margin-top: 14px;">
-                <div class="panel-header">
-                    <h2>Adventurer Supplies</h2>
+                    <h2>Realm Merchant Post</h2>
                     <div class="inv-filter-bar">
                         <button class="shop-filter-btn active" data-shop-filter="all">All Items</button>
                         <button class="shop-filter-btn" data-shop-filter="consumable">Potions & Elixirs</button>
@@ -784,7 +682,6 @@
                             <div class="reward-pill highlight" id="vicRewardNext">🗺️ Unlocked Next Realm!</div>
                         </div>
                         <div class="victory-actions">
-                            <button type="button" class="btn-victory-deeper" id="btnVictoryGoDeeper" style="display: none;">🌲 Go Deeper into Next Area</button>
                             <button type="button" class="btn-victory-travel" id="btnVictoryTravel">🗺️ Travel to Next
                                 Realm</button>
                             <button type="button" class="btn-victory-stay" id="btnVictoryStay">🌾 Continue Farming
@@ -941,7 +838,6 @@
         <script src="js/data/weather.js"></script>
         <script src="js/data/events.js"></script>
         <script src="js/data/items.js"></script>
-        <script src="js/data/alchemy.js"></script>
         <script src="js/data/scenarios.js"></script>
 
         <!-- CORE STATE -->

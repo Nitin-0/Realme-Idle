@@ -13,8 +13,11 @@ window.SpawningManager = {
         // Apply Weather, Event & Scenario modifiers
         let weatherDmgMult = 1.0;
         let eventDmgMult = 1.0;
+        let eventHpMult = 1.0;
+        let eventDropMult = 1.0;
         let scenarioHpMult = 1.0;
         let scenarioDmgMult = 1.0;
+        let scenarioDropMult = 1.0;
 
         const weather = window.WeatherData ? window.WeatherData[state.world.currentWeatherId] : null;
         if (weather && weather.enemyDmgMult) {
@@ -22,18 +25,27 @@ window.SpawningManager = {
         }
 
         if (state.world.activeEventId && window.EventsData[state.world.activeEventId]) {
-            eventDmgMult = window.EventsData[state.world.activeEventId].enemyDmgMult || 1.0;
+            const ev = window.EventsData[state.world.activeEventId];
+            eventDmgMult = ev.enemyDmgMult || 1.0;
+            eventHpMult = ev.enemyHpMult || 1.0;
+            eventDropMult = ev.dropMult || 1.0;
         }
 
         if (state.world.activeScenarioId && window.ScenariosData[state.world.activeScenarioId]) {
-            scenarioHpMult = window.ScenariosData[state.world.activeScenarioId].modifiers.enemyHpMult || 1.0;
-            scenarioDmgMult = window.ScenariosData[state.world.activeScenarioId].modifiers.enemyDmgMult || 1.0;
+            const sc = window.ScenariosData[state.world.activeScenarioId].modifiers || {};
+            scenarioHpMult = sc.enemyHpMult || 1.0;
+            scenarioDmgMult = sc.enemyDmgMult || 1.0;
+            scenarioDropMult = sc.dropMult || 1.0;
         }
 
-        const maxHp = Math.floor(template.baseHp * levelScale * scenarioHpMult);
-        const damage = Math.max(1, Math.floor(template.baseDmg * levelScale * weatherDmgMult * eventDmgMult * scenarioDmgMult));
-        const goldReward = Math.floor(template.goldReward * levelScale);
-        const xpReward = Math.floor(template.xpReward * levelScale);
+        // Apply Map Depth tier multipliers (e.g. Depth II: +45% stats, +50% rewards)
+        const depthMult = (state.getCurrentDepthMultiplier) ? state.getCurrentDepthMultiplier() : { statMult: 1, goldMult: 1, xpMult: 1 };
+
+        const maxHp = Math.floor(template.baseHp * levelScale * eventHpMult * scenarioHpMult * depthMult.statMult);
+        const damage = Math.max(1, Math.floor(template.baseDmg * levelScale * weatherDmgMult * eventDmgMult * scenarioDmgMult * depthMult.statMult));
+        const goldReward = Math.floor(template.goldReward * levelScale * depthMult.goldMult);
+        const xpReward = Math.floor(template.xpReward * levelScale * depthMult.xpMult);
+        const finalDropChance = Math.min(1.0, (template.dropChance || 0.5) * eventDropMult * scenarioDropMult);
 
         return {
             id: template.id,
@@ -46,7 +58,7 @@ window.SpawningManager = {
             damage: damage,
             goldReward: goldReward,
             xpReward: xpReward,
-            dropChance: template.dropChance || 0.5,
+            dropChance: finalDropChance,
             dropTable: template.dropTable || [],
             isBoss: false,
             currentPhase: 1,
@@ -58,7 +70,8 @@ window.SpawningManager = {
         const state = window.gameState;
         const currentId = mapId || state.world.currentMapId;
         const map = window.MapsData[currentId] || window.MapsData.moonlit_vale;
-        
+        const currentDepth = state.getMapCurrentDepth ? state.getMapCurrentDepth(currentId) : 1;
+
         let bossId = map.bossId;
         if (!bossId || !window.MobsData[bossId]) {
             const mobsList = map.mobs && map.mobs.length > 0 ? map.mobs : ["goblin"];
@@ -67,7 +80,7 @@ window.SpawningManager = {
 
         this.spawnMobById(bossId, {
             isBoss: true,
-            level: (map.levelMax || 5)
+            level: (map.levelMax || 5) + (currentDepth - 1) * 4
         });
     },
 

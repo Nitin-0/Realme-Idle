@@ -64,7 +64,8 @@ window.CombatManager = {
         }
 
         // 3. Emergency Auto-Potion Check (when HP <= 35%)
-        if (state.player.autoPotion && (state.player.hp / state.player.maxHp) <= 0.35) {
+        const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+        if (state.player.autoPotion && (state.player.hp / effMaxHp) <= 0.35 && state.player.hp < effMaxHp) {
             this.checkAutoPotion();
         }
 
@@ -130,8 +131,9 @@ window.CombatManager = {
         // Lifesteal Recovery
         const lifestealPct = state.getEffectiveLifesteal();
         if (lifestealPct > 0) {
+            const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
             const healed = Math.floor(finalDmg * lifestealPct);
-            state.player.hp = Math.min(state.player.maxHp, state.player.hp + healed);
+            state.player.hp = Math.min(effMaxHp, state.player.hp + healed);
         }
 
         this.showDamagePopup(isCrit ? `CRIT! -${finalDmg}` : `-${finalDmg}`, isCrit, false);
@@ -180,8 +182,9 @@ window.CombatManager = {
 
         const lifestealPct = state.getEffectiveLifesteal();
         if (lifestealPct > 0) {
+            const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
             const healed = Math.floor(finalDmg * lifestealPct);
-            state.player.hp = Math.min(state.player.maxHp, state.player.hp + healed);
+            state.player.hp = Math.min(effMaxHp, state.player.hp + healed);
         }
 
         this.showDamagePopup(isCrit ? `CRIT! -${finalDmg}` : `-${finalDmg}`, isCrit, false);
@@ -259,10 +262,15 @@ window.CombatManager = {
         const pots = state.player.potions;
         if (!pots) return;
 
-        if (pots.potion_full > 0) {
-            window.InventoryManager.usePotion("potion_full");
+        const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+        if (state.player.hp >= effMaxHp) return;
+
+        if (pots.potion_minor > 0 && (state.player.hp / effMaxHp) > 0.25) {
+            window.InventoryManager.usePotion("potion_minor");
         } else if (pots.potion_major > 0) {
             window.InventoryManager.usePotion("potion_major");
+        } else if (pots.potion_full > 0) {
+            window.InventoryManager.usePotion("potion_full");
         } else if (pots.potion_minor > 0) {
             window.InventoryManager.usePotion("potion_minor");
         }
@@ -319,6 +327,22 @@ window.CombatManager = {
         const currentIdx = currentMap.realmIndex || 1;
         const nextMap = Object.values(window.MapsData).find(m => m.realmIndex === currentIdx + 1);
 
+        // Unlock deeper version for current map if available
+        const currentDepth = state.getMapCurrentDepth ? state.getMapCurrentDepth(currentMap.id) : 1;
+        const currentTier = state.getDepthTier ? state.getDepthTier(currentMap.id, currentDepth) : { roman: "I" };
+        const nextDepth = state.unlockNextDepth ? state.unlockNextDepth(currentMap.id) : null;
+        const nextDepthTier = nextDepth ? (state.getDepthTier ? state.getDepthTier(currentMap.id, nextDepth) : { roman: "II", subtitle: "Deeper" }) : null;
+
+        // Kingdom Domain Milestone: Defeating Boss of Moonlit Vale III
+        if (currentMap.id === "moonlit_vale" && currentDepth >= 3) {
+            if (!state.player.moonlitVale3Cleared) {
+                state.player.moonlitVale3Cleared = true;
+                if (state.addLog) {
+                    state.addLog(`👑 ROYAL DECREE: Having banished the foul beast from this forest, the High King granted you sovereign land! Kingdom Domain is now unlocked!`, "legendary", "👑");
+                }
+            }
+        }
+
         if (nextMap) {
             state.unlockMap(nextMap.id);
         }
@@ -330,6 +354,9 @@ window.CombatManager = {
 
         if (state.addLog) {
             state.addLog(`🏆 REALM CLEARED! You defeated Boss ${bossMob.name}! (+${bonusGold.toLocaleString()}g, +${bonusXp.toLocaleString()} XP)`, "boss", "🏆");
+            if (nextDepthTier) {
+                state.addLog(`🌲 Discovered deeper territory: ${currentMap.name} ${nextDepthTier.roman} (${nextDepthTier.subtitle})!`, "travel", "🌲");
+            }
             if (nextMap) {
                 state.addLog(`🗺️ Unlocked new realm: ${nextMap.name} [Realm ${nextMap.roman || nextMap.realmIndex}]!`, "travel", "🗺️");
             }
@@ -341,7 +368,12 @@ window.CombatManager = {
         if (window.UIManager && typeof window.UIManager.showVictoryModal === "function") {
             window.UIManager.showVictoryModal({
                 bossName: bossMob.name,
-                mapName: currentMap.name,
+                mapName: `${currentMap.name} ${currentTier.roman}`,
+                currentMapId: currentMap.id,
+                currentDepth: currentDepth,
+                nextDepth: nextDepth ? `${currentMap.name} ${nextDepthTier.roman}` : null,
+                nextDepthTier: nextDepthTier,
+                nextDepthNum: nextDepth,
                 nextMap: nextMap ? nextMap.name : null,
                 nextMapId: nextMap ? nextMap.id : null,
                 gold: bonusGold,

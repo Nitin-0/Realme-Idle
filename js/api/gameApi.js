@@ -85,6 +85,19 @@ window.GameAPI = {
             if (window.gameState && typeof window.gameState.clearLogs === "function") {
                 window.gameState.clearLogs();
             }
+        },
+        setKingdomUnlocked(unlocked) {
+            const state = window.gameState;
+            if (state && state.player) {
+                state.player.moonlitVale3Cleared = !!unlocked;
+                if (unlocked && state.player.level < 5) {
+                    state.player.level = 5;
+                }
+                state.notify();
+                if (window.GameAPI && window.GameAPI.data) {
+                    window.GameAPI.data.broadcast("KINGDOM_OVERRIDE", { unlocked: !!unlocked });
+                }
+            }
         }
     },
 
@@ -149,6 +162,10 @@ window.GameAPI = {
             }
 
             return true;
+        },
+        buyUpgrade(id) {
+            if (window.buyUpgrade) return window.buyUpgrade(id);
+            return false;
         }
     },
 
@@ -165,6 +182,10 @@ window.GameAPI = {
         },
         unequipSlot(slot) {
             if (window.InventoryManager) window.InventoryManager.unequipSlot(slot);
+        },
+        forge(tierIdx) {
+            if (window.InventoryManager) return window.InventoryManager.forge(tierIdx);
+            return false;
         }
     },
 
@@ -182,13 +203,25 @@ window.GameAPI = {
 
     // Events & Scenarios Controller
     events: {
-        start(eventId) { if (window.EventManager) window.EventManager.startEvent(eventId); },
-        stop() { if (window.EventManager) window.EventManager.stopEvent(); }
+        start(eventId) {
+            if (window.EventManager) window.EventManager.startEvent(eventId);
+            if (syncChannel) syncChannel.postMessage({ type: "EVENT_START", eventId, time: Date.now() });
+        },
+        stop() {
+            if (window.EventManager) window.EventManager.stopEvent();
+            if (syncChannel) syncChannel.postMessage({ type: "EVENT_STOP", time: Date.now() });
+        }
     },
 
     scenarios: {
-        run(scenarioId) { if (window.ScenarioManager) window.ScenarioManager.runScenario(scenarioId); },
-        stop() { if (window.ScenarioManager) window.ScenarioManager.stopScenario(); }
+        run(scenarioId) {
+            if (window.ScenarioManager) window.ScenarioManager.runScenario(scenarioId);
+            if (syncChannel) syncChannel.postMessage({ type: "SCENARIO_RUN", scenarioId, time: Date.now() });
+        },
+        stop() {
+            if (window.ScenarioManager) window.ScenarioManager.stopScenario();
+            if (syncChannel) syncChannel.postMessage({ type: "SCENARIO_STOP", time: Date.now() });
+        }
     },
 
     // Data Management & Admin Editor API
@@ -230,6 +263,33 @@ window.GameAPI = {
             this.persistCustomData();
             this.broadcast("ITEM_UPDATED", itemObj);
         },
+        saveAlchemyRecipe(recipeObj) {
+            if (!window.AlchemyRecipes) window.AlchemyRecipes = [];
+            const idx = window.AlchemyRecipes.findIndex(r => r.id === recipeObj.id);
+            if (idx >= 0) window.AlchemyRecipes[idx] = { ...recipeObj };
+            else window.AlchemyRecipes.push({ ...recipeObj });
+            this.persistCustomData();
+            this.broadcast("RECIPE_UPDATED", recipeObj);
+        },
+        deleteAlchemyRecipe(id) {
+            if (!window.AlchemyRecipes) return;
+            const idx = window.AlchemyRecipes.findIndex(r => r.id === id);
+            if (idx >= 0) window.AlchemyRecipes.splice(idx, 1);
+            this.persistCustomData();
+            this.broadcast("RECIPE_DELETED", { id });
+        },
+        saveScenario(scenObj) {
+            if (!window.ScenariosData) window.ScenariosData = {};
+            window.ScenariosData[scenObj.id] = { ...scenObj };
+            this.persistCustomData();
+            this.broadcast("SCENARIO_UPDATED", scenObj);
+        },
+        deleteScenario(id) {
+            if (!window.ScenariosData) return;
+            delete window.ScenariosData[id];
+            this.persistCustomData();
+            this.broadcast("SCENARIO_DELETED", { id });
+        },
         deleteMob(id) {
             delete window.MobsData[id];
             this.persistCustomData();
@@ -262,9 +322,11 @@ window.GameAPI = {
                 maps: window.MapsData,
                 weather: window.WeatherData,
                 events: window.EventsData,
+                scenarios: window.ScenariosData,
                 heroes: window.HeroesData,
                 items: window.ItemsData,
-                shop: window.ShopData
+                shop: window.ShopData,
+                alchemy: window.AlchemyRecipes
             }));
         },
         loadCustomData() {
@@ -276,13 +338,43 @@ window.GameAPI = {
                     if (data.maps) Object.assign(window.MapsData, data.maps);
                     if (data.weather) Object.assign(window.WeatherData, data.weather);
                     if (data.events) Object.assign(window.EventsData, data.events);
+                    if (data.scenarios) Object.assign(window.ScenariosData, data.scenarios);
                     if (data.heroes) Object.assign(window.HeroesData, data.heroes);
                     if (data.items) Object.assign(window.ItemsData, data.items);
-                    if (data.shop && Array.isArray(data.shop)) window.ShopData = data.shop;
+                    if (data.shop && Array.isArray(data.shop)) {
+                        window.ShopData = data.shop.map(s => {
+                            const it = (s.itemId && window.ItemsData && window.ItemsData[s.itemId]) ||
+                                       (s.matKey && window.MaterialsData && window.MaterialsData[s.matKey]) ||
+                                       (s.matKey && window.ItemsData && window.ItemsData[s.matKey]) || {};
+                            return {
+                                ...s,
+                                name: (s.name && s.name !== "undefined") ? s.name : (it.name || s.id || "Shop Item"),
+                                icon: (s.icon && s.icon !== "undefined") ? s.icon : (it.icon || "🛍️"),
+                                category: (s.category && s.category !== "undefined") ? s.category : (it.slot || it.type || (s.matKey ? "material" : "item")),
+                                costGold: s.costGold || s.cost || it.baseValue || 100,
+                                reqLevel: s.reqLevel || 1,
+                                reqMap: s.reqMap || "any",
+                                reqDepth: s.reqDepth || 1,
+                                description: s.description || s.desc || it.description || ""
+                            };
+                        });
+                    }
+                    if (data.alchemy && Array.isArray(data.alchemy)) window.AlchemyRecipes = data.alchemy;
                 } catch (e) {
                     console.log("Custom data load failed.");
                 }
             }
+        },
+        resetShopData() {
+            try {
+                const saved = localStorage.getItem("realmIdleCustomData");
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    delete parsed.shop;
+                    localStorage.setItem("realmIdleCustomData", JSON.stringify(parsed));
+                }
+            } catch(e) {}
+            this.broadcast("SHOP_RESET", null);
         },
         broadcast(action, payload) {
             if (syncChannel) {
@@ -295,10 +387,12 @@ window.GameAPI = {
                 maps: window.MapsData,
                 weather: window.WeatherData,
                 events: window.EventsData,
+                scenarios: window.ScenariosData,
                 heroes: window.HeroesData,
                 items: window.ItemsData,
                 shop: window.ShopData,
-                recipes: window.CraftingRecipes
+                recipes: window.CraftingRecipes,
+                alchemy: window.AlchemyRecipes
             }, null, 2);
         },
         importAllJSON(jsonString) {
@@ -308,9 +402,11 @@ window.GameAPI = {
                 if (data.maps) Object.assign(window.MapsData, data.maps);
                 if (data.weather) Object.assign(window.WeatherData, data.weather);
                 if (data.events) Object.assign(window.EventsData, data.events);
+                if (data.scenarios) Object.assign(window.ScenariosData, data.scenarios);
                 if (data.heroes) Object.assign(window.HeroesData, data.heroes);
                 if (data.items) Object.assign(window.ItemsData, data.items);
                 if (data.shop && Array.isArray(data.shop)) window.ShopData = data.shop;
+                if (data.alchemy && Array.isArray(data.alchemy)) window.AlchemyRecipes = data.alchemy;
                 this.persistCustomData();
                 this.broadcast("ALL_IMPORTED", null);
                 return true;
@@ -370,6 +466,24 @@ if (window.GameAPI.settings) window.GameAPI.settings.loadRules();
 // Listen for broadcast sync across tabs
 if (syncChannel) {
     syncChannel.onmessage = (e) => {
+        if (!e.data) return;
+        if (e.data.type === "SCENARIO_RUN" && window.ScenarioManager) {
+            window.ScenarioManager.runScenario(e.data.scenarioId);
+        } else if (e.data.type === "SCENARIO_STOP" && window.ScenarioManager) {
+            window.ScenarioManager.stopScenario();
+        } else if (e.data.type === "EVENT_START" && window.EventManager) {
+            window.EventManager.startEvent(e.data.eventId);
+        } else if (e.data.type === "EVENT_STOP" && window.EventManager) {
+            window.EventManager.stopEvent();
+        } else if (e.data.action === "KINGDOM_OVERRIDE") {
+            if (window.gameState) {
+                window.gameState.player.moonlitVale3Cleared = !!(e.data.payload && e.data.payload.unlocked);
+                if (e.data.payload && e.data.payload.unlocked && window.gameState.player.level < 5) {
+                    window.gameState.player.level = 5;
+                }
+            }
+        }
+
         window.GameAPI.data.loadCustomData();
         if (window.GameAPI.settings) window.GameAPI.settings.loadRules();
         if (window.gameState) window.gameState.notify();

@@ -21,6 +21,10 @@ window.KingdomManager = {
     upgradeBuilding(bldgKey) {
         const state = window.gameState;
         if (state.kingdom[bldgKey] === undefined) return;
+        if (state.isKingdomDomainUnlocked && !state.isKingdomDomainUnlocked()) {
+            if (window.devMode) window.devMode.logToConsole("Kingdom Domain is locked pending royal decree.", "error");
+            return;
+        }
 
         const cost = this.getBuildingCost(bldgKey);
         if (!state.canAfford(cost)) {
