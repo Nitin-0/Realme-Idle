@@ -26,6 +26,52 @@ window.HeroesData = {
             buff: { name: "Iron Bastion", stat: "defense", bonus: 25, duration: 4 },
             description: "Crushes enemy for 220% Attack damage and increases Defense by +25 for 4s."
         },
+        skillsPool: [
+            {
+                id: "shield_slam",
+                name: "Shield Slam",
+                icon: "🛡️",
+                cooldown: 8,
+                damageMult: 2.2,
+                healPct: 0.0,
+                buff: { name: "Iron Bastion", stat: "defense", bonus: 25, duration: 4 },
+                description: "Crushes enemy for 220% Attack damage and increases Defense by +25 for 4s.",
+                isDefault: true
+            },
+            {
+                id: "whirlwind_slash",
+                name: "Whirlwind Slash",
+                icon: "🌪️",
+                cooldown: 7,
+                damageMult: 2.8,
+                healPct: 0.0,
+                buff: { name: "Battle Trance", stat: "critChance", bonus: 0.10, duration: 4 },
+                description: "Spins through enemy defenses for 280% Attack damage and +10% Crit for 4s.",
+                scrollId: "scroll_whirlwind"
+            },
+            {
+                id: "holy_bastion",
+                name: "Holy Bastion",
+                icon: "🏰",
+                cooldown: 9,
+                damageMult: 1.8,
+                healPct: 0.15,
+                buff: { name: "Aegis Wall", stat: "defense", bonus: 40, duration: 5 },
+                description: "Fortifies stance for 180% damage, recovers 15% Max HP, and +40 Defense for 5s.",
+                scrollId: "scroll_holy_bastion"
+            },
+            {
+                id: "judgment_blade",
+                name: "Heavenly Judgment",
+                icon: "⚡",
+                cooldown: 11,
+                damageMult: 3.8,
+                healPct: 0.08,
+                buff: { name: "Divine Retribution", stat: "attack", bonus: 45, duration: 5 },
+                description: "Strikes with divine thunder for 380% damage, +45 Attack, and 8% Max HP heal.",
+                scrollId: "scroll_judgment"
+            }
+        ],
         promotions: [
             {
                 rank: 2,
@@ -79,6 +125,52 @@ window.HeroesData = {
             buff: { name: "Smoke Veil", stat: "dodge", bonus: 0.25, duration: 4 },
             description: "Strikes from stealth for 320% Attack damage with +25% Dodge for 4s."
         },
+        skillsPool: [
+            {
+                id: "shadowstrike",
+                name: "Shadowstrike",
+                icon: "🗡️",
+                cooldown: 7,
+                damageMult: 3.2,
+                healPct: 0.0,
+                buff: { name: "Smoke Veil", stat: "dodge", bonus: 0.25, duration: 4 },
+                description: "Strikes from stealth for 320% Attack damage with +25% Dodge for 4s.",
+                isDefault: true
+            },
+            {
+                id: "poison_blade",
+                name: "Venomous Flurry",
+                icon: "🐍",
+                cooldown: 6,
+                damageMult: 2.6,
+                healPct: 0.0,
+                buff: { name: "Viper Essence", stat: "lifesteal", bonus: 0.08, duration: 6 },
+                description: "Coats daggers in deadly venom for 260% damage and +8% Lifesteal for 6s.",
+                scrollId: "scroll_poison_blade"
+            },
+            {
+                id: "smoke_bomb",
+                name: "Smoke Veil Bomb",
+                icon: "💨",
+                cooldown: 8,
+                damageMult: 2.0,
+                healPct: 0.0,
+                buff: { name: "Total Concealment", stat: "dodge", bonus: 0.35, duration: 5 },
+                description: "Blinds the foe for 200% damage, granting +35% Dodge and +12% Crit for 5s.",
+                scrollId: "scroll_smoke_bomb"
+            },
+            {
+                id: "assassinate",
+                name: "Death Blossom",
+                icon: "🩸",
+                cooldown: 10,
+                damageMult: 4.4,
+                healPct: 0.0,
+                buff: { name: "Blood Rush", stat: "critChance", bonus: 0.20, duration: 4 },
+                description: "Lethal execution dealing 440% Critical Pierce damage with +20% Crit for 4s.",
+                scrollId: "scroll_assassinate"
+            }
+        ],
         promotions: [
             {
                 rank: 2,
@@ -132,6 +224,52 @@ window.HeroesData = {
             buff: { name: "Arcane Surge", stat: "critChance", bonus: 0.15, duration: 5 },
             description: "Calls down an arcane meteor for 420% Attack damage and +15% Crit for 5s."
         },
+        skillsPool: [
+            {
+                id: "arcane_meteor",
+                name: "Arcane Meteor",
+                icon: "☄️",
+                cooldown: 10,
+                damageMult: 4.2,
+                healPct: 0.05,
+                buff: { name: "Arcane Surge", stat: "critChance", bonus: 0.15, duration: 5 },
+                description: "Calls down an arcane meteor for 420% Attack damage and +15% Crit for 5s.",
+                isDefault: true
+            },
+            {
+                id: "frost_nova",
+                name: "Frost Nova",
+                icon: "❄️",
+                cooldown: 8,
+                damageMult: 3.0,
+                healPct: 0.0,
+                buff: { name: "Permafrost Shield", stat: "defense", bonus: 25, duration: 5 },
+                description: "Deep freezes enemy for 300% Ice damage and grants +25 Defense for 5s.",
+                scrollId: "scroll_frost_nova"
+            },
+            {
+                id: "mana_shield",
+                name: "Arcane Barrier",
+                icon: "🔮",
+                cooldown: 9,
+                damageMult: 2.2,
+                healPct: 0.20,
+                buff: { name: "Rune Ward", stat: "defense", bonus: 35, duration: 6 },
+                description: "Conjures an astral sphere for 220% damage, recovers 20% Max HP, and +35 Def for 6s.",
+                scrollId: "scroll_mana_shield"
+            },
+            {
+                id: "meteor_strike",
+                name: "Meteor Calamity",
+                icon: "🌌",
+                cooldown: 12,
+                damageMult: 5.2,
+                healPct: 0.05,
+                buff: { name: "Supernova Grace", stat: "attack", bonus: 60, duration: 5 },
+                description: "Tears open cosmic rifts for 520% Cataclysmic damage and +60 Attack for 5s.",
+                scrollId: "scroll_meteor"
+            }
+        ],
         promotions: [
             {
                 rank: 2,
@@ -185,6 +323,52 @@ window.HeroesData = {
             buff: { name: "Blessed Ward", stat: "defense", bonus: 15, duration: 5 },
             description: "Deals 200% Holy damage and immediately restores 25% of maximum HP."
         },
+        skillsPool: [
+            {
+                id: "holy_radiance",
+                name: "Holy Radiance",
+                icon: "✨",
+                cooldown: 9,
+                damageMult: 2.0,
+                healPct: 0.25,
+                buff: { name: "Blessed Ward", stat: "defense", bonus: 15, duration: 5 },
+                description: "Deals 200% Holy damage and immediately restores 25% of maximum HP.",
+                isDefault: true
+            },
+            {
+                id: "divine_retribution",
+                name: "Divine Retribution",
+                icon: "🔨",
+                cooldown: 8,
+                damageMult: 3.1,
+                healPct: 0.10,
+                buff: { name: "Holy Aegis", stat: "defense", bonus: 30, duration: 5 },
+                description: "Smites for 310% Holy damage, restores 10% Max HP, and +30 Defense for 5s.",
+                scrollId: "scroll_divine_retribution"
+            },
+            {
+                id: "consecration",
+                name: "Sacred Ground",
+                icon: "🌟",
+                cooldown: 9,
+                damageMult: 2.6,
+                healPct: 0.18,
+                buff: { name: "Consecrated Armor", stat: "defense", bonus: 25, duration: 6 },
+                description: "Consecrates the earth for 260% damage, recovers 18% Max HP, and +25 Def for 6s.",
+                scrollId: "scroll_consecration"
+            },
+            {
+                id: "wrath_of_heavens",
+                name: "Avatar of Light",
+                icon: "⚜️",
+                cooldown: 11,
+                damageMult: 4.2,
+                healPct: 0.22,
+                buff: { name: "Heavenly Might", stat: "attack", bonus: 40, duration: 5 },
+                description: "Channels heavenly power for 420% damage, +40 Attack, +30 Def, and 22% Max HP heal.",
+                scrollId: "scroll_wrath_of_heavens"
+            }
+        ],
         promotions: [
             {
                 rank: 2,
@@ -216,3 +400,15 @@ window.HeroesData = {
         ]
     }
 };
+
+// Universal map of all skills indexed by ID
+window.AllSkillsData = {};
+Object.values(window.HeroesData).forEach(hero => {
+    if (hero.skillsPool) {
+        hero.skillsPool.forEach(sk => {
+            window.AllSkillsData[sk.id] = { ...sk, heroClass: hero.id };
+        });
+    } else if (hero.skill) {
+        window.AllSkillsData[hero.skill.id] = { ...hero.skill, heroClass: hero.id };
+    }
+});

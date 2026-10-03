@@ -43,6 +43,21 @@ window.AlchemyRecipes = [
         effect: { type: "buff", stat: "dodge", bonus: 0.08, duration: 60 },
         description: "Infuses the limbs with ethereal breeze. Increases Dodge chance by +8% for 60 seconds."
     },
+    {
+        id: "alch_stamina_tonic",
+        name: "Stamina Tonic",
+        icon: "⚡",
+        tier: 1,
+        tierName: "Apprentice Cauldron",
+        reqLevel: 2,
+        goldCost: 50,
+        materials: { wood: 2, crystal: 1 },
+        result: { id: "potion_stamina", type: "consumable", qty: 1 },
+        effect: { type: "fatigue", fatigueAmount: 40, heal: 40 },
+        recipeScrollId: "recipe_stamina_tonic",
+        requiresRecipe: true,
+        description: "A refreshing herbal tonic that restores 40 Fatigue and mends minor fatigue strain."
+    },
 
     // ---------------- TIER 2: JOURNEYMAN ALCHEMY (Hero Lv. 10 - Locked) ----------------
     {
@@ -97,6 +112,36 @@ window.AlchemyRecipes = [
         effect: { type: "buff", stat: "critChance", bonus: 0.12, duration: 120 },
         description: "Sharpens perception to pinpoint vital weaknesses. +12% Critical Strike Chance for 120s."
     },
+    {
+        id: "alch_elixir_rejuvenation",
+        name: "Elixir of Pure Rejuvenation",
+        icon: "🏺",
+        tier: 2,
+        tierName: "Journeyman Crucible",
+        reqLevel: 15,
+        goldCost: 350,
+        materials: { crystal: 3, dragonScale: 1 },
+        result: { id: "potion_elixir_rest", type: "consumable", qty: 1 },
+        effect: { type: "fatigue_full", fatigueAmount: 100, heal: 250 },
+        recipeScrollId: "recipe_elixir_rejuvenation",
+        requiresRecipe: true,
+        description: "Deep alchemical panacea that completely resets Fatigue to 0 and restores 250 HP."
+    },
+    {
+        id: "alch_elixir_shadow",
+        name: "Elixir of Shadowmeld",
+        icon: "🔮",
+        tier: 2,
+        tierName: "Journeyman Crucible",
+        reqLevel: 18,
+        goldCost: 420,
+        materials: { crystal: 2, shadowEssence: 1 },
+        result: { id: "elixir_shadow", type: "consumable", qty: 1 },
+        effect: { type: "buff", stat: "dodge", bonus: 0.15, duration: 90 },
+        recipeScrollId: "recipe_elixir_shadow",
+        requiresRecipe: true,
+        description: "Envelops the consumer in astral shadows. Grants +15% Dodge and +10% Crit for 90s."
+    },
 
     // ---------------- TIER 3: MASTER AINCRAD ALCHEMY (Hero Lv. 25 - Locked) ----------------
     {
@@ -111,6 +156,21 @@ window.AlchemyRecipes = [
         result: { id: "potion_full", type: "consumable", qty: 1 },
         effect: { type: "heal", value: 99999 },
         description: "Divine nectar brewed from dragon essence. Restores 100% of maximum HP instantly."
+    },
+    {
+        id: "alch_draught_titans",
+        name: "Titan's Might Draught",
+        icon: "🌋",
+        tier: 3,
+        tierName: "Aincrad Alchemical Altar",
+        reqLevel: 26,
+        goldCost: 1200,
+        materials: { dragonScale: 2, ironOre: 8, crystal: 3 },
+        result: { id: "elixir_titans", type: "consumable", qty: 1 },
+        effect: { type: "buff", stat: "attack", bonus: 60, duration: 120 },
+        recipeScrollId: "recipe_draught_titans",
+        requiresRecipe: true,
+        description: "Ancient titan blood that imbues overwhelming wrath (+60 Attack, +40 Def for 120s)."
     },
     {
         id: "alch_ambrosia_gods",

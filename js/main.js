@@ -11,6 +11,7 @@ window.MainEngine = {
     activeTab: "character",
     selectedInventoryItemInstanceId: null,
     currentInvFilter: "all",
+    currentInvSort: "rarity",
     currentShopFilter: "all",
 
     onboardState: {
@@ -237,11 +238,30 @@ window.MainEngine = {
             chkAutoPotion.addEventListener("change", (e) => api.player.toggleAutoPotion(e.target.checked));
         }
 
+        // Rest at Camp Button
+        const btnRestCamp = document.getElementById("btnRestCamp");
+        if (btnRestCamp) {
+            btnRestCamp.addEventListener("click", () => {
+                if (window.CombatManager && typeof window.CombatManager.rest === "function") {
+                    window.CombatManager.rest();
+                }
+            });
+        }
+
         // Inventory Category Filter Buttons
         document.querySelectorAll("[data-inv-filter]").forEach(btn => {
             btn.addEventListener("click", () => {
                 this.currentInvFilter = btn.dataset.invFilter;
                 document.querySelectorAll("[data-inv-filter]").forEach(b => b.classList.toggle("active", b === btn));
+                this.renderInventory();
+            });
+        });
+
+        // Inventory Sort Buttons
+        document.querySelectorAll("[data-inv-sort]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                this.currentInvSort = btn.dataset.invSort;
+                document.querySelectorAll("[data-inv-sort]").forEach(b => b.classList.toggle("active", b === btn));
                 this.renderInventory();
             });
         });
@@ -719,12 +739,47 @@ window.MainEngine = {
         if (document.getElementById("statDodge")) document.getElementById("statDodge").textContent = Math.round(state.getEffectiveDodge() * 100) + "%";
         if (document.getElementById("statLifesteal")) document.getElementById("statLifesteal").textContent = Math.round(state.getEffectiveLifesteal() * 100) + "%";
 
-        // Skill Bar
-        if (heroDef.skill) {
-            const skill = heroDef.skill;
-            if (document.getElementById("skillIcon")) document.getElementById("skillIcon").textContent = skill.icon;
-            if (document.getElementById("skillName")) document.getElementById("skillName").textContent = skill.name;
-            if (document.getElementById("skillDesc")) document.getElementById("skillDesc").textContent = `${Math.round(skill.damageMult * 100)}% Dmg · ${skill.cooldown}s CD`;
+        // Fatigue Stat Badge
+        const fatigue = state.getFatigue ? state.getFatigue() : (state.player.fatigue || 0);
+        const fatigueStatus = state.getFatigueStatus ? state.getFatigueStatus() : { label: "Fresh", color: "#4ade80" };
+        const fEl = document.getElementById("statFatigue");
+        const fLbl = document.getElementById("statFatigueLabel");
+        const fBadge = document.getElementById("fatigueStatBadge");
+        if (fEl) fEl.textContent = `${Math.floor(fatigue)}%`;
+        if (fLbl) {
+            fLbl.textContent = fatigueStatus.label;
+            fLbl.style.color = fatigueStatus.color;
+        }
+        if (fBadge) {
+            fBadge.style.borderColor = fatigue >= 75 ? "#ef4444" : (fatigue >= 50 ? "#f59e0b" : "rgba(255,255,255,0.12)");
+            fBadge.title = `Current Fatigue: ${Math.floor(fatigue)}% (${fatigueStatus.label}). Combat damage penalty: -${Math.round((1 - (state.getFatigueMultiplier ? state.getFatigueMultiplier() : 1)) * 100)}%. Pitch camp or drink Stamina Tonics to recover.`;
+        }
+
+        // Pitch Camp Rest Button
+        const btnRest = document.getElementById("btnRestCamp");
+        if (btnRest) {
+            const restCd = (window.CombatManager && window.CombatManager.restCooldown) ? window.CombatManager.restCooldown : 0;
+            if (restCd > 0) {
+                btnRest.textContent = `⛺ Rest (${restCd}s)`;
+                btnRest.disabled = true;
+            } else if (fatigue <= 0 && state.player.hp >= effMaxHp) {
+                btnRest.textContent = `⛺ Rest (Camp)`;
+                btnRest.disabled = true;
+                btnRest.title = "Hero is fully refreshed and at maximum HP.";
+            } else {
+                btnRest.textContent = `⛺ Rest (Camp)`;
+                btnRest.disabled = false;
+                btnRest.title = "Pitch Camp & Rest: Recovers 60 Fatigue and 50% HP (30s Cooldown)";
+            }
+        }
+
+        // Active Combat Skill Bar
+        const activeSkill = state.getActiveSkill ? state.getActiveSkill() : heroDef.skill;
+        if (activeSkill) {
+            if (document.getElementById("skillIcon")) document.getElementById("skillIcon").textContent = activeSkill.icon;
+            if (document.getElementById("skillName")) document.getElementById("skillName").textContent = activeSkill.name;
+            const lvStr = activeSkill.level ? ` (Lv. ${activeSkill.level})` : '';
+            if (document.getElementById("skillDesc")) document.getElementById("skillDesc").textContent = `${Math.round(activeSkill.damageMult * 100)}% Dmg${lvStr} · ${activeSkill.cooldown}s CD`;
 
             const cdBadge = document.getElementById("skillCdBadge");
             const btnSkill = document.getElementById("btnCastSkill");
@@ -746,6 +801,7 @@ window.MainEngine = {
             if (document.getElementById("potCount_minor")) document.getElementById("potCount_minor").textContent = `x${state.player.potions.potion_minor || 0}`;
             if (document.getElementById("potCount_major")) document.getElementById("potCount_major").textContent = `x${state.player.potions.potion_major || 0}`;
             if (document.getElementById("potCount_full")) document.getElementById("potCount_full").textContent = `x${state.player.potions.potion_full || 0}`;
+            if (document.getElementById("potCount_stamina")) document.getElementById("potCount_stamina").textContent = `x${state.player.potions.potion_stamina || 0}`;
         }
 
         const chkAutoPot = document.getElementById("chkAutoPotion");
@@ -1178,8 +1234,163 @@ window.MainEngine = {
             });
         }
 
+        // Render Special Skills & Ability Mastery Center
+        this.renderSpecialSkills();
+
         // Render Divine Blessings & Passives ("Blessed by the Gods")
         this.renderDivineBlessings();
+    },
+
+    renderSpecialSkills() {
+        const upgradeCenter = document.getElementById("skillUpgradeCenter");
+        const arsenalGrid = document.getElementById("skillArsenalGrid");
+        const headerTag = document.getElementById("specialSkillsHeaderTag");
+        if (!upgradeCenter || !arsenalGrid) return;
+
+        const state = window.gameState;
+        const heroDef = (window.HeroesData && window.HeroesData[state.player.heroClass]) || window.HeroesData.knight;
+        const activeSkill = state.getActiveSkill ? state.getActiveSkill() : heroDef.skill;
+        const activeSkillId = state.getActiveSkillId ? state.getActiveSkillId() : (activeSkill ? activeSkill.id : null);
+        const curLevel = state.getSkillLevel ? state.getSkillLevel(activeSkillId) : 1;
+        const nextStats = (state.getSkillEffectiveStats && activeSkillId) ? state.getSkillEffectiveStats(activeSkillId, curLevel + 1) : null;
+        const upgradeCost = (state.getSkillUpgradeCost && activeSkillId) ? state.getSkillUpgradeCost(activeSkillId) : null;
+        const canUpgrade = (state.canUpgradeSkill && activeSkillId) ? state.canUpgradeSkill(activeSkillId) : { can: false, reason: "N/A" };
+
+        if (headerTag) {
+            headerTag.textContent = `${heroDef.name.toUpperCase()} SPECIAL SKILLS`;
+        }
+
+        // 1. Render Active Skill Upgrade Center
+        if (activeSkill && upgradeCost && nextStats) {
+            let matsChipsHtml = "";
+            if (upgradeCost.materials) {
+                const matLabels = {
+                    ironOre: "⛏️ Iron",
+                    wood: "🪵 Wood",
+                    crystal: "💎 Crystal",
+                    dragonScale: "🐉 Dragon Scale",
+                    shadowEssence: "🔮 Shadow Essence"
+                };
+                matsChipsHtml = Object.entries(upgradeCost.materials).map(([mat, need]) => {
+                    const have = (state.player.materials && state.player.materials[mat]) || 0;
+                    const ok = have >= need;
+                    return `<span class="skill-cost-chip ${ok ? 'ok' : 'missing'}">${matLabels[mat] || mat}: ${have}/${need}</span>`;
+                }).join(" ");
+            }
+
+            const goldOk = state.canAfford(upgradeCost.gold);
+            const goldChip = `<span class="skill-cost-chip ${goldOk ? 'ok' : 'missing'}">💰 ${upgradeCost.gold.toLocaleString()}g</span>`;
+
+            const dmgDiff = Math.round((nextStats.damageMult - activeSkill.damageMult) * 100);
+            const cdDiff = (activeSkill.cooldown - nextStats.cooldown).toFixed(1);
+
+            let bonusNotes = "";
+            if (activeSkill.healPct) {
+                bonusNotes += ` · ❤️ Heals ${Math.round(activeSkill.healPct * 100)}% HP`;
+            }
+            if (activeSkill.buff) {
+                bonusNotes += ` · ✨ Grants ${activeSkill.buff.name || 'Buff'}`;
+            }
+
+            upgradeCenter.innerHTML = `
+                <div class="skill-active-hero-box">
+                    <div class="skill-active-info-col">
+                        <div class="skill-active-big-icon">${activeSkill.icon}</div>
+                        <div class="skill-active-title-block">
+                            <h3>${activeSkill.name} <span class="skill-lv-badge">Mastery Lv. ${curLevel}</span></h3>
+                            <p class="skill-active-desc">${activeSkill.description}${bonusNotes}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="skill-stats-compare-grid">
+                    <div class="skill-stat-box">
+                        <div class="skill-stat-lbl">Damage Multiplier</div>
+                        <div class="skill-stat-val">
+                            ${Math.round(activeSkill.damageMult * 100)}%
+                            <span class="skill-stat-next">➜ ${Math.round(nextStats.damageMult * 100)}% (+${dmgDiff}%)</span>
+                        </div>
+                    </div>
+                    <div class="skill-stat-box">
+                        <div class="skill-stat-lbl">Ability Cooldown</div>
+                        <div class="skill-stat-val">
+                            ${activeSkill.cooldown}s
+                            <span class="skill-stat-next">➜ ${nextStats.cooldown}s (-${cdDiff}s)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="skill-upgrade-footer">
+                    <div class="skill-upgrade-cost-list">
+                        <strong style="font-size:11px; color:#8f89a8; margin-right:4px;">UPGRADE COST:</strong>
+                        ${goldChip}
+                        ${matsChipsHtml}
+                    </div>
+                    <button type="button" class="btn-upgrade-skill" id="btnUpgradeActiveSkill" ${canUpgrade.can ? '' : 'disabled'}>
+                        ${canUpgrade.can ? `⭐ Upgrade Skill (Lv. ${curLevel} ➜ ${curLevel + 1})` : `🔒 ${canUpgrade.reason}`}
+                    </button>
+                </div>
+            `;
+
+            const btnUp = document.getElementById("btnUpgradeActiveSkill");
+            if (btnUp && canUpgrade.can) {
+                btnUp.addEventListener("click", () => {
+                    const ok = state.upgradeSkill(activeSkillId);
+                    if (ok) {
+                        this.renderSpecialSkills();
+                        this.updateUI();
+                    }
+                });
+            }
+        } else {
+            upgradeCenter.innerHTML = `<div class="empty-state" style="padding:16px; color:#8f89a8;">No active special skill equipped. Select a skill from your class arsenal below.</div>`;
+        }
+
+        // 2. Render Class Skill Arsenal Grid
+        const skillsPool = (heroDef && heroDef.skillsPool) || (heroDef && heroDef.skill ? [heroDef.skill] : []);
+        arsenalGrid.innerHTML = "";
+
+        skillsPool.forEach(skill => {
+            const isUnlocked = state.isSkillUnlocked ? state.isSkillUnlocked(skill.id) : true;
+            const isEquipped = activeSkillId === skill.id;
+            const skillLevel = state.getSkillLevel ? state.getSkillLevel(skill.id) : 1;
+            const effectiveStats = state.getSkillEffectiveStats ? state.getSkillEffectiveStats(skill.id, skillLevel) : skill;
+
+            const card = document.createElement("div");
+            card.className = `skill-arsenal-card ${isEquipped ? 'active-equipped' : ''} ${!isUnlocked ? 'locked-skill' : ''}`;
+
+            let specialBadge = "";
+            if (skill.healPct) specialBadge += `<span class="skill-arsenal-badge">❤️ Heal ${Math.round(skill.healPct * 100)}%</span>`;
+            if (skill.buff) specialBadge += `<span class="skill-arsenal-badge">✨ ${skill.buff.name || 'Buff'}</span>`;
+
+            let actionBtn = "";
+            if (isEquipped) {
+                actionBtn = `<button class="btn-equip-skill is-active" disabled>✓ EQUIPPED ACTIVE</button>`;
+            } else if (isUnlocked) {
+                actionBtn = `<button class="btn-equip-skill btn-purple" onclick="window.gameState.equipSkill('${skill.id}'); window.MainEngine.renderSpecialSkills(); window.MainEngine.updateUI();">⚔️ Equip Active Skill</button>`;
+            } else {
+                const scrollItem = window.ItemsData ? window.ItemsData[skill.scrollId] : null;
+                const scrollName = scrollItem ? scrollItem.name : "Skill Scroll";
+                actionBtn = `<button class="btn-equip-skill btn-disabled" disabled title="Acquire and study [${scrollName}] from the Realm Shop or monsters to master this ability">🔒 Locked (${scrollName})</button>`;
+            }
+
+            card.innerHTML = `
+                <div class="skill-arsenal-top">
+                    <div class="skill-arsenal-icon">${skill.icon}</div>
+                    <div class="skill-arsenal-title-box">
+                        <h4>${skill.name} ${isUnlocked ? `<span class="skill-lv-badge" style="font-size:9.5px; padding:1px 6px;">Lv. ${skillLevel}</span>` : ''}</h4>
+                        <div class="skill-arsenal-stats">
+                            <span class="skill-arsenal-badge">⚔️ ${Math.round(effectiveStats.damageMult * 100)}% Dmg</span>
+                            <span class="skill-arsenal-badge">⏱️ ${effectiveStats.cooldown}s CD</span>
+                            ${specialBadge}
+                        </div>
+                    </div>
+                </div>
+                <p class="skill-arsenal-desc">${skill.description}</p>
+                ${actionBtn}
+            `;
+            arsenalGrid.appendChild(card);
+        });
     },
 
     renderDivineBlessings() {
@@ -1312,7 +1523,8 @@ window.MainEngine = {
 
             tierRecipes.forEach(recipe => {
                 const reqLv = recipe.reqLevel || t.minLv;
-                const isRecipeLocked = playerLevel < reqLv;
+                const isLevelLocked = playerLevel < reqLv;
+                const isRecipeLocked = recipe.requiresRecipe ? (state.isRecipeUnlocked ? !state.isRecipeUnlocked(recipe.id) : (state.player.unlockedRecipes ? !state.player.unlockedRecipes.includes(recipe.id) : true)) : false;
 
                 const goldMet = state.canAfford(recipe.goldCost || 0);
                 let matsMet = true;
@@ -1334,13 +1546,20 @@ window.MainEngine = {
                     }).join(" · ");
                 }
 
-                const canBrew = !isRecipeLocked && goldMet && matsMet;
+                const canBrew = !isTierLocked && !isLevelLocked && !isRecipeLocked && goldMet && matsMet;
 
                 const resultId = recipe.result?.id || recipe.id;
                 const ownedQty = (state.player.potions && state.player.potions[resultId]) || 0;
 
+                let recipeTag = "";
+                if (recipe.requiresRecipe) {
+                    recipeTag = isRecipeLocked
+                        ? `<div style="margin-top:4px;"><span class="alch-recipe-tag locked">🔒 Recipe Required</span></div>`
+                        : `<div style="margin-top:4px;"><span class="alch-recipe-tag unlocked">✓ Recipe Mastered</span></div>`;
+                }
+
                 const card = document.createElement("div");
-                card.className = `alch-recipe-card ${isRecipeLocked ? 'locked' : ''}`;
+                card.className = `alch-recipe-card ${isLevelLocked || isRecipeLocked ? 'locked' : ''}`;
                 card.innerHTML = `
                     <div class="alch-recipe-top">
                         <span class="alch-recipe-icon">${recipe.icon || '🧪'}</span>
@@ -1350,6 +1569,7 @@ window.MainEngine = {
                                 <span class="alch-owned-badge">Pouch: <strong>${ownedQty}</strong></span>
                             </div>
                             <p class="alch-recipe-desc">${recipe.description || ''}</p>
+                            ${recipeTag}
                         </div>
                     </div>
 
@@ -1364,7 +1584,7 @@ window.MainEngine = {
 
                     <div class="alch-card-actions">
                         <button type="button" class="btn alch-brew-btn ${canBrew ? 'btn-gold' : 'btn-disabled'}" ${canBrew ? '' : 'disabled'}>
-                            ${isRecipeLocked ? `🔒 Locked (Lv. ${reqLv})` : (canBrew ? `⚗️ Brew Potion` : (!goldMet ? 'Need Gold' : 'Missing Mats'))}
+                            ${isLevelLocked ? `🔒 Locked (Lv. ${reqLv})` : (isRecipeLocked ? `🔒 Study Recipe Scroll` : (canBrew ? `⚗️ Brew Potion` : (!goldMet ? 'Need Gold' : 'Missing Mats')))}
                         </button>
                     </div>
                 `;
@@ -1446,41 +1666,83 @@ window.MainEngine = {
         const grid = document.getElementById("bagGrid");
         if (!grid) return;
 
-        const items = state.player.inventory || [];
+        let items = state.player.inventory ? [...state.player.inventory] : [];
+        const totalItemsCount = items.length;
         if (bagCountEl) {
-            bagCountEl.textContent = `${items.length} Item${items.length === 1 ? '' : 's'}`;
+            bagCountEl.textContent = `${totalItemsCount} / 50 Items`;
+        }
+
+        // Apply Category Filter
+        const filter = this.currentInvFilter || "all";
+        if (filter === "equipment") {
+            items = items.filter(it => it.type === "equipment" || (!it.type && (it.slot || it.stats)));
+        } else if (filter === "consumable") {
+            items = items.filter(it => it.type === "consumable");
+        } else if (filter === "scroll") {
+            items = items.filter(it => it.type === "learnable" && it.learnType === "skill");
+        } else if (filter === "blueprint") {
+            items = items.filter(it => it.type === "learnable" && (it.learnType === "forge" || it.learnType === "alchemy"));
+        }
+
+        // Apply Sorting
+        const sortMode = this.currentInvSort || "rarity";
+        const rarityWeights = { legendary: 5, epic: 4, rare: 3, uncommon: 2, common: 1 };
+        if (sortMode === "rarity") {
+            items.sort((a, b) => (rarityWeights[b.rarity] || 0) - (rarityWeights[a.rarity] || 0));
+        } else if (sortMode === "value") {
+            items.sort((a, b) => {
+                const valA = window.InventoryManager ? window.InventoryManager.getSellPrice(a) : (a.baseValue || 0);
+                const valB = window.InventoryManager ? window.InventoryManager.getSellPrice(b) : (b.baseValue || 0);
+                return valB - valA;
+            });
+        } else if (sortMode === "name") {
+            items.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         }
 
         grid.innerHTML = "";
 
         if (items.length === 0) {
-            grid.innerHTML = `<div class="empty-bag">Your inventory is empty. Forge gear or defeat monsters to acquire loot!</div>`;
+            grid.innerHTML = `<div class="empty-bag">No items found matching this filter in your inventory.</div>`;
             return;
         }
 
         items.forEach(item => {
             const rar = (window.RarityData && window.RarityData[item.rarity]) || { color: "#8b5cf6", name: "Common" };
             const statStr = window.formatItemStatLine ? window.formatItemStatLine(item) : (item.description || "");
-            const price = window.InventoryManager ? window.InventoryManager.getSellPrice(item) : 20;
+            const price = window.InventoryManager ? window.InventoryManager.getSellPrice(item) : (item.baseValue || 20);
             const isEquippable = item.type === "equipment" || (!item.type && (item.slot || item.stats));
+            const isLearnable = item.type === "learnable" || !!item.learnType;
 
             const card = document.createElement("div");
-            card.className = "item";
+            card.className = `item ${isLearnable ? 'learnable' : ''}`;
             card.style.setProperty("--rc", rar.color);
 
-            const actionBtn = isEquippable
-                ? `<button class="btn btn-purple sm" onclick="window.InventoryManager.equipItem('${item.instanceId}')">Equip</button>`
-                : `<button class="btn btn-gold sm" onclick="window.InventoryManager.usePotion('${item.id}')">Use</button>`;
+            let actionBtn = "";
+            let tagHtml = "";
+
+            if (isLearnable) {
+                const tagClass = item.learnType === "skill" ? "tag-skill" : (item.learnType === "alchemy" ? "tag-alchemy" : "tag-forge");
+                const tagLabel = item.learnType === "skill" ? "📜 SKILL SCROLL" : (item.learnType === "alchemy" ? "⚗️ ALCHEMY RECIPE" : "⚒️ FORGE BLUEPRINT");
+                tagHtml = `<div class="item-learn-tag ${tagClass}">${tagLabel}</div>`;
+                actionBtn = `<button class="btn btn-study sm" onclick="window.InventoryManager.learnItem('${item.instanceId}'); window.MainEngine.renderInventoryView(); window.MainEngine.updateUI();">📜 Study & Learn</button>`;
+            } else if (isEquippable) {
+                actionBtn = `<button class="btn btn-purple sm" onclick="window.InventoryManager.equipItem('${item.instanceId}'); window.MainEngine.renderInventoryView(); window.MainEngine.updateUI();">Equip</button>`;
+            } else if (item.type === "consumable") {
+                actionBtn = `<button class="btn btn-gold sm" onclick="window.InventoryManager.usePotion('${item.id}'); window.MainEngine.renderInventoryView(); window.MainEngine.updateUI();">Use</button>`;
+            }
 
             card.innerHTML = `
                 <div class="item-top">
-                    <span class="item-name">${item.name}</span>
+                    <div>
+                        ${tagHtml}
+                        <span class="item-name">${item.name}</span>
+                    </div>
                     <span class="item-rar">${(rar.name || item.rarity || 'Common').toUpperCase()}</span>
                 </div>
                 <div class="item-stats">${statStr}</div>
                 <div class="item-actions">
                     ${actionBtn}
-                    <button class="btn btn-ghost sm" onclick="window.InventoryManager.sellItem('${item.instanceId}')">Sell ${price.toLocaleString()}g</button>
+                    <button class="btn btn-ghost sm" onclick="window.InventoryManager.sellItem('${item.instanceId}'); window.MainEngine.renderInventoryView(); window.MainEngine.updateUI();">Sell ${price.toLocaleString()}g</button>
                 </div>
             `;
             grid.appendChild(card);
@@ -1538,17 +1800,35 @@ window.MainEngine = {
                 reqs.push(`${mat}: ${have}/${qty}`);
             }
 
+            const isBlueprintUnlocked = recipe.requiresBlueprint ? (state.isBlueprintUnlocked ? state.isBlueprintUnlocked(recipe.blueprintId || recipe.itemId) : (state.player.unlockedBlueprints && state.player.unlockedBlueprints.includes(recipe.blueprintId || recipe.itemId))) : true;
+
             const card = document.createElement("div");
-            card.className = "craft-card";
+            card.className = `craft-card ${!isBlueprintUnlocked ? 'blueprint-locked' : ''}`;
+
+            let bpTag = "";
+            let btnText = "CRAFT";
+            let btnDisabled = false;
+
+            if (recipe.requiresBlueprint) {
+                if (isBlueprintUnlocked) {
+                    bpTag = `<span class="craft-bp-tag unlocked">✓ Schematic Learned</span>`;
+                } else {
+                    bpTag = `<span class="craft-bp-tag locked">🔒 Blueprint Required</span>`;
+                    btnText = "🔒 Study Blueprint";
+                    btnDisabled = true;
+                }
+            }
+
             card.innerHTML = `
                 <div class="craft-info">
                     <span class="craft-icon">${item.icon}</span>
                     <div>
                         <strong style="color: ${rarity.color}">${item.name}</strong>
                         <small>${reqs.join(" · ")}</small>
+                        ${bpTag ? `<div style="margin-top:2px;">${bpTag}</div>` : ''}
                     </div>
                 </div>
-                <button class="btn-craft" onclick="window.InventoryManager.craftItem('${recipe.itemId}')">CRAFT</button>
+                <button class="btn-craft" ${btnDisabled ? 'disabled' : ''} onclick="window.InventoryManager.craftItem('${recipe.itemId}'); window.MainEngine.renderInventoryView(); window.MainEngine.updateUI();">${btnText}</button>
             `;
             grid.appendChild(card);
         });
@@ -1591,7 +1871,9 @@ window.MainEngine = {
             grid.innerHTML = "";
 
             let items = window.ShopData;
-            if (this.currentShopFilter && this.currentShopFilter !== "all") {
+            if (this.currentShopFilter === "blueprint") {
+                items = items.filter(s => s.category === "blueprint" || s.category === "recipe");
+            } else if (this.currentShopFilter && this.currentShopFilter !== "all") {
                 items = items.filter(s => s.category === this.currentShopFilter);
             }
 
@@ -1608,6 +1890,10 @@ window.MainEngine = {
                     color = "#4ade80";
                 } else if (shopItem.category === "consumable") {
                     color = "#60a5fa";
+                } else if (shopItem.category === "scroll") {
+                    color = "#c4b5fd";
+                } else if (shopItem.category === "recipe" || shopItem.category === "blueprint") {
+                    color = "#fcd34d";
                 }
 
                 const reqMapId = shopItem.reqMap || "any";

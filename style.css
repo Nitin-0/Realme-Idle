@@ -4593,3 +4593,489 @@ footer button:hover {
     cursor: pointer;
     transition: 0.15s ease;
 }
+
+/* =========================================================
+   FATIGUE SYSTEM & COMBAT REST
+========================================================= */
+.fatigue-stat-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(26, 21, 39, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 4px 10px;
+    border-radius: 20px;
+    transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.fatigue-status-tag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.btn-rest-camp {
+    background: linear-gradient(180deg, #3d2d14, #261c0d);
+    border: 1px solid #d97706;
+    color: #fbbf24;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-rest-camp:hover:not(:disabled) {
+    background: linear-gradient(180deg, #5c421b, #382913);
+    color: #fef3c7;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-rest-camp:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #8f89a8;
+}
+
+/* =========================================================
+   INVENTORY TOOLBAR, FILTERS & SORTING
+========================================================= */
+.inv-cap-badge {
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    color: #c4b5fd;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+}
+
+.inv-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0 14px;
+    padding: 10px 14px;
+    background: rgba(20, 16, 33, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+}
+
+.inv-filter-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.inv-filter-btn {
+    background: rgba(30, 24, 49, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #a7a2bc;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 11px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.inv-filter-btn:hover {
+    background: rgba(50, 40, 80, 0.8);
+    color: #e5e3ec;
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.inv-filter-btn.active {
+    background: linear-gradient(180deg, #6d28d9, #4c1d95);
+    border-color: #a78bfa;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.35);
+}
+
+.inv-sort-strip {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.inv-sort-strip .sort-lbl {
+    font-size: 10.5px;
+    color: #8f89a8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-sort {
+    background: rgba(30, 24, 49, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #8f89a8;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-sort:hover {
+    color: #f3f0fb;
+    border-color: rgba(242, 201, 76, 0.3);
+}
+
+.btn-sort.active {
+    background: rgba(242, 201, 76, 0.15);
+    border-color: #f2c94c;
+    color: #f2c94c;
+}
+
+/* LEARNABLE ITEM CARDS (SCROLLS, BLUEPRINTS, RECIPES) */
+.item.learnable {
+    border-color: rgba(242, 201, 76, 0.45) !important;
+    background: linear-gradient(135deg, rgba(29, 23, 44, 0.95), rgba(42, 31, 16, 0.6)) !important;
+    box-shadow: 0 0 14px rgba(242, 201, 76, 0.12);
+    position: relative;
+}
+
+.item-learn-tag {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+.item-learn-tag.tag-skill {
+    background: rgba(139, 92, 246, 0.25);
+    border: 1px solid #8b5cf6;
+    color: #c4b5fd;
+}
+
+.item-learn-tag.tag-alchemy {
+    background: rgba(16, 185, 129, 0.25);
+    border: 1px solid #10b981;
+    color: #6ee7b7;
+}
+
+.item-learn-tag.tag-forge {
+    background: rgba(245, 158, 11, 0.25);
+    border: 1px solid #f59e0b;
+    color: #fcd34d;
+}
+
+.btn-study {
+    background: linear-gradient(180deg, #b45309, #78350f) !important;
+    border: 1px solid #f59e0b !important;
+    color: #fef3c7 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+    transition: all 0.15s ease;
+}
+
+.btn-study:hover {
+    background: linear-gradient(180deg, #d97706, #92400e) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.55);
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   SPECIAL SKILLS & ABILITY MASTERY CENTER
+========================================================= */
+.skill-upgrade-center {
+    background: linear-gradient(180deg, rgba(29, 24, 46, 0.95), rgba(18, 14, 30, 0.95));
+    border: 1px solid rgba(242, 201, 76, 0.3);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4), inset 0 0 30px rgba(242, 201, 76, 0.03);
+}
+
+.skill-active-hero-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+}
+
+.skill-active-info-col {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.skill-active-big-icon {
+    font-size: 38px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(242, 201, 76, 0.12);
+    border: 2px solid #f2c94c;
+    border-radius: 14px;
+    box-shadow: 0 0 18px rgba(242, 201, 76, 0.2);
+}
+
+.skill-active-title-block h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #f7d58b;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.skill-lv-badge {
+    background: linear-gradient(180deg, #f2c94c, #b45309);
+    color: #12101e;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+}
+
+.skill-active-desc {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #b8b3cb;
+    line-height: 1.4;
+}
+
+.skill-stats-compare-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.skill-stat-box {
+    background: rgba(14, 11, 23, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.skill-stat-lbl {
+    font-size: 10.5px;
+    color: #8f89a8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.skill-stat-val {
+    font-size: 14px;
+    font-weight: 700;
+    color: #eae7f5;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.skill-stat-next {
+    color: #4ade80;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.skill-upgrade-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.skill-upgrade-cost-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.skill-cost-chip {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.skill-cost-chip.ok {
+    border-color: rgba(74, 222, 128, 0.4);
+    color: #4ade80;
+}
+
+.skill-cost-chip.missing {
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+}
+
+.btn-upgrade-skill {
+    background: linear-gradient(180deg, #f59e0b, #b45309);
+    border: 1px solid #fbbf24;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+    transition: all 0.2s ease;
+}
+
+.btn-upgrade-skill:hover:not(:disabled) {
+    background: linear-gradient(180deg, #fbbf24, #d97706);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+    transform: translateY(-1px);
+}
+
+.btn-upgrade-skill:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: none;
+}
+
+/* CLASS SKILLS ARSENAL GRID */
+.skill-arsenal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.skill-arsenal-card {
+    background: rgba(22, 18, 36, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.skill-arsenal-card:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+.skill-arsenal-card.active-equipped {
+    border: 1.5px solid #f2c94c;
+    background: linear-gradient(135deg, rgba(32, 25, 48, 0.95), rgba(45, 34, 18, 0.4));
+    box-shadow: 0 0 14px rgba(242, 201, 76, 0.2);
+}
+
+.skill-arsenal-card.locked-skill {
+    opacity: 0.6;
+    background: rgba(16, 13, 26, 0.75);
+}
+
+.skill-arsenal-top {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.skill-arsenal-icon {
+    font-size: 26px;
+    line-height: 1;
+}
+
+.skill-arsenal-title-box h4 {
+    margin: 0;
+    font-size: 13.5px;
+    color: #f3f0fb;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.skill-arsenal-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.skill-arsenal-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #c4b5fd;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.skill-arsenal-desc {
+    margin: 0;
+    font-size: 11px;
+    color: #9d98b2;
+    line-height: 1.35;
+}
+
+.btn-equip-skill {
+    width: 100%;
+    padding: 7px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-equip-skill.is-active {
+    background: rgba(242, 201, 76, 0.2);
+    border: 1px solid #f2c94c;
+    color: #f2c94c;
+    cursor: default;
+}
+
+/* BLUEPRINT AND RECIPE TAGS IN CRAFTING / ALCHEMY */
+.craft-bp-tag, .alch-recipe-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 3px;
+}
+
+.craft-bp-tag.locked, .alch-recipe-tag.locked {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #f87171;
+}
+
+.craft-bp-tag.unlocked, .alch-recipe-tag.unlocked {
+    background: rgba(74, 222, 128, 0.15);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    color: #4ade80;
+}

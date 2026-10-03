@@ -109,6 +109,9 @@
             <div class="stat-badge">🎯 Crit: <strong id="statCrit">10%</strong></div>
             <div class="stat-badge">💨 Dodge: <strong id="statDodge">5%</strong></div>
             <div class="stat-badge">🩸 Lifesteal: <strong id="statLifesteal">0%</strong></div>
+            <div class="stat-badge fatigue-stat-badge" id="fatigueStatBadge" title="Fatigue Level: Exhaustion in battle reduces attack power. Pitch camp or quaff Stamina Tonics to recover.">
+                ⚡ Fatigue: <strong id="statFatigue">0%</strong> (<span id="statFatigueLabel" style="color: #4ade80;">Rested</span>)
+            </div>
         </div>
 
         <!-- MAIN NAVIGATION BAR -->
@@ -194,7 +197,7 @@
 
             </main>
 
-            <!-- PRIMARY COMBAT CONTROLS: AUTOFIGHT & MANUAL STRIKE -->
+            <!-- PRIMARY COMBAT CONTROLS: AUTOFIGHT, MANUAL STRIKE & REST -->
             <div class="combat-control-strip">
                 <button class="btn-autofight" id="btnAutoFight">
                     <span class="autofight-icon">⚔️</span>
@@ -202,6 +205,9 @@
                 </button>
                 <button class="btn-manual-strike" id="btnManualStrike">
                     ⚡ Strike Enemy
+                </button>
+                <button class="btn-rest-camp" id="btnRestCamp" title="Pitch camp to rest, recover fatigue, and replenish HP">
+                    💤 Rest & Camp
                 </button>
             </div>
 
@@ -233,6 +239,9 @@
                         </button>
                         <button class="btn-belt-pot" data-pot="potion_full" title="Elixir of Rebirth (100% HP)">
                             🏺 Full <span class="pot-count" id="potCount_full">x0</span>
+                        </button>
+                        <button class="btn-belt-pot" data-pot="potion_stamina" title="Stamina Tonic (-40 Fatigue)">
+                            ⚡ Stamina <span class="pot-count" id="potCount_stamina">x2</span>
                         </button>
                     </div>
 
@@ -499,6 +508,25 @@
                 </div>
             </section>
 
+            <!-- SPECIAL SKILLS & ABILITY UPGRADE CENTER -->
+            <section class="panel" id="specialSkillsPanel" style="margin-top: 14px;">
+                <div class="panel-header">
+                    <h2>Special Skills & Ability Mastery</h2>
+                    <span id="specialSkillsHeaderTag">ACTIVE LOADOUT & UPGRADES</span>
+                </div>
+                
+                <!-- ACTIVE SKILL UPGRADE BOX -->
+                <div class="skill-upgrade-center" id="skillUpgradeCenter"></div>
+
+                <!-- CLASS SKILLS ARSENAL -->
+                <div class="skill-arsenal-box" style="margin-top: 16px;">
+                    <div class="skill-arsenal-header">
+                        <small style="color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Class Skill Arsenal (Equip Active Skill or Study Scrolls):</small>
+                    </div>
+                    <div class="skill-arsenal-grid" id="skillArsenalGrid"></div>
+                </div>
+            </section>
+
             <!-- CLASS PROMOTION & ASCENSION (LEVEL 10 & 20 MILESTONES) -->
             <section class="panel" id="classPromotionPanel" style="margin-top: 14px;">
                 <div class="panel-header">
@@ -548,8 +576,26 @@
             <section class="panel" style="margin-top: 14px;">
                 <div class="panel-header">
                     <h2>Inventory</h2>
-                    <span id="bagCount">0 Items</span>
+                    <span class="inv-cap-badge" id="bagCount">0 Items</span>
                 </div>
+
+                <!-- INVENTORY FILTER & SORT TOOLBAR -->
+                <div class="inv-toolbar">
+                    <div class="inv-filter-strip">
+                        <button class="inv-filter-btn active" data-inv-filter="all">All</button>
+                        <button class="inv-filter-btn" data-inv-filter="equipment">⚔️ Equipment</button>
+                        <button class="inv-filter-btn" data-inv-filter="consumable">🧪 Potions</button>
+                        <button class="inv-filter-btn" data-inv-filter="scroll">📜 Skill Scrolls</button>
+                        <button class="inv-filter-btn" data-inv-filter="blueprint">📖 Schematics</button>
+                    </div>
+                    <div class="inv-sort-strip">
+                        <span class="sort-lbl">Sort:</span>
+                        <button class="btn-sort active" data-inv-sort="rarity" title="Sort by Rarity">💎 Rarity</button>
+                        <button class="btn-sort" data-inv-sort="value" title="Sort by Value">💰 Value</button>
+                        <button class="btn-sort" data-inv-sort="name" title="Sort by Name">🔤 Name</button>
+                    </div>
+                </div>
+
                 <div class="bag-grid" id="bagGrid"></div>
             </section>
 
@@ -603,6 +649,8 @@
                         <button class="shop-filter-btn" data-shop-filter="consumable">Potions & Elixirs</button>
                         <button class="shop-filter-btn" data-shop-filter="equipment">Equipment</button>
                         <button class="shop-filter-btn" data-shop-filter="material">Materials</button>
+                        <button class="shop-filter-btn" data-shop-filter="scroll">📜 Skill Scrolls</button>
+                        <button class="shop-filter-btn" data-shop-filter="blueprint">📖 Blueprints & Recipes</button>
                     </div>
                 </div>
 

@@ -302,6 +302,370 @@ window.ItemsData = {
         icon: "🐉",
         description: "Grants +70 Defense for 180 seconds.",
         effect: { type: "buff", stat: "defense", value: 70, duration: 180 }
+    },
+
+    // Fatigue Potions & Advanced Elixirs
+    potion_stamina: {
+        id: "potion_stamina",
+        name: "Stamina Tonic",
+        type: "consumable",
+        rarity: "uncommon",
+        baseValue: 60,
+        icon: "⚡",
+        description: "Restores 40 Fatigue and heals 40 HP.",
+        effect: { type: "fatigue", fatigueAmount: 40, heal: 40 }
+    },
+    potion_elixir_rest: {
+        id: "potion_elixir_rest",
+        name: "Elixir of Pure Rejuvenation",
+        type: "consumable",
+        rarity: "epic",
+        baseValue: 350,
+        icon: "🏺",
+        description: "Completely resets Fatigue to 0 and heals 250 HP.",
+        effect: { type: "fatigue_full", fatigueAmount: 100, heal: 250 }
+    },
+    elixir_shadow: {
+        id: "elixir_shadow",
+        name: "Elixir of Shadowmeld",
+        type: "consumable",
+        rarity: "rare",
+        baseValue: 200,
+        icon: "🔮",
+        description: "Grants +15% Dodge and +10% Crit for 90 seconds.",
+        effect: { type: "buff", stat: "dodge", value: 0.15, duration: 90 }
+    },
+    elixir_titans: {
+        id: "elixir_titans",
+        name: "Titan's Might Draught",
+        type: "consumable",
+        rarity: "legendary",
+        baseValue: 600,
+        icon: "🌋",
+        description: "Grants +60 Attack and +40 Defense for 120 seconds.",
+        effect: { type: "buff", stat: "attack", value: 60, duration: 120 }
+    },
+
+    // Blueprint Crafted Weapons & Armor
+    dragonbone_greatsword: {
+        id: "dragonbone_greatsword",
+        name: "Dragonbone Greatsword",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 2200,
+        icon: "🗡️",
+        stats: { attack: 165, critChance: 0.10, lifesteal: 0.05 }
+    },
+    shadowveil_dagger: {
+        id: "shadowveil_dagger",
+        name: "Shadowveil Dagger",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 2000,
+        icon: "🗡️",
+        stats: { attack: 140, critChance: 0.15, dodge: 0.08 }
+    },
+    astral_staff: {
+        id: "astral_staff",
+        name: "Astral Arch-Staff",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 2400,
+        icon: "🔮",
+        stats: { attack: 185, critChance: 0.09, lifesteal: 0.04 }
+    },
+    aegis_valor: {
+        id: "aegis_valor",
+        name: "Aegis of Valor Plate",
+        slot: "armor",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 2100,
+        icon: "🛡️",
+        stats: { defense: 140, hp: 420, dodge: 0.05 }
+    },
+    infernus_blade: {
+        id: "infernus_blade",
+        name: "Infernus Calamity Blade",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 6500,
+        icon: "🔥",
+        stats: { attack: 330, critChance: 0.18, lifesteal: 0.10 }
+    },
+    divine_bulwark: {
+        id: "divine_bulwark",
+        name: "Divine Bulwark Cuirass",
+        slot: "armor",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 6200,
+        icon: "⚜️",
+        stats: { defense: 270, hp: 750, dodge: 0.10 }
+    },
+
+    // Skill Scrolls
+    scroll_whirlwind: {
+        id: "scroll_whirlwind",
+        name: "Skill Scroll: Whirlwind Slash",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "whirlwind_slash",
+        heroClass: "knight",
+        rarity: "uncommon",
+        baseValue: 350,
+        icon: "📜",
+        description: "Study this combat treatise to unlock the Whirlwind Slash skill for Knights."
+    },
+    scroll_holy_bastion: {
+        id: "scroll_holy_bastion",
+        name: "Skill Scroll: Holy Bastion",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "holy_bastion",
+        heroClass: "knight",
+        rarity: "rare",
+        baseValue: 800,
+        icon: "📜",
+        description: "Study ancient defensive rites to unlock Holy Bastion for Knights."
+    },
+    scroll_judgment: {
+        id: "scroll_judgment",
+        name: "Skill Scroll: Heavenly Judgment",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "judgment_blade",
+        heroClass: "knight",
+        rarity: "epic",
+        baseValue: 1800,
+        icon: "📜",
+        description: "Study celestial war decrees to unlock Heavenly Judgment for Knights."
+    },
+    scroll_poison_blade: {
+        id: "scroll_poison_blade",
+        name: "Skill Scroll: Venomous Flurry",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "poison_blade",
+        heroClass: "rogue",
+        rarity: "uncommon",
+        baseValue: 350,
+        icon: "📜",
+        description: "Study toxic bladecraft to unlock Venomous Flurry for Rogues."
+    },
+    scroll_smoke_bomb: {
+        id: "scroll_smoke_bomb",
+        name: "Skill Scroll: Smoke Veil Bomb",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "smoke_bomb",
+        heroClass: "rogue",
+        rarity: "rare",
+        baseValue: 800,
+        icon: "📜",
+        description: "Master concealment arts to unlock Smoke Veil Bomb for Rogues."
+    },
+    scroll_assassinate: {
+        id: "scroll_assassinate",
+        name: "Skill Scroll: Death Blossom",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "assassinate",
+        heroClass: "rogue",
+        rarity: "epic",
+        baseValue: 1800,
+        icon: "📜",
+        description: "Master lethal execution strikes to unlock Death Blossom for Rogues."
+    },
+    scroll_frost_nova: {
+        id: "scroll_frost_nova",
+        name: "Skill Scroll: Frost Nova",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "frost_nova",
+        heroClass: "mage",
+        rarity: "uncommon",
+        baseValue: 350,
+        icon: "📜",
+        description: "Inscribe cryo-sigils to unlock Frost Nova for Mages."
+    },
+    scroll_mana_shield: {
+        id: "scroll_mana_shield",
+        name: "Skill Scroll: Arcane Barrier",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "mana_shield",
+        heroClass: "mage",
+        rarity: "rare",
+        baseValue: 800,
+        icon: "📜",
+        description: "Inscribe astral wards to unlock Arcane Barrier for Mages."
+    },
+    scroll_meteor: {
+        id: "scroll_meteor",
+        name: "Skill Scroll: Meteor Calamity",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "meteor_strike",
+        heroClass: "mage",
+        rarity: "epic",
+        baseValue: 1800,
+        icon: "📜",
+        description: "Study cosmic armageddon incantations to unlock Meteor Calamity for Mages."
+    },
+    scroll_divine_retribution: {
+        id: "scroll_divine_retribution",
+        name: "Skill Scroll: Divine Retribution",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "divine_retribution",
+        heroClass: "paladin",
+        rarity: "uncommon",
+        baseValue: 350,
+        icon: "📜",
+        description: "Recite righteous litanies to unlock Divine Retribution for Paladins."
+    },
+    scroll_consecration: {
+        id: "scroll_consecration",
+        name: "Skill Scroll: Sacred Ground",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "consecration",
+        heroClass: "paladin",
+        rarity: "rare",
+        baseValue: 800,
+        icon: "📜",
+        description: "Consecrate the battlefield to unlock Sacred Ground for Paladins."
+    },
+    scroll_wrath_of_heavens: {
+        id: "scroll_wrath_of_heavens",
+        name: "Skill Scroll: Avatar of Light",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "wrath_of_heavens",
+        heroClass: "paladin",
+        rarity: "epic",
+        baseValue: 1800,
+        icon: "📜",
+        description: "Channel seraphic wrath to unlock Avatar of Light for Paladins."
+    },
+
+    // Alchemy Recipe Tomes
+    recipe_stamina_tonic: {
+        id: "recipe_stamina_tonic",
+        name: "Alchemy Recipe: Stamina Tonic",
+        type: "learnable",
+        learnType: "alchemy",
+        targetId: "alch_stamina_tonic",
+        rarity: "uncommon",
+        baseValue: 200,
+        icon: "📖",
+        description: "Learn how to distill fatigue-recovering Stamina Tonics at the Alchemy Table."
+    },
+    recipe_elixir_rejuvenation: {
+        id: "recipe_elixir_rejuvenation",
+        name: "Alchemy Recipe: Pure Rejuvenation",
+        type: "learnable",
+        learnType: "alchemy",
+        targetId: "alch_elixir_rejuvenation",
+        rarity: "rare",
+        baseValue: 500,
+        icon: "📖",
+        description: "Learn how to brew Elixirs of Pure Rejuvenation (resets Fatigue to 0) at the Alchemy Table."
+    },
+    recipe_elixir_shadow: {
+        id: "recipe_elixir_shadow",
+        name: "Alchemy Recipe: Elixir of Shadowmeld",
+        type: "learnable",
+        learnType: "alchemy",
+        targetId: "alch_elixir_shadow",
+        rarity: "rare",
+        baseValue: 600,
+        icon: "📖",
+        description: "Learn how to brew Elixirs of Shadowmeld (+15% Dodge, +10% Crit) at the Alchemy Table."
+    },
+    recipe_draught_titans: {
+        id: "recipe_draught_titans",
+        name: "Alchemy Recipe: Titan's Might",
+        type: "learnable",
+        learnType: "alchemy",
+        targetId: "alch_draught_titans",
+        rarity: "epic",
+        baseValue: 1200,
+        icon: "📖",
+        description: "Learn how to brew Titan's Might Draught (+60 Attack, +40 Def) at the Alchemy Table."
+    },
+
+    // Blacksmith Forge Blueprints
+    blueprint_dragonbone_greatsword: {
+        id: "blueprint_dragonbone_greatsword",
+        name: "Forge Blueprint: Dragonbone Greatsword",
+        type: "learnable",
+        learnType: "forge",
+        targetId: "dragonbone_greatsword",
+        rarity: "epic",
+        baseValue: 1000,
+        icon: "📐",
+        description: "Study this schematic to forge the Dragonbone Greatsword at the Blacksmith."
+    },
+    blueprint_shadowveil_dagger: {
+        id: "blueprint_shadowveil_dagger",
+        name: "Forge Blueprint: Shadowveil Dagger",
+        type: "learnable",
+        learnType: "forge",
+        targetId: "shadowveil_dagger",
+        rarity: "epic",
+        baseValue: 1000,
+        icon: "📐",
+        description: "Study this schematic to forge the Shadowveil Dagger at the Blacksmith."
+    },
+    blueprint_astral_staff: {
+        id: "blueprint_astral_staff",
+        name: "Forge Blueprint: Astral Arch-Staff",
+        type: "learnable",
+        learnType: "forge",
+        targetId: "astral_staff",
+        rarity: "epic",
+        baseValue: 1000,
+        icon: "📐",
+        description: "Study this schematic to forge the Astral Arch-Staff at the Blacksmith."
+    },
+    blueprint_aegis_valor: {
+        id: "blueprint_aegis_valor",
+        name: "Forge Blueprint: Aegis of Valor",
+        type: "learnable",
+        learnType: "forge",
+        targetId: "aegis_valor",
+        rarity: "epic",
+        baseValue: 1000,
+        icon: "📐",
+        description: "Study this schematic to forge the Aegis of Valor Plate at the Blacksmith."
+    },
+    blueprint_infernus_blade: {
+        id: "blueprint_infernus_blade",
+        name: "Forge Blueprint: Infernus Calamity Blade",
+        type: "learnable",
+        learnType: "forge",
+        targetId: "infernus_blade",
+        rarity: "legendary",
+        baseValue: 2500,
+        icon: "📐",
+        description: "Study this mythical schematic to forge the Infernus Blade at the Blacksmith."
+    },
+    blueprint_divine_bulwark: {
+        id: "blueprint_divine_bulwark",
+        name: "Forge Blueprint: Divine Bulwark Cuirass",
+        type: "learnable",
+        learnType: "forge",
+        targetId: "divine_bulwark",
+        rarity: "legendary",
+        baseValue: 2500,
+        icon: "📐",
+        description: "Study this mythical schematic to forge the Divine Bulwark Cuirass at the Blacksmith."
     }
 };
 
@@ -320,7 +684,15 @@ window.CraftingRecipes = [
     { itemId: "jade_signet", req: { crystal: 12, gold: 300 } },
     { itemId: "ring_of_wealth", req: { crystal: 15, gold: 1000 } },
     { itemId: "abyssal_ring", req: { shadowEssence: 8, crystal: 15, gold: 2500 } },
-    { itemId: "void_artifact", req: { crystal: 20, shadowEssence: 10, gold: 8000 } }
+    { itemId: "void_artifact", req: { crystal: 20, shadowEssence: 10, gold: 8000 } },
+
+    // Blueprint-unlocked craftables
+    { itemId: "dragonbone_greatsword", blueprintId: "blueprint_dragonbone_greatsword", requiresBlueprint: true, req: { dragonScale: 10, ironOre: 35, crystal: 10, gold: 3000 } },
+    { itemId: "shadowveil_dagger", blueprintId: "blueprint_shadowveil_dagger", requiresBlueprint: true, req: { shadowEssence: 6, ironOre: 25, crystal: 8, gold: 2800 } },
+    { itemId: "astral_staff", blueprintId: "blueprint_astral_staff", requiresBlueprint: true, req: { crystal: 25, wood: 20, shadowEssence: 5, gold: 3200 } },
+    { itemId: "aegis_valor", blueprintId: "blueprint_aegis_valor", requiresBlueprint: true, req: { ironOre: 40, crystal: 12, dragonScale: 6, gold: 3000 } },
+    { itemId: "infernus_blade", blueprintId: "blueprint_infernus_blade", requiresBlueprint: true, req: { dragonScale: 30, crystal: 25, shadowEssence: 10, gold: 8500 } },
+    { itemId: "divine_bulwark", blueprintId: "blueprint_divine_bulwark", requiresBlueprint: true, req: { dragonScale: 28, crystal: 20, ironOre: 50, gold: 8000 } }
 ];
 
 window.ShopData = [
@@ -351,7 +723,42 @@ window.ShopData = [
     // ---------------- FROSTPEAK CITADEL & INFERNAL DEPTHS (REALMS IV & V) ----------------
     { id: "shop_pot_full", itemId: "potion_full", name: "Elixir of Rebirth", icon: "🏺", category: "consumable", costGold: 800, reqLevel: 20, reqMap: "frostpeak", reqDepth: 1, stock: -1, description: "Miraculous nectar that completely restores 100% of maximum HP." },
     { id: "shop_mat_shadow", matKey: "shadowEssence", matQty: 2, name: "Shadow Essence x2", icon: "🔮", category: "material", costGold: 1400, reqLevel: 22, reqMap: "frostpeak", reqDepth: 2, stock: -1, description: "Dark metaphysical matter collected from void apparitions." },
-    { id: "shop_ring_wealth", itemId: "ring_of_wealth", name: "Ring of Imperial Wealth", icon: "💍", category: "equipment", costGold: 2400, reqLevel: 25, reqMap: "infernal_depths", reqDepth: 1, stock: -1, description: "Adorned with royal gemstones (+25g/s, +12% Crit)." }
+    { id: "shop_ring_wealth", itemId: "ring_of_wealth", name: "Ring of Imperial Wealth", icon: "💍", category: "equipment", costGold: 2400, reqLevel: 25, reqMap: "infernal_depths", reqDepth: 1, stock: -1, description: "Adorned with royal gemstones (+25g/s, +12% Crit)." },
+
+    // ---------------- FATIGUE POTIONS & REFRESHERS ----------------
+    { id: "shop_pot_stamina", itemId: "potion_stamina", name: "Stamina Tonic", icon: "⚡", category: "consumable", costGold: 90, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Restores 40 Fatigue and heals 40 HP instantly." },
+    { id: "shop_pot_rejuvenation", itemId: "potion_elixir_rest", name: "Elixir of Pure Rejuvenation", icon: "🏺", category: "consumable", costGold: 500, reqLevel: 10, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Ancient secret brew that completely resets Fatigue to 0 and heals 250 HP." },
+
+    // ---------------- SKILL SCROLLS (LEARNABLE SPECIAL SKILLS) ----------------
+    { id: "shop_sc_whirlwind", itemId: "scroll_whirlwind", name: "Scroll: Whirlwind Slash", icon: "📜", category: "scroll", costGold: 450, reqLevel: 3, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Teaches the Whirlwind Slash skill (Knight). High damage cleave with +10% Crit." },
+    { id: "shop_sc_holy_bastion", itemId: "scroll_holy_bastion", name: "Scroll: Holy Bastion", icon: "📜", category: "scroll", costGold: 950, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches the Holy Bastion skill (Knight). Restores HP and grants +40 Defense." },
+    { id: "shop_sc_judgment", itemId: "scroll_judgment", name: "Scroll: Heavenly Judgment", icon: "📜", category: "scroll", costGold: 2200, reqLevel: 15, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Teaches Heavenly Judgment (Knight). Devastating 380% lightning burst." },
+    
+    { id: "shop_sc_poison_blade", itemId: "scroll_poison_blade", name: "Scroll: Venomous Flurry", icon: "📜", category: "scroll", costGold: 450, reqLevel: 3, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Teaches Venomous Flurry (Rogue). 260% attack and +8% Lifesteal." },
+    { id: "shop_sc_smoke_bomb", itemId: "scroll_smoke_bomb", name: "Scroll: Smoke Veil Bomb", icon: "📜", category: "scroll", costGold: 950, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches Smoke Veil Bomb (Rogue). Blinds foes with +35% Dodge and +12% Crit." },
+    { id: "shop_sc_assassinate", itemId: "scroll_assassinate", name: "Scroll: Death Blossom", icon: "📜", category: "scroll", costGold: 2200, reqLevel: 15, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Teaches Death Blossom (Rogue). 440% Critical Pierce execution strike." },
+
+    { id: "shop_sc_frost_nova", itemId: "scroll_frost_nova", name: "Scroll: Frost Nova", icon: "📜", category: "scroll", costGold: 450, reqLevel: 3, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Teaches Frost Nova (Mage). Deep freeze dealing 300% Ice damage + Defense." },
+    { id: "shop_sc_mana_shield", itemId: "scroll_mana_shield", name: "Scroll: Arcane Barrier", icon: "📜", category: "scroll", costGold: 950, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches Arcane Barrier (Mage). Restores 20% Max HP and creates +35 Def shield." },
+    { id: "shop_sc_meteor", itemId: "scroll_meteor", name: "Scroll: Meteor Calamity", icon: "📜", category: "scroll", costGold: 2200, reqLevel: 15, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Teaches Meteor Calamity (Mage). Calls down 520% Astral Cataclysm." },
+
+    { id: "shop_sc_divine_retribution", itemId: "scroll_divine_retribution", name: "Scroll: Divine Retribution", icon: "📜", category: "scroll", costGold: 450, reqLevel: 3, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Teaches Divine Retribution (Paladin). Smites for 310% Holy damage + Shield." },
+    { id: "shop_sc_consecration", itemId: "scroll_consecration", name: "Scroll: Sacred Ground", icon: "📜", category: "scroll", costGold: 950, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches Sacred Ground (Paladin). 260% Holy damage and restores 18% Max HP." },
+    { id: "shop_sc_wrath_of_heavens", itemId: "scroll_wrath_of_heavens", name: "Scroll: Avatar of Light", icon: "📜", category: "scroll", costGold: 2200, reqLevel: 15, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Teaches Avatar of Light (Paladin). 420% damage, +40 Attack, and 22% Heal." },
+
+    // ---------------- ALCHEMY RECIPES (LEARNABLE BREWS) ----------------
+    { id: "shop_rec_stamina", itemId: "recipe_stamina_tonic", name: "Recipe: Stamina Tonic", icon: "📖", category: "recipe", costGold: 150, reqLevel: 2, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Study to permanently unlock Stamina Tonic at the Alchemy Table." },
+    { id: "shop_rec_shadowmeld", itemId: "recipe_elixir_shadow", name: "Recipe: Elixir of Shadowmeld", icon: "📖", category: "recipe", costGold: 450, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Study to unlock the elusive Elixir of Shadowmeld (+15% Dodge) recipe." },
+    { id: "shop_rec_rejuvenation", itemId: "recipe_elixir_rejuvenation", name: "Recipe: Pure Rejuvenation", icon: "📖", category: "recipe", costGold: 850, reqLevel: 12, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Study to permanently unlock the fatigue-clearing Elixir of Pure Rejuvenation." },
+    { id: "shop_rec_titans", itemId: "recipe_draught_titans", name: "Recipe: Titan's Might Draught", icon: "📖", category: "recipe", costGold: 1600, reqLevel: 20, reqMap: "frostpeak", reqDepth: 1, stock: -1, description: "Study to permanently unlock the legendary Titan's Might Draught recipe." },
+
+    // ---------------- BLACKSMITH BLUEPRINTS (LEARNABLE GEAR SCHEMATICS) ----------------
+    { id: "shop_bp_dagger", itemId: "blueprint_shadowveil_dagger", name: "Blueprint: Shadowveil Dagger", icon: "📐", category: "blueprint", costGold: 600, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 3, stock: -1, description: "Unlocks forging for Shadowveil Dagger (+140 Atk, +15% Crit, +8% Dodge)." },
+    { id: "shop_bp_greatsword", itemId: "blueprint_dragonbone_greatsword", name: "Blueprint: Dragonbone Greatsword", icon: "📐", category: "blueprint", costGold: 1200, reqLevel: 10, reqMap: "ashen_wastes", reqDepth: 2, stock: -1, description: "Unlocks forging for Dragonbone Greatsword (+165 Atk, +10% Crit, +5% Lifesteal)." },
+    { id: "shop_bp_staff", itemId: "blueprint_astral_staff", name: "Blueprint: Astral Arch-Staff", icon: "📐", category: "blueprint", costGold: 1300, reqLevel: 11, reqMap: "ashen_wastes", reqDepth: 2, stock: -1, description: "Unlocks forging for Astral Arch-Staff (+185 Atk, +9% Crit)." },
+    { id: "shop_bp_aegis", itemId: "blueprint_aegis_valor", name: "Blueprint: Aegis of Valor Plate", icon: "📐", category: "blueprint", costGold: 1800, reqLevel: 14, reqMap: "bloodthorn_forest", reqDepth: 2, stock: -1, description: "Unlocks forging for Aegis of Valor Plate (+140 Def, +420 HP)." },
+    { id: "shop_bp_infernus", itemId: "blueprint_infernus_blade", name: "Blueprint: Infernus Calamity Blade", icon: "📐", category: "blueprint", costGold: 3500, reqLevel: 22, reqMap: "frostpeak", reqDepth: 2, stock: -1, description: "Unlocks forging for Legendary Infernus Blade (+330 Atk, +18% Crit)." },
+    { id: "shop_bp_bulwark", itemId: "blueprint_divine_bulwark", name: "Blueprint: Divine Bulwark Cuirass", icon: "📐", category: "blueprint", costGold: 3200, reqLevel: 24, reqMap: "frostpeak", reqDepth: 2, stock: -1, description: "Unlocks forging for Legendary Divine Bulwark (+270 Def, +750 HP)." }
 ];
 
 /* =========================================================

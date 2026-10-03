@@ -49,17 +49,27 @@ window.gameState = {
             potion_minor: 5,
             potion_major: 1,
             potion_full: 0,
+            potion_stamina: 2,
+            potion_elixir_rest: 0,
             elixir_fury: 1,
-            elixir_iron: 1
+            elixir_iron: 1,
+            elixir_shadow: 0,
+            elixir_titans: 0
         },
         autoPotion: true,
+        fatigue: 0,
         skills: {
+            activeSkillId: null,
             activeCooldown: 0,
-            autoCast: true
+            autoCast: true,
+            levels: {},
+            unlocked: []
         },
         activeBuffs: [],
         classRanks: { knight: 1, rogue: 1, mage: 1, paladin: 1 },
-        moonlitVale3Cleared: false
+        moonlitVale3Cleared: false,
+        unlockedRecipes: [],
+        unlockedBlueprints: []
     },
 
     world: {
@@ -650,6 +660,220 @@ window.gameState = {
     },
 
     /* =========================
+       FATIGUE SYSTEM
+    ========================= */
+    getFatigue() {
+        return Math.max(0, Math.min(100, Math.round(this.player.fatigue || 0)));
+    },
+
+    addFatigue(amount) {
+        this.player.fatigue = Math.max(0, Math.min(100, (this.player.fatigue || 0) + amount));
+        this.notify();
+    },
+
+    reduceFatigue(amount) {
+        this.player.fatigue = Math.max(0, Math.min(100, (this.player.fatigue || 0) - amount));
+        this.notify();
+    },
+
+    getFatigueMultiplier() {
+        const f = this.getFatigue();
+        if (f < 50) return 1.0;
+        if (f < 80) return 0.85; // -15% Attack
+        if (f < 100) return 0.65; // -35% Attack
+        return 0.40; // Total exhaustion (-60% Attack)
+    },
+
+    getFatigueStatus() {
+        const f = this.getFatigue();
+        if (f < 50) {
+            return {
+                tier: "rested",
+                label: "Well Rested",
+                icon: "⚡",
+                color: "#4ade80",
+                penaltyText: "Peak Battle Condition (100% Effectiveness)"
+            };
+        }
+        if (f < 80) {
+            return {
+                tier: "tired",
+                label: "Fatigued",
+                icon: "⚠️",
+                color: "#f2c94c",
+                penaltyText: "-15% Attack Power (Consider resting or drinking Stamina Tonic)"
+            };
+        }
+        if (f < 100) {
+            return {
+                tier: "exhausted",
+                label: "Exhausted",
+                icon: "🔥",
+                color: "#ff8a9b",
+                penaltyText: "-35% Attack Power · Enemies strike +20% harder"
+            };
+        }
+        return {
+            tier: "collapsed",
+            label: "Over-Exhausted",
+            icon: "💀",
+            color: "#ff4d6d",
+            penaltyText: "CRITICAL: -60% Attack Power! Rest at Temple immediately!"
+        };
+    },
+
+    /* =========================
+       SKILL UPGRADE & LOADOUT ENGINE
+    ========================= */
+    getActiveSkillId() {
+        if (this.player.skills && this.player.skills.activeSkillId) {
+            return this.player.skills.activeSkillId;
+        }
+        const heroDef = window.HeroesData ? window.HeroesData[this.player.heroClass] : null;
+        return (heroDef && heroDef.skill && heroDef.skill.id) || "shield_slam";
+    },
+
+    getSkillDefinition(skillId) {
+        if (window.AllSkillsData && window.AllSkillsData[skillId]) {
+            return window.AllSkillsData[skillId];
+        }
+        const heroDef = window.HeroesData ? window.HeroesData[this.player.heroClass] : null;
+        if (heroDef && heroDef.skillsPool) {
+            const found = heroDef.skillsPool.find(s => s.id === skillId);
+            if (found) return found;
+        }
+        return (heroDef && heroDef.skill) || null;
+    },
+
+    getSkillLevel(skillId) {
+        if (!this.player.skills) return 1;
+        if (!this.player.skills.levels) this.player.skills.levels = {};
+        return this.player.skills.levels[skillId] || 1;
+    },
+
+    getSkillEffectiveStats(skillId) {
+        const def = this.getSkillDefinition(skillId);
+        if (!def) return null;
+        const level = this.getSkillLevel(skillId);
+        const damageMult = +( (def.damageMult || 2.0) + (level - 1) * 0.30 ).toFixed(2);
+        const cooldown = Math.max(3, +( (def.cooldown || 8) - (level - 1) * 0.5 ).toFixed(1));
+        const healPct = def.healPct ? +( def.healPct + (level - 1) * 0.02 ).toFixed(2) : 0;
+        
+        let buff = null;
+        if (def.buff) {
+            buff = {
+                ...def.buff,
+                bonus: def.buff.bonus ? Math.round(def.buff.bonus * (1 + (level - 1) * 0.20)) : def.buff.bonus,
+                duration: def.buff.duration || 4
+            };
+        }
+
+        return {
+            ...def,
+            level,
+            damageMult,
+            cooldown,
+            healPct,
+            buff
+        };
+    },
+
+    getActiveSkill() {
+        const skillId = this.getActiveSkillId();
+        return this.getSkillEffectiveStats(skillId);
+    },
+
+    getSkillUpgradeCost(skillId) {
+        const level = this.getSkillLevel(skillId);
+        const gold = Math.floor(180 * Math.pow(1.5, level - 1));
+        let materials = { ironOre: 4 + (level - 1) * 3 };
+        if (level >= 3) {
+            materials.crystal = 2 + (level - 3) * 2;
+        }
+        if (level >= 5) {
+            materials.dragonScale = 1 + (level - 5);
+        }
+        return { gold, materials, nextLevel: level + 1 };
+    },
+
+    canUpgradeSkill(skillId) {
+        const cost = this.getSkillUpgradeCost(skillId);
+        if (!this.canAfford(cost.gold)) return { can: false, reason: `Need ${cost.gold.toLocaleString()} gold!` };
+        for (const [mat, need] of Object.entries(cost.materials)) {
+            const have = (this.player.materials && this.player.materials[mat]) || 0;
+            if (have < need) return { can: false, reason: `Missing ${need - have}x ${mat}!` };
+        }
+        return { can: true, cost };
+    },
+
+    upgradeSkill(skillId) {
+        const check = this.canUpgradeSkill(skillId);
+        if (!check.can) {
+            if (typeof alert !== "undefined") alert(check.reason);
+            return false;
+        }
+
+        const cost = check.cost;
+        this.spendGold(cost.gold);
+        for (const [mat, need] of Object.entries(cost.materials)) {
+            this.player.materials[mat] -= need;
+        }
+
+        if (!this.player.skills.levels) this.player.skills.levels = {};
+        this.player.skills.levels[skillId] = cost.nextLevel;
+
+        const skillDef = this.getSkillDefinition(skillId);
+        const skillName = skillDef ? skillDef.name : skillId;
+        if (this.addLog) {
+            this.addLog(`⚡ SKILL UPGRADED! [${skillName}] reached Rank ${cost.nextLevel}!`, "level", "⚡");
+        }
+        if (window.CombatManager) {
+            window.CombatManager.showDamagePopup(`⚡ ${skillName} Lv.${cost.nextLevel}!`, false, false, "crit");
+        }
+
+        this.save();
+        this.notify();
+        return true;
+    },
+
+    equipSkill(skillId) {
+        const skillDef = this.getSkillDefinition(skillId);
+        if (!skillDef) return false;
+        this.player.skills.activeSkillId = skillId;
+        this.player.skills.activeCooldown = 0;
+        if (this.addLog) {
+            this.addLog(`Equipped active special skill: [${skillDef.name}].`, "combat", skillDef.icon || "⚔️");
+        }
+        this.save();
+        this.notify();
+        return true;
+    },
+
+    isSkillUnlocked(skillId) {
+        const heroDef = window.HeroesData ? window.HeroesData[this.player.heroClass] : null;
+        if (heroDef && heroDef.skill && heroDef.skill.id === skillId) return true;
+        if (heroDef && heroDef.skillsPool) {
+            const match = heroDef.skillsPool.find(s => s.id === skillId);
+            if (match && match.isDefault) return true;
+        }
+        return (this.player.skills && Array.isArray(this.player.skills.unlocked) && this.player.skills.unlocked.includes(skillId));
+    },
+
+    isRecipeUnlocked(recipeId) {
+        const recipe = (window.AlchemyRecipes || []).find(r => r.id === recipeId);
+        if (!recipe || !recipe.requiresRecipe) return true;
+        return (this.player.unlockedRecipes && this.player.unlockedRecipes.includes(recipeId));
+    },
+
+    isBlueprintUnlocked(blueprintId) {
+        if (!blueprintId) return true;
+        if (!this.player.unlockedBlueprints || this.player.unlockedBlueprints.length === 0) return false;
+        if (this.player.unlockedBlueprints.includes(blueprintId)) return true;
+        // Check if matching substring or alias
+        return this.player.unlockedBlueprints.some(b => b.includes(blueprintId) || blueprintId.includes(b));
+    },
+
+    /* =========================
        CLASS PROMOTION & ASCENSION
     ========================= */
     getClassRank(classId = this.player.heroClass) {
@@ -1101,10 +1325,26 @@ window.gameState = {
                 if (data.player) {
                     Object.assign(this.player, data.player);
                     if (!this.player.potions) {
-                        this.player.potions = { potion_minor: 5, potion_major: 1, potion_full: 0, elixir_fury: 1, elixir_iron: 1 };
+                        this.player.potions = { potion_minor: 5, potion_major: 1, potion_full: 0, potion_stamina: 2, potion_elixir_rest: 0, elixir_fury: 1, elixir_iron: 1, elixir_shadow: 0, elixir_titans: 0 };
+                    } else {
+                        if (this.player.potions.potion_stamina === undefined) this.player.potions.potion_stamina = 0;
+                        if (this.player.potions.potion_elixir_rest === undefined) this.player.potions.potion_elixir_rest = 0;
+                    }
+                    if (this.player.fatigue === undefined) {
+                        this.player.fatigue = 0;
                     }
                     if (!this.player.skills) {
-                        this.player.skills = { activeCooldown: 0, autoCast: true };
+                        this.player.skills = { activeSkillId: null, activeCooldown: 0, autoCast: true, levels: {}, unlocked: [] };
+                    } else {
+                        if (this.player.skills.levels === undefined) this.player.skills.levels = {};
+                        if (this.player.skills.unlocked === undefined) this.player.skills.unlocked = [];
+                        if (this.player.skills.activeSkillId === undefined) this.player.skills.activeSkillId = null;
+                    }
+                    if (!this.player.unlockedRecipes) {
+                        this.player.unlockedRecipes = [];
+                    }
+                    if (!this.player.unlockedBlueprints) {
+                        this.player.unlockedBlueprints = [];
                     }
                     if (!this.player.activeBuffs) {
                         this.player.activeBuffs = [];

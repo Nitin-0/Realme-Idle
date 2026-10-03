@@ -146,6 +146,34 @@ window.InventoryManager = {
         const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
         const effect = itemDef.effect;
 
+        if (effect.type === "fatigue" || effect.type === "fatigue_full") {
+            const currentFatigue = state.getFatigue ? state.getFatigue() : (state.player.fatigue || 0);
+            if (currentFatigue <= 0 && state.player.hp >= effMaxHp) {
+                if (window.CombatManager) window.CombatManager.showDamagePopup("NOT TIRED!", false, false, "heal");
+                return false;
+            }
+
+            state.player.potions[potionId]--;
+            const fReduce = effect.type === "fatigue_full" ? 100 : (effect.fatigueAmount || 40);
+            if (state.reduceFatigue) state.reduceFatigue(fReduce);
+
+            if (effect.heal) {
+                const healed = Math.min(effect.heal, effMaxHp - state.player.hp);
+                state.player.hp = Math.min(effMaxHp, state.player.hp + effect.heal);
+                if (window.CombatManager && healed > 0) window.CombatManager.showDamagePopup(`+${healed} HP`, false, false, "heal");
+            }
+
+            if (window.CombatManager) {
+                window.CombatManager.showDamagePopup(`⚡ -${fReduce} Fatigue!`, false, false, "potion");
+            }
+            if (state.addLog) {
+                state.addLog(`Quaffed ${itemDef.name}. Fatigue reduced by ${fReduce} points!`, "combat", "⚡");
+            }
+            state.save();
+            state.notify();
+            return true;
+        }
+
         if (effect.type === "heal" || effect.type === "heal_pct") {
             if (state.player.hp >= effMaxHp) {
                 if (window.CombatManager) window.CombatManager.showDamagePopup("HP FULL!", false, false, "heal");
@@ -179,6 +207,89 @@ window.InventoryManager = {
             if (state.addLog) state.addLog(`Consumed ${itemDef.name}! Active combat buff applied.`, "combat", "🧪");
         }
 
+        state.notify();
+        return true;
+    },
+
+    learnItem(itemInstanceId) {
+        const state = window.gameState;
+        const index = state.player.inventory.findIndex(i => i.instanceId === itemInstanceId || i.id === itemInstanceId);
+        if (index === -1) return false;
+
+        const item = state.player.inventory[index];
+        if (!item || (item.type !== "learnable" && !item.learnType)) {
+            alert("This item cannot be studied or learned.");
+            return false;
+        }
+
+        const lType = item.learnType;
+        const targetId = item.targetId;
+
+        if (lType === "skill") {
+            if (!state.player.skills.unlocked) state.player.skills.unlocked = [];
+            if (state.player.skills.unlocked.includes(targetId)) {
+                alert(`You have already mastered this skill!`);
+                return false;
+            }
+            state.player.skills.unlocked.push(targetId);
+
+            const skillDef = state.getSkillDefinition ? state.getSkillDefinition(targetId) : null;
+            const skillName = skillDef ? skillDef.name : targetId;
+
+            if (state.addLog) {
+                state.addLog(`📜 MASTERED: You studied [${item.name}] and unlocked the [${skillName}] special skill!`, "level", "📜");
+            }
+            if (window.CombatManager) {
+                window.CombatManager.showDamagePopup(`📜 LEARNED: ${skillName}!`, false, false, "crit");
+            }
+
+            // Auto-equip if for current class
+            if (item.heroClass === state.player.heroClass) {
+                state.player.skills.activeSkillId = targetId;
+                state.player.skills.activeCooldown = 0;
+            }
+        } else if (lType === "alchemy") {
+            if (!state.player.unlockedRecipes) state.player.unlockedRecipes = [];
+            if (state.player.unlockedRecipes.includes(targetId)) {
+                alert(`You have already learned this alchemy recipe!`);
+                return false;
+            }
+            state.player.unlockedRecipes.push(targetId);
+
+            const recipe = (window.AlchemyRecipes || []).find(r => r.id === targetId);
+            const recipeName = recipe ? recipe.name : item.name;
+
+            if (state.addLog) {
+                state.addLog(`⚗️ RECIPE MASTERED: You learned how to brew [${recipeName}]!`, "craft", "⚗️");
+            }
+            if (window.CombatManager) {
+                window.CombatManager.showDamagePopup(`⚗️ RECIPE LEARNED!`, false, false, "potion");
+            }
+        } else if (lType === "forge") {
+            if (!state.player.unlockedBlueprints) state.player.unlockedBlueprints = [];
+            const bpId = item.id;
+            const gearId = item.targetId;
+            if (state.player.unlockedBlueprints.includes(bpId) || state.player.unlockedBlueprints.includes(gearId)) {
+                alert(`You have already learned this blacksmith blueprint!`);
+                return false;
+            }
+            state.player.unlockedBlueprints.push(bpId);
+            if (gearId && gearId !== bpId) state.player.unlockedBlueprints.push(gearId);
+
+            const craftedItem = window.ItemsData ? window.ItemsData[gearId] : null;
+            const gearName = craftedItem ? craftedItem.name : item.name;
+
+            if (state.addLog) {
+                state.addLog(`⚒️ BLUEPRINT MASTERED: You can now forge [${gearName}] at the Blacksmith!`, "craft", "⚒️");
+            }
+            if (window.CombatManager) {
+                window.CombatManager.showDamagePopup(`⚒️ BLUEPRINT LEARNED!`, false, false, "crit");
+            }
+        }
+
+        // Consume scroll/blueprint from inventory
+        state.player.inventory.splice(index, 1);
+        state.save();
         state.notify();
         return true;
     },
@@ -279,6 +390,15 @@ window.InventoryManager = {
 
         const state = window.gameState;
 
+        // Check Blueprint requirement
+        if (recipe.requiresBlueprint && recipe.blueprintId) {
+            const isUnlocked = state.isBlueprintUnlocked ? state.isBlueprintUnlocked(recipe.blueprintId) : (state.player.unlockedBlueprints && state.player.unlockedBlueprints.includes(recipe.blueprintId));
+            if (!isUnlocked) {
+                alert(`🔒 Locked! You must acquire and study the schematic blueprint for this equipment before you can forge it!`);
+                return;
+            }
+        }
+
         // Check Gold
         if (!state.canAfford(recipe.req.gold)) {
             alert("Cannot afford crafting gold cost.");
@@ -323,6 +443,15 @@ window.InventoryManager = {
         if (!recipe) {
             notifyMsg("Recipe not found!");
             return false;
+        }
+
+        // Check Recipe requirement
+        if (recipe.requiresRecipe) {
+            const isUnlocked = state.isRecipeUnlocked ? state.isRecipeUnlocked(recipe.id) : (state.player.unlockedRecipes && state.player.unlockedRecipes.includes(recipe.id));
+            if (!isUnlocked) {
+                notifyMsg(`📜 Recipe Locked! You must acquire and study the recipe scroll for ${recipe.name} before you can brew it!`);
+                return false;
+            }
         }
 
         const reqLv = recipe.reqLevel || 1;

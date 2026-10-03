@@ -11,6 +11,11 @@ window.CombatManager = {
         const weather = window.WeatherData ? window.WeatherData[state.world.currentWeatherId] : null;
         if (weather) damage *= weather.playerDmgMult;
 
+        // Fatigue multiplier
+        if (state.getFatigueMultiplier) {
+            damage *= state.getFatigueMultiplier();
+        }
+
         // World Event / Scenario multiplier
         if (state.world.activeEventId && window.EventsData[state.world.activeEventId]) {
             damage *= window.EventsData[state.world.activeEventId].playerDmgMult;
@@ -28,6 +33,7 @@ window.CombatManager = {
     },
 
     showDamagePopup(text, isCrit = false, isMiss = false, customType = "") {
+        if (typeof document === "undefined") return;
         const arena = document.getElementById("arena");
         if (!arena) return;
 
@@ -47,7 +53,15 @@ window.CombatManager = {
 
     attackTick() {
         const state = window.gameState;
-        if (!state.player.hasCompletedOnboarding || state.combat.inTemple) {
+        if (!state.player.hasCompletedOnboarding) {
+            return;
+        }
+
+        if (state.combat.inTemple) {
+            // Resting in Temple recovers fatigue and heals
+            if (state.reduceFatigue && (state.player.fatigue || 0) > 0) {
+                state.reduceFatigue(10);
+            }
             return;
         }
 
@@ -128,6 +142,9 @@ window.CombatManager = {
         const finalDmg = Math.max(1, Math.floor(baseDmg));
         mob.hp -= finalDmg;
 
+        // Accumulate fatigue while actively fighting
+        if (state.addFatigue) state.addFatigue(1.2);
+
         // Lifesteal Recovery
         const lifestealPct = state.getEffectiveLifesteal();
         if (lifestealPct > 0) {
@@ -180,6 +197,9 @@ window.CombatManager = {
         const finalDmg = Math.max(1, Math.floor(baseDmg));
         mob.hp -= finalDmg;
 
+        // Accumulate fatigue on strike
+        if (state.addFatigue) state.addFatigue(1.0);
+
         const lifestealPct = state.getEffectiveLifesteal();
         if (lifestealPct > 0) {
             const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
@@ -206,18 +226,17 @@ window.CombatManager = {
 
     triggerSkill() {
         const state = window.gameState;
-        const heroDef = window.HeroesData[state.player.heroClass] || window.HeroesData.knight;
-        if (!heroDef || !heroDef.skill) return false;
+        const skill = state.getActiveSkill ? state.getActiveSkill() : ((window.HeroesData[state.player.heroClass] || window.HeroesData.knight).skill);
+        if (!skill) return false;
 
         if (state.player.skills.activeCooldown > 0 && !(window.devMode && window.devMode.noCooldowns)) {
             return false;
         }
 
-        const skill = heroDef.skill;
         const mob = state.combat.currentMob;
         if (!mob) return false;
 
-        // Calculate skill damage
+        // Calculate skill damage with upgraded multiplier
         const baseAtk = this.calculatePlayerDamage();
         const skillDmg = Math.floor(baseAtk * (skill.damageMult || 2.0));
 
@@ -226,26 +245,29 @@ window.CombatManager = {
 
         // Apply heal if any
         if (skill.healPct && skill.healPct > 0) {
-            const healed = Math.floor(state.player.maxHp * skill.healPct);
-            state.player.hp = Math.min(state.player.maxHp, state.player.hp + healed);
+            const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+            const healed = Math.floor(effMaxHp * skill.healPct);
+            state.player.hp = Math.min(effMaxHp, state.player.hp + healed);
             this.showDamagePopup(`+${healed} HP`, false, false, "heal");
         }
 
         // Apply temporary buff if defined
         if (skill.buff) {
             // Remove existing buff with same stat
-            state.player.activeBuffs = state.player.activeBuffs.filter(b => b.name !== skill.buff.name);
+            state.player.activeBuffs = (state.player.activeBuffs || []).filter(b => b.name !== skill.buff.name);
             state.player.activeBuffs.push({ ...skill.buff });
         }
 
-        // Reset cooldown
-        state.player.skills.activeCooldown = (window.devMode && window.devMode.noCooldowns) ? 0 : skill.cooldown;
+        // Reset cooldown (fatigue penalty applies if collapsed)
+        const fatiguePenalty = (state.getFatigue && state.getFatigue() >= 100) ? 1.4 : 1.0;
+        state.player.skills.activeCooldown = (window.devMode && window.devMode.noCooldowns) ? 0 : Math.round(skill.cooldown * fatiguePenalty);
 
         // Visual FX
-        this.showDamagePopup(`💥 ${skill.name}! -${skillDmg}`, true, false, "skill");
+        const lvlTag = skill.level > 1 ? ` (Lv.${skill.level})` : '';
+        this.showDamagePopup(`💥 ${skill.name}${lvlTag}! -${skillDmg}`, true, false, "skill");
 
         if (window.devMode && typeof window.devMode.logToConsole === "function") {
-            window.devMode.logToConsole(`⚡ CAST: ${skill.name} for ${skillDmg} DMG!`, "success");
+            window.devMode.logToConsole(`⚡ CAST: ${skill.name}${lvlTag} for ${skillDmg} DMG!`, "success");
         }
 
         if (mob.hp <= 0) {
@@ -255,6 +277,23 @@ window.CombatManager = {
         }
 
         return true;
+    },
+
+    rest() {
+        const state = window.gameState;
+        if (state.combat.autoFight) {
+            state.combat.autoFight = false;
+        }
+        state.combat.inTemple = true;
+        if (state.reduceFatigue) state.reduceFatigue(60);
+        const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+        state.player.hp = Math.min(effMaxHp, Math.round(state.player.hp + effMaxHp * 0.50));
+        this.showDamagePopup("💤 Camped & Rested!", false, false, "heal");
+        if (state.addLog) {
+            state.addLog("Camp pitched. Hero took a deep rest, recovering fatigue and wounds.", "system", "💤");
+        }
+        state.save();
+        state.notify();
     },
 
     checkAutoPotion() {
