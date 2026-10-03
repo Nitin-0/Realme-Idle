@@ -158,3 +158,13 @@
     background: linear-gradient(180deg, #534085, #352857);
     color: white;
 }
+
+@media (max-width: 440px) {
+    .debug-widget {
+        right: 10px;
+        bottom: 10px;
+        left: 10px;
+        width: auto;
+        max-width: calc(100vw - 20px);
+    }
+}

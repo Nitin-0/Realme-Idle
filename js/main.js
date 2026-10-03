@@ -478,6 +478,10 @@ window.MainEngine = {
         });
 
         this.updateUI();
+
+        if (tabId === "arena" && window.WeatherManager) {
+            setTimeout(() => window.WeatherManager.resize(), 50);
+        }
     },
 
     showOfflineModal(report) {

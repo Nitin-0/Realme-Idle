@@ -2634,7 +2634,7 @@ footer button:hover {
 /* Combat Control Strip */
 .combat-control-strip {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
     margin-top: 12px;
     margin-bottom: 16px;
@@ -3785,204 +3785,7 @@ footer button:hover {
 }
 
 /* =========================================================
-   RESPONSIVE DESIGN & MOBILE OPTIMIZATION
-========================================================= */
-@media (max-width: 768px) {
-    .game {
-        width: 95%;
-        padding: 14px 0 60px 0;
-    }
 
-    .topbar {
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .resources {
-        grid-template-columns: 1fr;
-        gap: 6px;
-    }
-
-    .bars-container {
-        grid-template-columns: 1fr;
-        gap: 8px;
-    }
-
-    .stats-strip {
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-
-    .stat-badge {
-        flex: 1 1 45%;
-        text-align: center;
-    }
-
-    .game-nav-tabs {
-        overflow-x: auto;
-        white-space: nowrap;
-        padding-bottom: 4px;
-        -webkit-overflow-scrolling: touch;
-        gap: 6px;
-    }
-
-    .nav-tab-btn {
-        flex-shrink: 0;
-        font-size: 11px;
-        padding: 9px 12px;
-    }
-
-    .arena {
-        min-height: 310px;
-        border-radius: 16px;
-    }
-
-    .combat-control-strip {
-        gap: 8px;
-    }
-
-    .combat-hud {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .hud-skill-box,
-    .hud-potion-box {
-        width: 100%;
-    }
-
-    .potion-belt {
-        justify-content: space-between;
-    }
-
-    .btn-belt-pot {
-        flex: 1;
-        padding: 8px 4px;
-        font-size: 10px;
-    }
-
-    .equipment-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .kingdom-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .bottom-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .char-sheet-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .inv-container-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .shop-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .onboard-class-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .footer-buttons {
-        flex-wrap: wrap;
-        gap: 8px;
-        justify-content: center;
-    }
-
-    .onboarding-card,
-    .temple-card,
-    .victory-card,
-    .offline-card,
-    .hero-quick-menu-card {
-        padding: 16px;
-        border-radius: 14px;
-    }
-}
-
-@media (max-width: 480px) {
-    .brand h1 {
-        font-size: 18px;
-    }
-
-    .brand-icon {
-        width: 38px;
-        height: 38px;
-        font-size: 18px;
-    }
-
-    .combat-control-strip {
-        flex-direction: column;
-    }
-
-    .btn-autofight,
-    .btn-manual-strike {
-        width: 100%;
-        text-align: center;
-        justify-content: center;
-    }
-
-    .realm-actions-row {
-        flex-direction: column;
-    }
-
-    .btn-prev-realm,
-    .next-realm {
-        width: 100%;
-    }
-
-    .crafting-grid {
-        grid-template-columns: 1fr;
-    }
-    .panel-header{
-        flex-direction: column;
-        gap: 10px;
-    }
-
-}
-
-@media (max-width: 380px) {
-    .brand h1 {
-        font-size: 18px;
-    }
-
-    .brand-icon {
-        width: 38px;
-        height: 38px;
-        font-size: 18px;
-    }
-
-    .combat-control-strip {
-        flex-direction: column;
-    }
-
-    .btn-autofight,
-    .btn-manual-strike {
-        width: 100%;
-        text-align: center;
-        justify-content: center;
-    }
-
-    .realm-actions-row {
-        flex-direction: column;
-    }
-
-    .btn-prev-realm,
-    .next-realm {
-        width: 100%;
-    }
-
-    .crafting-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* =========================================================
    EQUIPMENT, INVENTORY BAG, FORGE & REALM SHOP STYLING
 ========================================================= */
 
@@ -4298,18 +4101,7 @@ footer button:hover {
     filter: grayscale(0.35);
 }
 
-@media (max-width: 960px) {
-    .equip-grid { grid-template-columns: repeat(3, 1fr); }
-    .bag-grid { grid-template-columns: repeat(2, 1fr); }
-}
 
-@media (max-width: 780px) {
-    .equip-grid { grid-template-columns: 1fr; }
-    .bag-grid { grid-template-columns: 1fr; }
-    .forge-grid { grid-template-columns: 1fr; }
-    .shop-row { flex-wrap: wrap; }
-    .sr-buy { width: 100%; }
-}
 
 /* =========================================================
    DIVINE BLESSINGS ("BLESSED BY THE GODS")
@@ -4623,14 +4415,16 @@ footer button:hover {
     background: linear-gradient(180deg, #3d2d14, #261c0d);
     border: 1px solid #d97706;
     color: #fbbf24;
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 11px;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.5px;
     transition: all 0.2s ease;
 }
 
@@ -5079,3 +4873,719 @@ footer button:hover {
     border: 1px solid rgba(74, 222, 128, 0.4);
     color: #4ade80;
 }
+
+
+/* =========================================================
+   RESPONSIVE DESIGN & MOBILE OPTIMIZATION
+========================================================= */
+
+/* --- TABLET / SMALL DESKTOP (<= 960px) --- */
+@media (max-width: 960px) {
+    .game {
+        width: 96%;
+        max-width: 100%;
+    }
+
+    .equip-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 10px;
+    }
+
+    .bag-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+
+    .forge-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 10px;
+    }
+
+    .kingdom-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+}
+
+/* --- TABLET PORTRAIT / LARGE PHONES (<= 768px) --- */
+@media (max-width: 768px) {
+    .game {
+        width: 96%;
+        max-width: 100%;
+        padding: 12px 0 60px 0;
+        box-sizing: border-box;
+    }
+
+    .topbar {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .resources {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .bars-container {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .stats-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .stat-badge {
+        flex: 1 1 calc(50% - 6px);
+        text-align: center;
+        padding: 6px 8px;
+        font-size: 11px;
+    }
+
+    .fatigue-stat-badge {
+        flex: 1 1 100% !important;
+        justify-content: center;
+        font-size: 11.5px;
+        padding: 7px 12px;
+    }
+
+    .game-nav-tabs {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 6px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 6px;
+    }
+    .game-nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-tab-btn {
+        flex-shrink: 0;
+        font-size: 11px;
+        padding: 9px 13px;
+        min-height: 38px;
+    }
+
+    .arena {
+        min-height: 300px;
+        border-radius: 16px;
+    }
+
+    .combat-control-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .btn-autofight,
+    .btn-manual-strike,
+    .btn-rest-camp {
+        padding: 10px 8px;
+        font-size: 11.5px;
+        min-height: 42px;
+    }
+
+    .combat-hud {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .hud-skill-box,
+    .hud-potion-box {
+        width: 100%;
+    }
+
+    .potion-belt {
+        display: flex;
+        gap: 6px;
+        justify-content: space-between;
+    }
+
+    .btn-belt-pot {
+        flex: 1;
+        padding: 8px 4px;
+        font-size: 10px;
+        min-height: 36px;
+    }
+
+    .equip-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 10px;
+    }
+
+    .bag-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+
+    .forge-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 10px;
+    }
+
+    .alch-cards-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+
+    .skill-stats-compare-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px;
+    }
+
+    .skill-arsenal-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+
+    .classes-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+
+    .char-sheet-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .shop-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+
+    .shop-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .sr-buy {
+        width: 100%;
+    }
+
+    .kingdom-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+
+    .onboarding-card,
+    .temple-card,
+    .victory-card,
+    .offline-card,
+    .hero-quick-menu-card {
+        padding: 20px;
+        border-radius: 14px;
+        max-height: 90vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 95vw;
+        max-width: 540px;
+    }
+}
+
+/* --- MOBILE PHONES (<= 650px) --- */
+@media (max-width: 650px) {
+    .resources {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .world-status-strip {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    /* Combat Controls Stack */
+    .combat-control-strip {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .btn-autofight,
+    .btn-manual-strike,
+    .btn-rest-camp {
+        width: 100%;
+        min-height: 44px;
+        font-size: 12px;
+    }
+
+    .arena {
+        min-height: 320px;
+    }
+
+    .enemy {
+        width: 120px;
+        height: 120px;
+        font-size: 64px;
+    }
+
+    /* Special Skills Mastery Center */
+    .skill-upgrade-center {
+        padding: 14px;
+    }
+
+    .skill-active-hero-box {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .skill-active-info-col {
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .skill-active-big-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 28px;
+        flex-shrink: 0;
+    }
+
+    .skill-active-title-block h3 {
+        font-size: 15px;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .skill-upgrade-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .skill-upgrade-cost-list {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 6px;
+    }
+
+    .btn-upgrade-skill {
+        width: 100%;
+        min-height: 44px;
+        font-size: 12px;
+        justify-content: center;
+        display: flex;
+        align-items: center;
+    }
+
+    .skill-arsenal-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+
+    .skill-arsenal-card {
+        padding: 12px;
+    }
+
+    .btn-equip-skill {
+        min-height: 40px;
+        font-size: 11.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Inventory Toolbar & Filters */
+    .inv-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .inv-filter-strip {
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+        gap: 6px;
+    }
+    .inv-filter-strip::-webkit-scrollbar {
+        display: none;
+    }
+
+    .inv-filter-btn {
+        flex-shrink: 0;
+        padding: 6px 12px;
+        font-size: 11px;
+        min-height: 36px;
+    }
+
+    .inv-sort-strip {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 6px;
+    }
+
+    .btn-sort {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+        padding: 6px 4px;
+        font-size: 10.5px;
+        min-height: 34px;
+    }
+
+    .equip-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+
+    .bag-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+
+    .item {
+        padding: 12px;
+    }
+
+    .item-top {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .item-top > div {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .item-name {
+        word-break: break-word;
+    }
+
+    .item-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .item-actions .btn {
+        flex: 1 1 calc(50% - 6px);
+        min-height: 38px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-study {
+        width: 100% !important;
+        min-height: 38px;
+    }
+
+    .forge-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+
+    .alch-cards-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+
+    .alch-recipe-card {
+        padding: 12px;
+    }
+
+    .alch-brew-btn {
+        min-height: 40px;
+        font-size: 12px;
+    }
+
+    .crafting-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+
+    .craft-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .btn-craft {
+        width: 100%;
+        min-height: 40px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Shop Filter Bar & Cards */
+    .inv-filter-bar {
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+        gap: 6px;
+    }
+    .inv-filter-bar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .shop-filter-btn {
+        flex-shrink: 0;
+        padding: 6px 12px;
+        font-size: 11px;
+        min-height: 36px;
+    }
+
+    .shop-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+
+    .shop-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .btn-buy {
+        width: 100%;
+        min-height: 40px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .classes-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+
+    .class-card {
+        padding: 12px;
+    }
+
+    .btn-select-class {
+        min-height: 40px;
+        font-size: 12px;
+    }
+
+    .char-hero-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .promo-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .promo-req-grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .btn-promote {
+        min-height: 42px;
+        font-size: 12px;
+    }
+
+    .divine-blessing-card {
+        padding: 12px;
+    }
+
+    .blessing-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .blessing-status-badge {
+        align-self: flex-start;
+    }
+
+    .kingdom-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+
+    .kingdom-decree-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .charter-reqs {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .charter-req-chip {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .quest-card {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .btn-claim-quest {
+        width: 100%;
+        min-height: 36px;
+        padding: 8px 12px;
+        text-align: center;
+    }
+
+    .realm-actions-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn-prev-realm,
+    .realm-actions-row .next-realm {
+        width: 100%;
+        min-height: 40px;
+        margin-top: 0;
+    }
+
+    .victory-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .victory-actions button {
+        width: 100%;
+        min-height: 40px;
+    }
+
+    .materials-bar {
+        gap: 6px;
+    }
+
+    .mat-badge {
+        flex: 1 1 calc(50% - 6px);
+        font-size: 10.5px;
+        text-align: center;
+    }
+
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+
+/* --- SMALL MOBILE PHONES (<= 440px) --- */
+@media (max-width: 440px) {
+    .potion-belt {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .btn-belt-pot {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        padding: 8px 6px;
+        font-size: 10.5px;
+        min-height: 38px;
+    }
+
+    .skill-stats-compare-grid {
+        grid-template-columns: 1fr !important;
+        gap: 6px;
+    }
+
+    .stat-badge {
+        flex: 1 1 100%;
+        font-size: 11px;
+    }
+
+    .mat-badge {
+        flex: 1 1 100%;
+    }
+
+    .starter-gear-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .gender-btn-group {
+        flex-direction: column;
+    }
+
+    .gender-btn-group .btn-gender {
+        width: 100%;
+    }
+
+    .stage-info {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .onboarding-card,
+    .temple-card,
+    .victory-card,
+    .offline-card,
+    .hero-quick-menu-card {
+        padding: 14px;
+        width: 94vw;
+    }
+
+    .footer-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    footer {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+}
+
+/* --- EXTRA NARROW SCREENS (<= 380px) --- */
+@media (max-width: 380px) {
+    .brand h1 {
+        font-size: 16px;
+    }
+
+    .brand-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 16px;
+    }
+
+    .realm-badge {
+        padding: 6px 10px;
+        font-size: 9px;
+    }
+
+    .item-actions .btn {
+        flex: 1 1 100%;
+    }
+
+    .inv-sort-strip {
+        flex-wrap: wrap;
+    }
+
+    .btn-sort {
+        flex: 1 1 30%;
+    }
+}
+
