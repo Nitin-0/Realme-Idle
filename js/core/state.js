@@ -27,8 +27,15 @@ window.gameState = {
             weapon: null,
             armor: null,
             trinket: null,
-            ring: null
+            ring: null,
+            crown: null
         },
+        holyShield: 0,
+        darknessLevel: 0,
+        demonWarningAccepted: false,
+        guardianAngelUsed: false,
+        holyRetributionCharged: false,
+        equilibriumForged: false,
         upgrades: {
             attack: 0,
             defense: 0,
@@ -90,7 +97,9 @@ window.gameState = {
         autoFight: false,
         stage: 1,
         maxStages: 10,
-        inTemple: false
+        inTemple: false,
+        isDestabilized: false,
+        destabilizedBossSpawned: false
     },
 
     kingdom: {
@@ -447,6 +456,24 @@ window.gameState = {
             else if (b.stat === "attackMult") att *= (1 + b.bonus);
         });
 
+        // Break-the-rules crown scaling
+        const crown = this.player.equipment && this.player.equipment.crown;
+        const isDemon = crown && crown.id === "demon_crown";
+        const isEquilibrium = (crown && crown.id === "equilibrium_crown") || (this.combat && this.combat.isDestabilized);
+        if (isDemon) {
+            const effMax = (this.player.maxHp || 100);
+            const missingRatio = Math.max(0, 1 - (this.player.hp / effMax));
+            // Low HP = More Power (up to +150% bonus damage)
+            att *= (1 + missingRatio * 1.5);
+
+            // Demon's Last Stand: insane ATK surge when HP <= 25%
+            if ((this.player.hp / effMax) <= 0.25) {
+                att *= 1.5;
+            }
+        } else if (isEquilibrium) {
+            att *= 1.25;
+        }
+
         return Math.floor(att);
     },
 
@@ -507,7 +534,31 @@ window.gameState = {
             if (b.stat === "critChance") crit += b.bonus;
         });
 
+        // Demon's Last Stand: 100% Guaranteed Crit
+        const crown = this.player.equipment && this.player.equipment.crown;
+        const isDemon = crown && crown.id === "demon_crown";
+        if (isDemon) {
+            const effMax = (this.player.maxHp || 100);
+            if ((this.player.hp / effMax) <= 0.25) {
+                return 1.0;
+            }
+        }
+
         return Math.min(0.95, crit);
+    },
+
+    getEffectiveCritDmg() {
+        let mult = this.player.critDmg || 1.5;
+        Object.values(this.player.equipment).forEach(item => {
+            if (item) {
+                const eff = this.getItemEffectiveStats(item);
+                if (eff.critDmg) mult += eff.critDmg;
+            }
+        });
+        if (this.combat && this.combat.isDestabilized && Math.random() < 0.35) {
+            mult *= (3.0 + Math.random() * 3.0); // Reality-shattering Paradox Crits!
+        }
+        return mult;
     },
 
     getEffectiveDodge() {
@@ -1352,6 +1403,17 @@ window.gameState = {
                     if (!this.player.classRanks) {
                         this.player.classRanks = { knight: 1, rogue: 1, mage: 1, paladin: 1 };
                     }
+                    if (!this.player.equipment) {
+                        this.player.equipment = { weapon: null, armor: null, trinket: null, ring: null, crown: null };
+                    } else if (this.player.equipment.crown === undefined) {
+                        this.player.equipment.crown = null;
+                    }
+                    if (this.player.holyShield === undefined) this.player.holyShield = 0;
+                    if (this.player.darknessLevel === undefined) this.player.darknessLevel = 0;
+                    if (this.player.demonWarningAccepted === undefined) this.player.demonWarningAccepted = false;
+                    if (this.player.guardianAngelUsed === undefined) this.player.guardianAngelUsed = false;
+                    if (this.player.holyRetributionCharged === undefined) this.player.holyRetributionCharged = false;
+                    if (this.player.equilibriumForged === undefined) this.player.equilibriumForged = false;
                 }
                 if (data.world) {
                     Object.assign(this.world, data.world);
@@ -1362,6 +1424,7 @@ window.gameState = {
                     if (data.combat.stage) this.combat.stage = data.combat.stage;
                     if (data.combat.inTemple !== undefined) this.combat.inTemple = data.combat.inTemple;
                     if (data.combat.autoFight !== undefined) this.combat.autoFight = data.combat.autoFight;
+                    if (data.combat.isDestabilized !== undefined) this.combat.isDestabilized = data.combat.isDestabilized;
                 }
                 if (data.kingdom) Object.assign(this.kingdom, data.kingdom);
                 if (data.quests) Object.assign(this.quests, data.quests);

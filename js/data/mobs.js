@@ -170,5 +170,25 @@ window.MobsData = {
             { type: "item", id: "dragon_slayer", chance: 0.35 },
             { type: "item", id: "dragon_scale_mail", chance: 0.35 }
         ]
+    },
+    weaver_of_duality: {
+        id: "weaver_of_duality",
+        name: "The Weaver of Duality",
+        type: "PARADOX ENTITY · DUALITY SOVEREIGN",
+        levelMin: 5,
+        levelMax: 100,
+        baseHp: 18000,
+        baseDmg: 95,
+        goldReward: 25000,
+        xpReward: 15000,
+        icon: "👁️",
+        isBoss: true,
+        isParadoxBoss: true,
+        isUniversal: false,
+        assignedMap: "all",
+        dropChance: 1.0,
+        dropTable: [
+            { type: "item", id: "equilibrium_crown", chance: 1.0 }
+        ]
     }
 };

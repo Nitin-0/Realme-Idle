@@ -80,6 +80,27 @@ window.DebugWidget = {
         const btnGiveGold = document.getElementById("dbgBtnGiveGold");
         if (btnGiveGold) btnGiveGold.addEventListener("click", () => api.player.addGold(100000));
 
+        // Legendary Crown Debug Buttons
+        const btnGiveDemonCrown = document.getElementById("dbgBtnGiveDemonCrown");
+        if (btnGiveDemonCrown) btnGiveDemonCrown.addEventListener("click", () => {
+            if (window.InventoryManager) window.InventoryManager.addItem("demon_crown");
+        });
+
+        const btnGiveDivineCrown = document.getElementById("dbgBtnGiveDivineCrown");
+        if (btnGiveDivineCrown) btnGiveDivineCrown.addEventListener("click", () => {
+            if (window.InventoryManager) window.InventoryManager.addItem("divine_crown");
+        });
+
+        const btnTriggerCrisis = document.getElementById("dbgBtnTriggerCrisis");
+        if (btnTriggerCrisis) btnTriggerCrisis.addEventListener("click", () => {
+            if (window.CrownManager) window.CrownManager.triggerDestabilizationEvent();
+        });
+
+        const btnGiveEqCrown = document.getElementById("dbgBtnGiveEqCrown");
+        if (btnGiveEqCrown) btnGiveEqCrown.addEventListener("click", () => {
+            if (window.InventoryManager) window.InventoryManager.addItem("equilibrium_crown");
+        });
+
         // Speed Select
         document.querySelectorAll(".dbg-speed-btn").forEach(btn => {
             btn.addEventListener("click", () => {

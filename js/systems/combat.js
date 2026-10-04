@@ -65,6 +65,12 @@ window.CombatManager = {
             return;
         }
 
+        // 0. Crown Manager Passive Combat Tick
+        if (window.CrownManager) {
+            window.CrownManager.combatTick();
+            if (!state.combat.currentMob) return; // enemy died to aura
+        }
+
         // 1. Tick Buffs Duration & Expiration
         if (state.player.activeBuffs && state.player.activeBuffs.length > 0) {
             state.player.activeBuffs.forEach(b => b.duration--);
@@ -108,7 +114,8 @@ window.CombatManager = {
         const critChance = state.getEffectiveCritChance();
         if (Math.random() < critChance) {
             isCrit = true;
-            baseDmg *= state.player.critDmg;
+            const critMult = state.getEffectiveCritDmg ? state.getEffectiveCritDmg() : state.player.critDmg;
+            baseDmg *= critMult;
         }
 
         // 2. Dodge Check (5% base mob dodge)
@@ -117,6 +124,18 @@ window.CombatManager = {
             this.showDamagePopup("MISS!", false, true);
             state.notify();
             return;
+        }
+
+        // Crown Executioner and Holy Retribution check
+        if (window.CrownManager) {
+            const hook = window.CrownManager.onPlayerAttackHit(mob, isCrit, baseDmg);
+            if (hook.executed) {
+                this.onMobDefeated();
+                return;
+            }
+            if (hook.bonusDmg) {
+                baseDmg += hook.bonusDmg;
+            }
         }
 
         // 3. One hit kill cheat
@@ -148,9 +167,13 @@ window.CombatManager = {
         // Lifesteal Recovery
         const lifestealPct = state.getEffectiveLifesteal();
         if (lifestealPct > 0) {
-            const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+            const effMax = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
             const healed = Math.floor(finalDmg * lifestealPct);
-            state.player.hp = Math.min(effMaxHp, state.player.hp + healed);
+            if (window.CrownManager) {
+                window.CrownManager.healPlayer(healed, "Lifesteal");
+            } else {
+                state.player.hp = Math.min(effMax, state.player.hp + healed);
+            }
         }
 
         this.showDamagePopup(isCrit ? `CRIT! -${finalDmg}` : `-${finalDmg}`, isCrit, false);
@@ -187,7 +210,20 @@ window.CombatManager = {
         const critChance = state.getEffectiveCritChance();
         if (Math.random() < critChance) {
             isCrit = true;
-            baseDmg *= state.player.critDmg;
+            const critMult = state.getEffectiveCritDmg ? state.getEffectiveCritDmg() : state.player.critDmg;
+            baseDmg *= critMult;
+        }
+
+        // Crown Executioner and Holy Retribution check
+        if (window.CrownManager) {
+            const hook = window.CrownManager.onPlayerAttackHit(mob, isCrit, baseDmg);
+            if (hook.executed) {
+                this.onMobDefeated();
+                return;
+            }
+            if (hook.bonusDmg) {
+                baseDmg += hook.bonusDmg;
+            }
         }
 
         if (window.devMode && window.devMode.enabled && window.devMode.oneHitKill) {
@@ -202,9 +238,13 @@ window.CombatManager = {
 
         const lifestealPct = state.getEffectiveLifesteal();
         if (lifestealPct > 0) {
-            const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+            const effMax = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
             const healed = Math.floor(finalDmg * lifestealPct);
-            state.player.hp = Math.min(effMaxHp, state.player.hp + healed);
+            if (window.CrownManager) {
+                window.CrownManager.healPlayer(healed, "Lifesteal");
+            } else {
+                state.player.hp = Math.min(effMax, state.player.hp + healed);
+            }
         }
 
         this.showDamagePopup(isCrit ? `CRIT! -${finalDmg}` : `-${finalDmg}`, isCrit, false);
@@ -335,6 +375,16 @@ window.CombatManager = {
         const wasBoss = !!mob.isBoss;
         state.combat.currentMob = null;
 
+        // Reset Guardian Angel single-use trigger for the next battle
+        if (state.combat) {
+            state.combat.guardianAngelUsed = false;
+        }
+
+        // Secret Equilibrium Boss defeated hook
+        if (mob.id === "weaver_of_duality" && window.CrownManager) {
+            window.CrownManager.onParadoxBossDefeated();
+        }
+
         if (wasBoss) {
             this.handleBossDefeated(mob);
         } else {
@@ -362,6 +412,21 @@ window.CombatManager = {
 
     handleBossDefeated(bossMob) {
         const state = window.gameState;
+
+        if (bossMob.id === "weaver_of_duality") {
+            const bonusGold = (bossMob.goldReward || 20000);
+            const bonusXp = (bossMob.xpReward || 10000);
+            state.addGold(bonusGold);
+            state.addXp(bonusXp);
+            if (state.addLog) {
+                state.addLog(`👑 PARADOX SHATTERED! You defeated ${bossMob.name}! (+${bonusGold.toLocaleString()}g, +${bonusXp.toLocaleString()} XP)`, "boss", "👑");
+            }
+            if (window.SpawningManager) {
+                window.SpawningManager.spawnNextMob();
+            }
+            return;
+        }
+
         const currentMap = window.MapsData[state.world.currentMapId] || window.MapsData.moonlit_vale;
         const currentIdx = currentMap.realmIndex || 1;
         const nextMap = Object.values(window.MapsData).find(m => m.realmIndex === currentIdx + 1);
@@ -446,7 +511,21 @@ window.CombatManager = {
         // Mob damage reduced by player defense (min 1)
         const rawDmg = mob.damage || 1;
         const defense = state.getEffectiveDefense();
-        const dmgTaken = Math.max(1, Math.floor(rawDmg - defense * 0.5));
+        let dmgTaken = Math.max(1, Math.floor(rawDmg - defense * 0.5));
+
+        // Legendary Crown: Divine Protection (chance to negate) and Overheal Shield absorption
+        if (window.CrownManager) {
+            dmgTaken = window.CrownManager.onIncomingDamage(dmgTaken);
+        }
+
+        if (dmgTaken <= 0) {
+            return;
+        }
+
+        // Legendary Crown: Guardian Angel lethal save (once per encounter)
+        if (window.CrownManager && window.CrownManager.checkGuardianAngel(dmgTaken)) {
+            return;
+        }
 
         state.player.hp = Math.max(0, state.player.hp - dmgTaken);
 
@@ -473,6 +552,13 @@ window.CombatManager = {
 
     onPlayerDeath() {
         const state = window.gameState;
+        if (state.combat) {
+            state.combat.guardianAngelUsed = false;
+            if (state.combat.isDestabilized) {
+                state.combat.isDestabilized = false;
+                if (window.CrownManager) window.CrownManager.updateVisualAtmosphere();
+            }
+        }
         state.respawnAtTemple();
 
         const statusEl = document.getElementById("status");

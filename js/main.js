@@ -729,13 +729,25 @@ window.MainEngine = {
         const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : state.player.maxHp;
         if (state.player.hp > effMaxHp) state.player.hp = effMaxHp;
 
-        if (document.getElementById("playerHpCard")) document.getElementById("playerHpCard").textContent = Math.max(0, Math.floor(state.player.hp)).toLocaleString();
+        const currentHp = Math.max(0, Math.floor(state.player.hp));
+        const holyShield = Math.floor(state.player.holyShield || 0);
+
+        if (document.getElementById("playerHpCard")) document.getElementById("playerHpCard").textContent = currentHp.toLocaleString();
         if (document.getElementById("playerMaxHpCard")) document.getElementById("playerMaxHpCard").textContent = Math.floor(effMaxHp).toLocaleString();
-        if (document.getElementById("playerHpText")) document.getElementById("playerHpText").textContent = Math.max(0, Math.floor(state.player.hp)).toLocaleString();
+        if (document.getElementById("playerHpText")) {
+            document.getElementById("playerHpText").textContent = holyShield > 0 ? `${currentHp.toLocaleString()} (+${holyShield.toLocaleString()}🛡️)` : currentHp.toLocaleString();
+        }
         if (document.getElementById("playerMaxHpText")) document.getElementById("playerMaxHpText").textContent = Math.floor(effMaxHp).toLocaleString();
 
         const playerHpPct = Math.max(0, Math.min(100, (state.player.hp / effMaxHp) * 100));
         if (document.getElementById("playerHpFill")) document.getElementById("playerHpFill").style.width = playerHpPct + "%";
+
+        const shieldPct = Math.max(0, Math.min(100, (holyShield / effMaxHp) * 100));
+        const shieldEl = document.getElementById("playerShieldFill");
+        if (shieldEl) {
+            shieldEl.style.width = shieldPct + "%";
+            shieldEl.style.display = shieldPct > 0 ? "block" : "none";
+        }
 
         // Stats Breakdown Strip
         if (document.getElementById("statDefense")) document.getElementById("statDefense").textContent = state.getEffectiveDefense();
@@ -1634,7 +1646,8 @@ window.MainEngine = {
         const slots = [
             { id: "weapon", name: "Weapon" },
             { id: "armor", name: "Armor" },
-            { id: "trinket", name: "Trinket" }
+            { id: "trinket", name: "Trinket" },
+            { id: "crown", name: "Crown / Relic" }
         ];
 
         slots.forEach(s => {

@@ -202,6 +202,50 @@ window.ItemsData = {
         stats: { attack: 95, defense: 95, critChance: 0.12, lifesteal: 0.06 }
     },
 
+    // =========================================================
+    // LEGENDARY "BREAK THE RULES" CROWNS
+    // =========================================================
+    demon_crown: {
+        id: "demon_crown",
+        name: "Demon Crown",
+        slot: "crown",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 66666,
+        icon: "👑",
+        stats: { attack: 350, defense: 150, critChance: 0.40, critDmg: 2.0, lifesteal: 0.15 },
+        description: "Power at a Price. Grants colossal ATK, Demonic Aura, and execution, but drains HP continuously and plunges the realm into eternal darkness.",
+        loreWarning: "The crown does not grant power. It borrows it from your life.",
+        crownType: "demon",
+        isBreakTheRules: true
+    },
+    divine_crown: {
+        id: "divine_crown",
+        name: "Divine Crown",
+        slot: "crown",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 66666,
+        icon: "👑",
+        stats: { defense: 120, hp: 600, dodge: 0.10, goldMult: 0.50 },
+        description: "Blessing of Heaven. Radiates holy aura, massively enhances healing, shields overheal, negates damage, and revives with Guardian Angel.",
+        crownType: "divine",
+        isBreakTheRules: true
+    },
+    equilibrium_crown: {
+        id: "equilibrium_crown",
+        name: "Crown of Equilibrium",
+        slot: "crown",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 150000,
+        icon: "👁️",
+        stats: { attack: 280, defense: 160, hp: 500, critChance: 0.25, critDmg: 1.0, lifesteal: 0.10, dodge: 0.08 },
+        description: "The Sovereign of Duality. Forged by transcending the cosmic clash of Demon and Divine. Harmonizes light and void into supreme, stable mastery.",
+        crownType: "equilibrium",
+        isBreakTheRules: true
+    },
+
     // Consumables (Healing & Elixirs)
     potion_minor: {
         id: "potion_minor",
@@ -758,7 +802,11 @@ window.ShopData = [
     { id: "shop_bp_staff", itemId: "blueprint_astral_staff", name: "Blueprint: Astral Arch-Staff", icon: "📐", category: "blueprint", costGold: 1300, reqLevel: 11, reqMap: "ashen_wastes", reqDepth: 2, stock: -1, description: "Unlocks forging for Astral Arch-Staff (+185 Atk, +9% Crit)." },
     { id: "shop_bp_aegis", itemId: "blueprint_aegis_valor", name: "Blueprint: Aegis of Valor Plate", icon: "📐", category: "blueprint", costGold: 1800, reqLevel: 14, reqMap: "bloodthorn_forest", reqDepth: 2, stock: -1, description: "Unlocks forging for Aegis of Valor Plate (+140 Def, +420 HP)." },
     { id: "shop_bp_infernus", itemId: "blueprint_infernus_blade", name: "Blueprint: Infernus Calamity Blade", icon: "📐", category: "blueprint", costGold: 3500, reqLevel: 22, reqMap: "frostpeak", reqDepth: 2, stock: -1, description: "Unlocks forging for Legendary Infernus Blade (+330 Atk, +18% Crit)." },
-    { id: "shop_bp_bulwark", itemId: "blueprint_divine_bulwark", name: "Blueprint: Divine Bulwark Cuirass", icon: "📐", category: "blueprint", costGold: 3200, reqLevel: 24, reqMap: "frostpeak", reqDepth: 2, stock: -1, description: "Unlocks forging for Legendary Divine Bulwark (+270 Def, +750 HP)." }
+    { id: "shop_bp_bulwark", itemId: "blueprint_divine_bulwark", name: "Blueprint: Divine Bulwark Cuirass", icon: "📐", category: "blueprint", costGold: 3200, reqLevel: 24, reqMap: "frostpeak", reqDepth: 2, stock: -1, description: "Unlocks forging for Legendary Divine Bulwark (+270 Def, +750 HP)." },
+
+    // ---------------- LEGENDARY BREAK-THE-RULES CROWNS ----------------
+    { id: "shop_crown_demon", itemId: "demon_crown", name: "Demon Crown", icon: "👑", category: "equipment", costGold: 10000, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 2, stock: 1, description: "Power at a Price. Abyssal artifact granting colossal ATK and Demonic Aura, but exacts an unending Blood Price." },
+    { id: "shop_crown_divine", itemId: "divine_crown", name: "Divine Crown", icon: "👑", category: "equipment", costGold: 10000, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 2, stock: 1, description: "Blessing of Heaven. Radiant celestial artifact of unyielding HP regeneration, overheal shields, and Guardian Angel." }
 ];
 
 /* =========================================================

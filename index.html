@@ -99,6 +99,7 @@
                 </div>
                 <div class="player-hp-bar">
                     <div class="player-hp-fill" id="playerHpFill"></div>
+                    <div class="player-shield-fill" id="playerShieldFill" style="display: none;"></div>
                 </div>
             </div>
         </div>
@@ -874,6 +875,114 @@
                 </div>
             </div>
 
+            <!-- ==================== DEMON CROWN WARNING MODAL ==================== -->
+            <div class="crown-modal demon-modal" id="demonWarningModal" style="display: none;">
+                <div class="crown-modal-card demon-card">
+                    <div class="crown-modal-header">
+                        <span class="crown-modal-icon">👑</span>
+                        <h3>THE FORBIDDEN PACT</h3>
+                        <span class="crown-modal-tag demon-tag">DEMON CROWN</span>
+                    </div>
+                    <div class="crown-modal-body">
+                        <blockquote class="crown-warning-quote">
+                            "The crown does not grant power. It borrows it from your life."
+                        </blockquote>
+                        <p class="crown-lore-desc">
+                            Donning the Crown of the Underworld breaches mortal boundaries. The demonic embers will ravage your flesh, exacting a continuous <strong>Blood Price (HP Drain)</strong>. 
+                        </p>
+                        <div class="crown-perks-grid">
+                            <div class="crown-perk-item demon-perk">
+                                <strong>⚔️ Overwhelming Might</strong>
+                                <span>+220 ATK & massive CRIT chance/dmg bonuses.</span>
+                            </div>
+                            <div class="crown-perk-item demon-perk">
+                                <strong>🩸 Blood Thirst</strong>
+                                <span>The lower your HP, the deadlier your attacks become.</span>
+                            </div>
+                            <div class="crown-perk-item demon-perk">
+                                <strong>☠️ Demon's Last Stand</strong>
+                                <span>At &le;25% HP, achieve 100% Critical strikes and explosive power (healing reduced by 75%).</span>
+                            </div>
+                            <div class="crown-perk-item demon-perk">
+                                <strong>👹 Executioner</strong>
+                                <span>Attacks against foes below 15% HP have a 45% chance to instantly execute them.</span>
+                            </div>
+                        </div>
+                        <p class="crown-subwarning">
+                            ⚠️ <em>Darkness will envelop your screen as long as this relic rests upon your brow.</em>
+                        </p>
+                    </div>
+                    <div class="crown-modal-actions">
+                        <button type="button" class="btn-crown-accept demon-accept" onclick="window.CrownManager.confirmDemonPact()">
+                            🩸 Seal the Blood Pact & Equip
+                        </button>
+                        <button type="button" class="btn-crown-cancel" onclick="window.CrownManager.cancelDemonPact()">
+                            ❌ Refuse & Cast It Aside
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== EQUILIBRIUM DESTABILIZATION CRISIS MODAL ==================== -->
+            <div class="crown-modal equilibrium-modal" id="equilibriumModal" style="display: none;">
+                <div class="crown-modal-card equilibrium-card">
+                    <div class="crown-modal-header">
+                        <span class="crown-modal-icon">👁️</span>
+                        <h3>COSMIC DESTABILIZATION</h3>
+                        <span class="crown-modal-tag equilibrium-tag">DEMON × DIVINE</span>
+                    </div>
+                    <div class="crown-modal-body">
+                        <blockquote class="crown-warning-quote eq-quote">
+                            "Two crowns recognize the same soul."
+                        </blockquote>
+                        <p class="crown-lore-desc">
+                            The celestial host and demonic abyss cannot coexist peacefully. Possessing both relics has torn open the fabric of reality, triggering an unstable <strong>Equilibrium Fracture</strong>!
+                        </p>
+                        <div class="crisis-effects-box">
+                            <div class="crisis-effect-bullet">⚡ <strong>Reality Distortion:</strong> Screen rapidly fluctuates between celestial radiance and abyssal void.</div>
+                            <div class="crisis-effect-bullet">💥 <strong>Unstable Crits & Bursts:</strong> Critical strikes reach absurd Paradox damage, while reality shockwaves ripple across combat.</div>
+                            <div class="crisis-effect-bullet">⚠️ <strong>The Weaver Awakens:</strong> A cosmic anomaly boss, <em>The Weaver of Duality</em>, has materialized in the Arena! Defeat it to forge eternal balance!</div>
+                        </div>
+                    </div>
+                    <div class="crown-modal-actions">
+                        <button type="button" class="btn-crown-accept equilibrium-accept" onclick="window.CrownManager.closeDestabilizationModal()">
+                            ⚔️ Confront the Weaver of Duality!
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== EQUILIBRIUM VICTORY / SYNTHESIS MODAL ==================== -->
+            <div class="crown-modal victory-eq-modal" id="equilibriumVictoryModal" style="display: none;">
+                <div class="crown-modal-card victory-eq-card">
+                    <div class="crown-modal-header">
+                        <span class="crown-modal-icon">👑</span>
+                        <h3>THE SOVEREIGN OF DUALITY</h3>
+                        <span class="crown-modal-tag supreme-tag">LEGENDARY SYNTHESIS</span>
+                    </div>
+                    <div class="crown-modal-body">
+                        <p class="crown-lore-desc victory-lore">
+                            The Weaver of Duality dissolved into stardust. As the celestial and demonic energies converged upon your spirit, the destructive volatility crystallized into absolute harmony!
+                        </p>
+                        <div class="supreme-crown-showcase">
+                            <div class="supreme-crown-icon">👑</div>
+                            <h4>CROWN OF EQUILIBRIUM</h4>
+                            <p class="supreme-sub">The Third Legendary Crown Synthesized</p>
+                            <div class="supreme-stats-list">
+                                <span>✦ +280 Attack & +160 Defense</span>
+                                <span>✦ +500 Max HP & +25% Crit</span>
+                                <span>✦ 10% Cosmic Lifesteal & +8% Dodge</span>
+                                <span>✦ Passive Overheal Shields & Twilight Pulses without self-harm!</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="crown-modal-actions">
+                        <button type="button" class="btn-crown-accept supreme-accept" onclick="window.CrownManager.closeEquilibriumVictoryModal()">
+                            🌟 Claim Sovereign Equilibrium
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <footer>
 
@@ -950,6 +1059,16 @@
                 </div>
 
                 <div class="dbg-row">
+                    <button id="dbgBtnGiveDemonCrown" class="dbg-btn-action" style="border-color: #ef4444; color: #fca5a5;">👑 +Demon Crown</button>
+                    <button id="dbgBtnGiveDivineCrown" class="dbg-btn-action" style="border-color: #facc15; color: #fde047;">👑 +Divine Crown</button>
+                </div>
+
+                <div class="dbg-row">
+                    <button id="dbgBtnTriggerCrisis" class="dbg-btn-action" style="border-color: #c084fc; color: #e9d5ff;">👁️ Test Crisis</button>
+                    <button id="dbgBtnGiveEqCrown" class="dbg-btn-action" style="border-color: #a855f7; color: #d8b4fe;">👑 +Equilibrium</button>
+                </div>
+
+                <div class="dbg-row">
                     <button id="dbgBtnSimOffline" class="dbg-btn-action">⏳ Sim 8h Offline</button>
                     <button id="dbgBtnMaxGear" class="dbg-btn-action">🛡️ Max Gear (+10)</button>
                 </div>
@@ -996,6 +1115,7 @@
         <script src="js/core/state.js"></script>
 
         <!-- SYSTEMS -->
+        <script src="js/systems/crowns.js"></script>
         <script src="js/systems/combat.js"></script>
         <script src="js/systems/spawning.js"></script>
         <script src="js/systems/maps.js"></script>

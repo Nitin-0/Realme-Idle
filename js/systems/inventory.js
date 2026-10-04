@@ -31,6 +31,11 @@ window.InventoryManager = {
             state.addLog(`🎁 RARE LOOT! Found [${itemDef.name}] (${itemDef.rarity.toUpperCase()})!`, "loot", "🎁");
         }
 
+        // Crown Coexistence trigger check
+        if (window.CrownManager) {
+            window.CrownManager.checkCrownCoexistence();
+        }
+
         state.notify();
     },
 
@@ -297,7 +302,24 @@ window.InventoryManager = {
     equipItem(itemInstanceId) {
         const state = window.gameState;
         const index = state.player.inventory.findIndex(i => i.instanceId === itemInstanceId || i.id === itemInstanceId);
+        if (index === -1) return;
 
+        const item = state.player.inventory[index];
+
+        // Demon Crown Forbidden Warning check
+        if (item.id === "demon_crown" && !state.player.demonWarningAccepted) {
+            if (window.CrownManager) {
+                window.CrownManager.promptDemonEquip(item.instanceId || item.id);
+                return;
+            }
+        }
+
+        this.confirmEquipItem(itemInstanceId);
+    },
+
+    confirmEquipItem(itemInstanceId) {
+        const state = window.gameState;
+        const index = state.player.inventory.findIndex(i => i.instanceId === itemInstanceId || i.id === itemInstanceId);
         if (index === -1) return;
 
         const item = state.player.inventory[index];
@@ -318,6 +340,17 @@ window.InventoryManager = {
         if (state.addLog) {
             state.addLog(`Equipped [${item.name}].`, "loot", "🗡️");
         }
+
+        // Crown Audio & Atmosphere feedback
+        if (window.CrownManager) {
+            if (item.id === "demon_crown") window.CrownManager.playDemonSound();
+            else if (item.id === "divine_crown") window.CrownManager.playDivineSound();
+            else if (item.id === "equilibrium_crown") window.CrownManager.playEquilibriumSound();
+
+            window.CrownManager.updateVisualAtmosphere();
+            window.CrownManager.checkCrownCoexistence();
+        }
+
         state.notify();
     },
 
@@ -333,6 +366,11 @@ window.InventoryManager = {
         if (state.addLog) {
             state.addLog(`Unequipped [${current.name}].`, "loot", "📦");
         }
+
+        if (window.CrownManager) {
+            window.CrownManager.updateVisualAtmosphere();
+        }
+
         state.notify();
     },
 
