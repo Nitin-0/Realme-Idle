@@ -260,8 +260,8 @@ window.ItemsData = {
         rarity: "common",
         baseValue: 30,
         icon: "🧪",
-        description: "Instantly restores 50 HP.",
-        effect: { type: "heal", amount: 50 }
+        description: "Instantly restores 150 HP (or 25% of Max HP).",
+        effect: { type: "heal", amount: 150, minPct: 0.25 }
     },
     potion_major: {
         id: "potion_major",
@@ -270,8 +270,8 @@ window.ItemsData = {
         rarity: "rare",
         baseValue: 120,
         icon: "🧪",
-        description: "Instantly restores 180 HP.",
-        effect: { type: "heal", amount: 180 }
+        description: "Instantly restores 500 HP (or 60% of Max HP).",
+        effect: { type: "heal", amount: 500, minPct: 0.60 }
     },
     potion_full: {
         id: "potion_full",
@@ -280,7 +280,7 @@ window.ItemsData = {
         rarity: "legendary",
         baseValue: 400,
         icon: "🏺",
-        description: "Completely restores 100% of maximum HP.",
+        description: "Completely restores 100% of maximum HP and grants +15% Holy Barrier.",
         effect: { type: "heal_pct", amount: 1.0 }
     },
     elixir_fury: {
@@ -290,8 +290,8 @@ window.ItemsData = {
         rarity: "uncommon",
         baseValue: 90,
         icon: "🍷",
-        description: "Grants +25% Attack power for 30 seconds.",
-        effect: { type: "buff", stat: "attackMult", value: 0.25, duration: 30 }
+        description: "Grants +40% Attack power for 60 seconds.",
+        effect: { type: "buff", stat: "attackMult", value: 0.40, duration: 60 }
     },
     elixir_iron: {
         id: "elixir_iron",
@@ -300,8 +300,8 @@ window.ItemsData = {
         rarity: "uncommon",
         baseValue: 90,
         icon: "🍶",
-        description: "Grants +35 Defense for 30 seconds.",
-        effect: { type: "buff", stat: "defense", value: 35, duration: 30 }
+        description: "Grants +60 Defense for 60 seconds.",
+        effect: { type: "buff", stat: "defense", value: 60, duration: 60 }
     },
     elixir_swift: {
         id: "elixir_swift",
@@ -310,8 +310,8 @@ window.ItemsData = {
         rarity: "uncommon",
         baseValue: 75,
         icon: "💨",
-        description: "Grants +8% Dodge chance for 60 seconds.",
-        effect: { type: "buff", stat: "dodge", value: 0.08, duration: 60 }
+        description: "Grants +15% Dodge chance for 90 seconds.",
+        effect: { type: "buff", stat: "dodge", value: 0.15, duration: 90 }
     },
     elixir_stone: {
         id: "elixir_stone",
@@ -320,8 +320,8 @@ window.ItemsData = {
         rarity: "rare",
         baseValue: 150,
         icon: "🪨",
-        description: "Grants +35 Defense for 120 seconds.",
-        effect: { type: "buff", stat: "defense", value: 35, duration: 120 }
+        description: "Grants +70 Defense for 180 seconds.",
+        effect: { type: "buff", stat: "defense", value: 70, duration: 180 }
     },
     elixir_crit: {
         id: "elixir_crit",
@@ -330,8 +330,8 @@ window.ItemsData = {
         rarity: "rare",
         baseValue: 180,
         icon: "🎯",
-        description: "Grants +12% Critical Strike Chance for 120 seconds.",
-        effect: { type: "buff", stat: "critChance", value: 0.12, duration: 120 }
+        description: "Grants +20% Critical Strike Chance for 180 seconds.",
+        effect: { type: "buff", stat: "critChance", value: 0.20, duration: 180 }
     },
     elixir_ambrosia: {
         id: "elixir_ambrosia",
@@ -340,8 +340,8 @@ window.ItemsData = {
         rarity: "epic",
         baseValue: 500,
         icon: "✨",
-        description: "Grants +80 Attack Power for 180 seconds.",
-        effect: { type: "buff", stat: "attack", value: 80, duration: 180 }
+        description: "Grants +150 Attack Power for 240 seconds.",
+        effect: { type: "buff", stat: "attack", value: 150, duration: 240 }
     },
     elixir_dragonheart: {
         id: "elixir_dragonheart",
@@ -350,8 +350,8 @@ window.ItemsData = {
         rarity: "legendary",
         baseValue: 900,
         icon: "🐉",
-        description: "Grants +70 Defense for 180 seconds.",
-        effect: { type: "buff", stat: "defense", value: 70, duration: 180 }
+        description: "Grants +120 Defense for 240 seconds.",
+        effect: { type: "buff", stat: "defense", value: 120, duration: 240 }
     },
 
     // Fatigue Potions & Advanced Elixirs
@@ -362,8 +362,8 @@ window.ItemsData = {
         rarity: "uncommon",
         baseValue: 60,
         icon: "⚡",
-        description: "Restores 40 Fatigue and heals 40 HP.",
-        effect: { type: "fatigue", fatigueAmount: 40, heal: 40 }
+        description: "Restores 60 Fatigue and heals 120 HP (or 20% of Max HP).",
+        effect: { type: "fatigue", fatigueAmount: 60, heal: 120 }
     },
     potion_elixir_rest: {
         id: "potion_elixir_rest",
@@ -372,8 +372,8 @@ window.ItemsData = {
         rarity: "epic",
         baseValue: 350,
         icon: "🏺",
-        description: "Completely resets Fatigue to 0 and heals 250 HP.",
-        effect: { type: "fatigue_full", fatigueAmount: 100, heal: 250 }
+        description: "Completely resets Fatigue to 0 and heals 600 HP (or 75% of Max HP).",
+        effect: { type: "fatigue_full", fatigueAmount: 100, heal: 600 }
     },
     elixir_shadow: {
         id: "elixir_shadow",
@@ -382,8 +382,8 @@ window.ItemsData = {
         rarity: "rare",
         baseValue: 200,
         icon: "🔮",
-        description: "Grants +15% Dodge and +10% Crit for 90 seconds.",
-        effect: { type: "buff", stat: "dodge", value: 0.15, duration: 90 }
+        description: "Grants +25% Dodge and +18% Crit for 120 seconds.",
+        effect: { type: "buff", stat: "dodge", value: 0.25, duration: 120 }
     },
     elixir_titans: {
         id: "elixir_titans",
@@ -392,8 +392,8 @@ window.ItemsData = {
         rarity: "legendary",
         baseValue: 600,
         icon: "🌋",
-        description: "Grants +60 Attack and +40 Defense for 120 seconds.",
-        effect: { type: "buff", stat: "attack", value: 60, duration: 120 }
+        description: "Grants +140 Attack and +80 Defense for 180 seconds.",
+        effect: { type: "buff", stat: "attack", value: 140, duration: 180 }
     },
 
     // Blueprint Crafted Weapons & Armor
@@ -771,35 +771,35 @@ window.ShopData = [
     // ---------------- STARTER PROVISIONS (MOONLIT VALE · DEPTH 1) ----------------
     { id: "shop_mat_wood", matKey: "wood", matQty: 10, name: "Hardwood Bundle x10", icon: "🪵", category: "material", costGold: 80, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Timber gathered from the Moonlit Vale fringes." },
     { id: "shop_mat_iron", matKey: "ironOre", matQty: 10, name: "Iron Ore Bundle x10", icon: "⛏️", category: "material", costGold: 100, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Common iron ore veins mined near the surface." },
-    { id: "shop_pot_minor", itemId: "potion_minor", name: "Minor Health Potion", icon: "🧪", category: "consumable", costGold: 50, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Instantly restores 50 HP." },
+    { id: "shop_pot_minor", itemId: "potion_minor", name: "Minor Health Potion", icon: "🧪", category: "consumable", costGold: 50, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Instantly restores 150 HP (or 25% of Max HP)." },
     { id: "shop_sword_iron", itemId: "iron_sword", name: "Iron Broadsword", icon: "🗡️", category: "equipment", costGold: 180, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "A balanced starter blade forged from iron (+15 Attack)." },
     { id: "shop_armor_iron", itemId: "iron_plate", name: "Iron Breastplate", icon: "🛡️", category: "equipment", costGold: 200, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Sturdy standard iron breastplate (+12 Def, +30 HP)." },
-    { id: "shop_ring_copper", itemId: "copper_band", name: "Copper Band", icon: "💍", category: "equipment", costGold: 140, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "A simple polished band granting wealth (+3g/s, +3% Crit)." },
+    { id: "shop_ring_copper", itemId: "copper_band", name: "Copper Band", icon: "💍", category: "equipment", costGold: 140, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "A simple polished band granting wealth (+3g/10m, +3% Crit)." },
 
     // ---------------- DEEP MOONLIT VALE (DEPTHS 2 & 3) ----------------
-    { id: "shop_pot_major", itemId: "potion_major", name: "Greater Health Potion", icon: "🧪", category: "consumable", costGold: 180, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Concentrated healing draught. Restores 180 HP." },
+    { id: "shop_pot_major", itemId: "potion_major", name: "Greater Health Potion", icon: "🧪", category: "consumable", costGold: 180, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Concentrated healing draught. Restores 500 HP (or 60% of Max HP)." },
     { id: "shop_mat_crystal", matKey: "crystal", matQty: 5, name: "Arcane Crystal x5", icon: "💎", category: "material", costGold: 280, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Glowing geological crystals found in the Deep Thicket." },
     { id: "shop_sword_steel", itemId: "steel_rapier", name: "Steel Rapier", icon: "🗡️", category: "equipment", costGold: 550, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Sharp, agile blade forged for critical thrusts (+30 Attack, +6% Crit)." },
     { id: "shop_armor_leather", itemId: "hardened_leather", name: "Hardened Leather Armor", icon: "🛡️", category: "equipment", costGold: 500, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 3, stock: -1, description: "Supple predator hide granting agility (+22 Def, +5% Dodge)." },
 
     // ---------------- ASHEN WASTES (REALM II) ----------------
-    { id: "shop_elixir_fury", itemId: "elixir_fury", name: "Berserker Draught", icon: "🧪", category: "consumable", costGold: 150, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Fiery tonic granting +20 Attack for 60 seconds." },
-    { id: "shop_ring_jade", itemId: "jade_signet", name: "Jade Signet", icon: "💍", category: "equipment", costGold: 700, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Radiates verdant serenity (+8g/s, +60 HP)." },
+    { id: "shop_elixir_fury", itemId: "elixir_fury", name: "Berserker Draught", icon: "🧪", category: "consumable", costGold: 150, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Fiery tonic granting +40% Attack for 60 seconds." },
+    { id: "shop_ring_jade", itemId: "jade_signet", name: "Jade Signet", icon: "💍", category: "equipment", costGold: 700, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Radiates verdant serenity (+8g/10m, +60 HP)." },
     { id: "shop_sword_runed", itemId: "runed_blade", name: "Runed Broadsword", icon: "🗡️", category: "equipment", costGold: 1400, reqLevel: 10, reqMap: "ashen_wastes", reqDepth: 2, stock: -1, description: "Inscribed with ancient runes (+55 Attack, +4% Lifesteal)." },
 
     // ---------------- BLOODTHORN FOREST (REALM III) ----------------
-    { id: "shop_elixir_iron", itemId: "elixir_iron", name: "Elixir of Ironbark", icon: "🧪", category: "consumable", costGold: 160, reqLevel: 12, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Hardens the flesh like granite, granting +25 Defense for 60s." },
+    { id: "shop_elixir_iron", itemId: "elixir_iron", name: "Elixir of Ironbark", icon: "🧪", category: "consumable", costGold: 160, reqLevel: 12, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Hardens the flesh like granite, granting +60 Defense for 60s." },
     { id: "shop_mat_scale", matKey: "dragonScale", matQty: 3, name: "Dragon Scale x3", icon: "🐉", category: "material", costGold: 1000, reqLevel: 14, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Impervious wyrm plating harvested from primal drakes." },
     { id: "shop_armor_shadow", itemId: "shadow_cowl", name: "Shadow Cowl", icon: "🛡️", category: "equipment", costGold: 1600, reqLevel: 15, reqMap: "bloodthorn_forest", reqDepth: 2, stock: -1, description: "Woven from twilight threads (+45 Def, +100 HP, +8% Dodge)." },
 
     // ---------------- FROSTPEAK CITADEL & INFERNAL DEPTHS (REALMS IV & V) ----------------
-    { id: "shop_pot_full", itemId: "potion_full", name: "Elixir of Rebirth", icon: "🏺", category: "consumable", costGold: 800, reqLevel: 20, reqMap: "frostpeak", reqDepth: 1, stock: -1, description: "Miraculous nectar that completely restores 100% of maximum HP." },
+    { id: "shop_pot_full", itemId: "potion_full", name: "Elixir of Rebirth", icon: "🏺", category: "consumable", costGold: 800, reqLevel: 20, reqMap: "frostpeak", reqDepth: 1, stock: -1, description: "Miraculous nectar that completely restores 100% of maximum HP and grants +15% Holy Barrier." },
     { id: "shop_mat_shadow", matKey: "shadowEssence", matQty: 2, name: "Shadow Essence x2", icon: "🔮", category: "material", costGold: 1400, reqLevel: 22, reqMap: "frostpeak", reqDepth: 2, stock: -1, description: "Dark metaphysical matter collected from void apparitions." },
-    { id: "shop_ring_wealth", itemId: "ring_of_wealth", name: "Ring of Imperial Wealth", icon: "💍", category: "equipment", costGold: 2400, reqLevel: 25, reqMap: "infernal_depths", reqDepth: 1, stock: -1, description: "Adorned with royal gemstones (+25g/s, +12% Crit)." },
+    { id: "shop_ring_wealth", itemId: "ring_of_wealth", name: "Ring of Imperial Wealth", icon: "💍", category: "equipment", costGold: 2400, reqLevel: 25, reqMap: "infernal_depths", reqDepth: 1, stock: -1, description: "Adorned with royal gemstones (+25g/10m, +12% Crit)." },
 
     // ---------------- FATIGUE POTIONS & REFRESHERS ----------------
-    { id: "shop_pot_stamina", itemId: "potion_stamina", name: "Stamina Tonic", icon: "⚡", category: "consumable", costGold: 90, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Restores 40 Fatigue and heals 40 HP instantly." },
-    { id: "shop_pot_rejuvenation", itemId: "potion_elixir_rest", name: "Elixir of Pure Rejuvenation", icon: "🏺", category: "consumable", costGold: 500, reqLevel: 10, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Ancient secret brew that completely resets Fatigue to 0 and heals 250 HP." },
+    { id: "shop_pot_stamina", itemId: "potion_stamina", name: "Stamina Tonic", icon: "⚡", category: "consumable", costGold: 90, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Restores 60 Fatigue and heals 120 HP (or 20% of Max HP) instantly." },
+    { id: "shop_pot_rejuvenation", itemId: "potion_elixir_rest", name: "Elixir of Pure Rejuvenation", icon: "🏺", category: "consumable", costGold: 500, reqLevel: 10, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Ancient secret brew that completely resets Fatigue to 0 and heals 600 HP (or 75% of Max HP)." },
 
     // ---------------- SKILL SCROLLS (LEARNABLE SPECIAL SKILLS) ----------------
     { id: "shop_sc_whirlwind", itemId: "scroll_whirlwind", name: "Scroll: Whirlwind Slash", icon: "📜", category: "scroll", costGold: 200, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Teaches the Whirlwind Slash skill (Knight). High damage cleave with +10% Crit." },
@@ -908,7 +908,7 @@ window.rollItem = function(rarityKey, slot, ilvl) {
 window.formatItemStatLine = function(it) {
     if (!it || !it.stats) return '';
     const STAT_ICON = { atk: '⚔', attack: '⚔', def: '🛡', defense: '🛡', hp: '❤', crit: '🎯', critChance: '🎯', gold: '💰', goldMult: '💰', lifesteal: '🩸', dodge: '💨' };
-    const STAT_LABEL = { atk: 'Atk', attack: 'Atk', def: 'Def', defense: 'Def', hp: 'HP', crit: 'Crit', critChance: 'Crit', gold: 'g/s', goldMult: 'g/s', lifesteal: 'Lifesteal', dodge: 'Dodge' };
+    const STAT_LABEL = { atk: 'Atk', attack: 'Atk', def: 'Def', defense: 'Def', hp: 'HP', crit: 'Crit', critChance: 'Crit', gold: 'g/10m', goldMult: 'g/10m', lifesteal: 'Lifesteal', dodge: 'Dodge' };
 
     return Object.entries(it.stats).map(([k, v]) => {
         const icon = STAT_ICON[k] || '✦';

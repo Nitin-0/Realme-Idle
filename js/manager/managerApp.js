@@ -1669,7 +1669,7 @@ window.ManagerApp = {
                 const chk = document.getElementById("cfg_guildIncomeEnabled");
                 if (chk) chk.checked = (rules.guildIncome.enabled !== false);
                 const rate = document.getElementById("cfg_guildIncomeRate");
-                if (rate) rate.value = rules.guildIncome.goldPerSecond !== undefined ? rules.guildIncome.goldPerSecond : 3;
+                if (rate) rate.value = rules.guildIncome.goldPerSecond !== undefined ? rules.guildIncome.goldPerSecond : 1;
             }
             if (rules.templeDonation) {
                 const chk = document.getElementById("cfg_templeDonationEnabled");

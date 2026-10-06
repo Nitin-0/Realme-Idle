@@ -964,18 +964,25 @@ window.MainEngine = {
         const guildPill = document.getElementById("guildIncomePill");
         if (guildPill) {
             if (state.guildIncome && state.guildIncome.enabled === false) {
-                guildPill.textContent = "+0/s (Off)";
+                guildPill.textContent = "+0 (Off)";
             } else {
-                const baseRate = (state.guildIncome && state.guildIncome.goldPerSecond !== undefined) ? state.guildIncome.goldPerSecond : (state.costs.goldPerSecond || 3);
-                const upgradeBonus = (state.player.upgrades && state.player.upgrades.income) ? state.player.upgrades.income * 2.5 : 0;
-                let gearGps = 0;
-                Object.values(state.player.equipment).forEach(item => {
-                    if (item && item.stats && item.stats.gold) gearGps += item.stats.gold;
-                });
-                const treasuryBonus = 1 + (state.kingdom.treasury - 1) * 0.10;
-                const totalRate = Math.floor((baseRate + upgradeBonus + gearGps) * treasuryBonus);
-                guildPill.textContent = `+${totalRate}/s`;
+                const totalRate = state.getPassiveIncomePer10Min ? state.getPassiveIncomePer10Min() : 1;
+                guildPill.textContent = `+${totalRate} / 10 min`;
             }
+        }
+
+        const goldCard = document.getElementById("resourceGoldCard");
+        if (goldCard) {
+            const speed = (window.devMode && window.devMode.enabled) ? (window.devMode.gameSpeed || 1) : 1;
+            const tenMinutesMs = (10 * 60 * 1000) / (speed > 0 ? speed : 1);
+            const elapsed = state.player.lastPassiveGoldAt ? (Date.now() - state.player.lastPassiveGoldAt) : 0;
+            const remainingMs = Math.max(0, tenMinutesMs - (elapsed % tenMinutesMs));
+            const remMin = Math.floor(remainingMs / 60000);
+            const remSec = Math.floor((remainingMs % 60000) / 1000);
+            const remStr = `${remMin}:${remSec.toString().padStart(2, '0')}`;
+            const totalRate = state.getPassiveIncomePer10Min ? state.getPassiveIncomePer10Min() : 1;
+            goldCard.title = `Adventurer's Guild Stipend: +${totalRate} gold every 10 minutes (Next payout in ${remStr})`;
+            if (guildPill) guildPill.title = `Next +${totalRate}g in ${remStr}`;
         }
 
         // Temple Banner Text
@@ -1108,15 +1115,8 @@ window.MainEngine = {
             }
         }
         if (document.getElementById("charStatGps")) {
-            const baseRate = (state.guildIncome && state.guildIncome.goldPerSecond !== undefined) ? state.guildIncome.goldPerSecond : (state.costs.goldPerSecond || 3);
-            const upgradeBonus = (state.player.upgrades && state.player.upgrades.income) ? state.player.upgrades.income * 2.5 : 0;
-            let gearGps = 0;
-            Object.values(state.player.equipment).forEach(item => {
-                if (item && item.stats && item.stats.gold) gearGps += item.stats.gold;
-            });
-            const treasuryBonus = 1 + (state.kingdom.treasury - 1) * 0.10;
-            const totalRate = Math.floor((baseRate + upgradeBonus + gearGps) * treasuryBonus);
-            document.getElementById("charStatGps").textContent = `${totalRate}g / sec`;
+            const totalRate = state.getPassiveIncomePer10Min ? state.getPassiveIncomePer10Min() : 1;
+            document.getElementById("charStatGps").textContent = `${totalRate}g / 10 min`;
         }
 
         // Render Class Promotion & Ascension Card

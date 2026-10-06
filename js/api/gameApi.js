@@ -506,7 +506,7 @@ window.GameAPI = {
                 }
             } catch (e) {}
             return {
-                guildIncome: gi || (window.gameState ? window.gameState.guildIncome : { enabled: true, goldPerSecond: 3 }),
+                guildIncome: gi || (window.gameState ? window.gameState.guildIncome : { enabled: true, goldPerSecond: 1 }),
                 templeDonation: td || (window.gameState ? window.gameState.templeDonation : { enabled: true, cost: 50 })
             };
         }

@@ -125,7 +125,7 @@ window.gameState = {
         damageCost: 120,
         incomeCost: 250,
         realmCost: 1000,
-        goldPerSecond: 3
+        goldPerSecond: 1
     },
 
     templeDonation: {
@@ -135,7 +135,7 @@ window.gameState = {
 
     guildIncome: {
         enabled: true,
-        goldPerSecond: 3
+        goldPerSecond: 1
     },
 
     lastTempleDonation: 0,
@@ -775,8 +775,22 @@ window.gameState = {
     },
 
     /* =========================================================
-       PASSIVE INCOME: ADD 1 GOLD TO PLAYER AFTER EVERY 10 MIN ONLY
+       PASSIVE INCOME: ADD GOLD TO PLAYER AFTER EVERY 10 MIN ONLY
     ========================================================= */
+    getPassiveIncomePer10Min() {
+        if (this.guildIncome && this.guildIncome.enabled === false) return 0;
+        const base = (this.guildIncome && this.guildIncome.goldPerSecond !== undefined) ? this.guildIncome.goldPerSecond : (this.costs.goldPerSecond || 1);
+        const upgradeBonus = (this.player.upgrades && this.player.upgrades.income) ? this.player.upgrades.income : 0;
+        let gearGold = 0;
+        if (this.player.equipment) {
+            Object.values(this.player.equipment).forEach(item => {
+                if (item && item.stats && item.stats.gold) gearGold += item.stats.gold;
+            });
+        }
+        const treasuryBonus = (this.kingdom && this.kingdom.treasury) ? (1 + (this.kingdom.treasury - 1) * 0.10) : 1;
+        return Math.max(1, Math.floor((base + upgradeBonus + gearGold) * treasuryBonus));
+    },
+
     tickPassiveIncome() {
         const now = Date.now();
         if (!this.player.lastPassiveGoldAt) {
@@ -786,15 +800,17 @@ window.gameState = {
         const speed = (window.devMode && window.devMode.enabled) ? (window.devMode.gameSpeed || 1) : 1;
         const tenMinutesMs = (10 * 60 * 1000) / (speed > 0 ? speed : 1);
         if (now - this.player.lastPassiveGoldAt >= tenMinutesMs) {
-            this.addGold(1);
+            const amount = this.getPassiveIncomePer10Min ? this.getPassiveIncomePer10Min() : 1;
+            this.addGold(amount);
             this.player.lastPassiveGoldAt = now;
         }
     },
 
     triggerPassiveIncomePayout() {
-        this.addGold(1);
+        const amount = this.getPassiveIncomePer10Min ? this.getPassiveIncomePer10Min() : 1;
+        this.addGold(amount);
         this.player.lastPassiveGoldAt = Date.now();
-        return 1;
+        return amount;
     },
 
     /* =========================
@@ -1303,9 +1319,10 @@ window.gameState = {
         const cappedSec = Math.min(elapsedSec, 43200);
         const hoursAway = (cappedSec / 3600).toFixed(1);
 
-        // 1. Passive Income: add 1 gold to player after every 10 minutes only
+        // 1. Passive Income: add gold to player after every 10 minutes only
         const tenMinCycles = Math.floor(cappedSec / 600);
-        const passiveGold = tenMinCycles * 1;
+        const goldPerCycle = (typeof this.getPassiveIncomePer10Min === "function") ? this.getPassiveIncomePer10Min() : 1;
+        const passiveGold = tenMinCycles * goldPerCycle;
         this.player.lastPassiveGoldAt = now - (cappedSec % 600) * 1000;
 
         // Check if player was actively in combat with autofight enabled

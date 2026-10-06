@@ -180,8 +180,11 @@ window.InventoryManager = {
             if (state.reduceFatigue) state.reduceFatigue(fReduce);
 
             if (effect.heal) {
-                const healed = Math.min(effect.heal, effMaxHp - state.player.hp);
-                state.player.hp = Math.min(effMaxHp, state.player.hp + effect.heal);
+                let healAmount = effect.heal;
+                if (potionId === "potion_stamina") healAmount = Math.max(healAmount, Math.floor(effMaxHp * 0.20));
+                else if (potionId === "potion_elixir_rest") healAmount = Math.max(healAmount, Math.floor(effMaxHp * 0.75));
+                const healed = Math.min(healAmount, effMaxHp - state.player.hp);
+                state.player.hp = Math.min(effMaxHp, state.player.hp + healAmount);
                 if (window.CombatManager && healed > 0) window.CombatManager.showDamagePopup(`+${healed} HP`, false, false, "heal");
             }
 
@@ -205,7 +208,13 @@ window.InventoryManager = {
             state.player.potions[potionId]--;
 
             if (effect.type === "heal") {
-                const healVal = effect.amount !== undefined ? effect.amount : (effect.value !== undefined ? effect.value : 50);
+                const baseHeal = effect.amount !== undefined ? effect.amount : (effect.value !== undefined ? effect.value : 50);
+                let pctFloor = 0;
+                if (potionId === "potion_minor") pctFloor = 0.25;
+                else if (potionId === "potion_major") pctFloor = 0.60;
+                else if (effect.minPct) pctFloor = effect.minPct;
+
+                const healVal = Math.max(baseHeal, Math.floor(effMaxHp * pctFloor));
                 const healed = Math.max(1, Math.min(healVal, effMaxHp - state.player.hp));
                 state.player.hp = Math.min(effMaxHp, state.player.hp + healVal);
                 if (window.CombatManager) window.CombatManager.showDamagePopup(`+${healed} HP`, false, false, "heal");
@@ -213,8 +222,9 @@ window.InventoryManager = {
             } else if (effect.type === "heal_pct") {
                 const healed = Math.max(1, effMaxHp - state.player.hp);
                 state.player.hp = effMaxHp;
-                if (window.CombatManager) window.CombatManager.showDamagePopup(`+${healed} HP (FULL)`, false, false, "heal");
-                if (state.addLog) state.addLog(`Quaffed ${itemDef.name}. Fully restored HP! (+${healed} HP)`, "combat", "💖");
+                state.player.holyShield = Math.max(state.player.holyShield || 0, Math.floor(effMaxHp * 0.15));
+                if (window.CombatManager) window.CombatManager.showDamagePopup(`+${healed} HP (FULL + SHIELD)`, false, false, "heal");
+                if (state.addLog) state.addLog(`Quaffed ${itemDef.name}. Fully restored HP (+${healed} HP) & granted +${state.player.holyShield} Holy Barrier!`, "combat", "💖");
             }
         } else if (effect.type === "buff") {
             state.player.potions[potionId]--;
