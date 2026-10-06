@@ -18,6 +18,17 @@ window.InventoryManager = {
             upgradeLevel: customOpts.upgradeLevel || itemDef.upgradeLevel || 0,
             instanceId: itemDef.instanceId || (Date.now() + "_" + Math.random().toString(36).substr(2, 6))
         };
+
+        // Enforce 30-minute lifespan and unsellable status for legendary crowns
+        if (itemDef.slot === "crown" || ["demon_crown", "divine_crown", "equilibrium_crown"].includes(itemDef.id)) {
+            newItem.unsellable = true;
+            newItem.baseValue = 0;
+            if (!newItem.expiresAt) {
+                newItem.duration = itemDef.duration || 1800;
+                newItem.expiresAt = Date.now() + newItem.duration * 1000;
+            }
+        }
+
         state.player.inventory.push(newItem);
 
         // Record in Monster/Item Journal
@@ -41,6 +52,9 @@ window.InventoryManager = {
 
     getSellPrice(item) {
         if (!item) return 0;
+        if (item.unsellable || item.slot === "crown" || ["demon_crown", "divine_crown", "equilibrium_crown"].includes(item.id)) {
+            return 0;
+        }
         const rarities = window.RarityData || {};
         const rarity = rarities[item.rarity] || { sellMult: 1, sell: 18 };
         if (item.baseValue) {
@@ -128,6 +142,11 @@ window.InventoryManager = {
         if (index === -1) return false;
 
         const item = state.player.inventory[index];
+        if (item.unsellable || item.slot === "crown" || ["demon_crown", "divine_crown", "equilibrium_crown"].includes(item.id)) {
+            if (state.addLog) state.addLog("⚠️ Legendary Crowns cannot be sold!", "warning", "👑");
+            return false;
+        }
+
         const price = this.getSellPrice(item);
 
         state.player.inventory.splice(index, 1);

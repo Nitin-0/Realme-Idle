@@ -403,7 +403,18 @@ window.HeroesData = {
 
 // Universal map of all skills indexed by ID
 window.AllSkillsData = {};
+window.DefaultHeroPromotions = {};
+
 Object.values(window.HeroesData).forEach(hero => {
+    // Ensure promotions have both bonus and bonusStats for cross-compatibility
+    if (hero.promotions) {
+        hero.promotions.forEach(p => {
+            if (!p.bonusStats && p.bonus) p.bonusStats = { ...p.bonus };
+            if (!p.bonus && p.bonusStats) p.bonus = { ...p.bonusStats };
+        });
+        window.DefaultHeroPromotions[hero.id] = JSON.parse(JSON.stringify(hero.promotions));
+    }
+
     if (hero.skillsPool) {
         hero.skillsPool.forEach(sk => {
             window.AllSkillsData[sk.id] = { ...sk, heroClass: hero.id };

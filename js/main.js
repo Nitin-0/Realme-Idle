@@ -857,19 +857,24 @@ window.MainEngine = {
         }
 
         // Equipment Slots
-        ["weapon", "armor", "ring"].forEach(slot => {
+        ["weapon", "armor", "ring", "crown"].forEach(slot => {
             const el = document.getElementById(`eqSlot_${slot}`);
             if (el) {
                 const item = state.player.equipment[slot] || (slot === "ring" ? (state.player.equipment.ring || state.player.equipment.trinket) : null);
                 if (item) {
                     const upgStr = item.upgradeLevel ? ` <span class="eq-upg">+${item.upgradeLevel}</span>` : "";
-                    el.innerHTML = `<span class="eq-icon">${item.icon}</span> <span class="eq-name ${item.rarity}">${item.name}${upgStr}</span>`;
+                    let timerStr = "";
+                    if (slot === "crown" && window.CrownManager) {
+                        const rem = window.CrownManager.getCrownRemainingSeconds(item);
+                        timerStr = ` <span class="eq-timer" data-crown-instance="${item.instanceId}">(${window.CrownManager.formatCrownTime(rem)})</span>`;
+                    }
+                    el.innerHTML = `<span class="eq-icon">${item.icon}</span> <span class="eq-name ${item.rarity}">${item.name}${upgStr}${timerStr}</span>`;
                     el.onclick = () => {
                         this.selectedInventoryItemInstanceId = item.instanceId;
                         this.switchTab("inventory");
                     };
                 } else {
-                    el.innerHTML = `<span class="eq-empty">Empty ${slot}</span>`;
+                    el.innerHTML = `<span class="eq-empty">Empty ${slot.charAt(0).toUpperCase() + slot.slice(1)}</span>`;
                     el.onclick = null;
                 }
             }
@@ -1117,6 +1122,7 @@ window.MainEngine = {
             const curRank = state.getClassRank(curClass);
             const nextPromo = state.getNextClassPromotion(curClass);
             const check = state.canPromoteClass(curClass);
+            const heroDef = (window.HeroesData && window.HeroesData[curClass]) || { name: "Hero" };
 
             if (!nextPromo) {
                 promoCard.innerHTML = `
@@ -1152,12 +1158,14 @@ window.MainEngine = {
                 }
 
                 let bonusStatsHtml = '';
-                if (nextPromo.bonusStats) {
-                    bonusStatsHtml = Object.entries(nextPromo.bonusStats).map(([st, val]) => {
+                const bStats = nextPromo.bonusStats || nextPromo.bonus;
+                if (bStats) {
+                    bonusStatsHtml = Object.entries(bStats).map(([st, val]) => {
                         const statLabels = {
                             attack: "⚔ Attack",
                             defense: "🛡 Defense",
                             hp: "❤ Max HP",
+                            maxHp: "❤ Max HP",
                             critChance: "🎯 Crit Rate",
                             dodge: "💨 Dodge",
                             lifesteal: "🩸 Lifesteal"
@@ -1657,11 +1665,17 @@ window.MainEngine = {
             if (item) {
                 const rar = (window.RarityData && window.RarityData[item.rarity]) || { color: "#8b5cf6", name: "Common" };
                 const statStr = window.formatItemStatLine ? window.formatItemStatLine(item) : "";
+                let timerHtml = "";
+                if (s.id === "crown" && window.CrownManager) {
+                    const rem = window.CrownManager.getCrownRemainingSeconds(item);
+                    timerHtml = `<div class="crown-timer-badge" data-crown-instance="${item.instanceId}">⏳ ${window.CrownManager.formatCrownTime(rem)} remaining</div>`;
+                }
                 card.className = "slot-card filled";
                 card.style.setProperty("--rc", rar.color);
                 card.innerHTML = `
                     <div class="slot-name">${s.name}</div>
                     <div class="item-name" style="color: ${rar.color};">${item.name}</div>
+                    ${timerHtml}
                     <div class="item-stats">${statStr || "No bonus stats"}</div>
                     <button class="btn btn-ghost sm" onclick="window.InventoryManager.unequipSlot('${s.id}')">Unequip</button>
                 `;
@@ -1748,18 +1762,32 @@ window.MainEngine = {
                 actionBtn = `<button class="btn btn-gold sm" onclick="window.InventoryManager.usePotion('${item.id}'); window.MainEngine.renderInventoryView(); window.MainEngine.updateUI();">Use</button>`;
             }
 
+            const isCrown = item.slot === "crown" || ["demon_crown", "divine_crown", "equilibrium_crown"].includes(item.id);
+            const isUnsellable = item.unsellable || isCrown;
+
+            let timerHtml = "";
+            if (isCrown && window.CrownManager) {
+                const rem = window.CrownManager.getCrownRemainingSeconds(item);
+                timerHtml = `<div class="crown-timer-badge" data-crown-instance="${item.instanceId}">⏳ ${window.CrownManager.formatCrownTime(rem)} remaining</div>`;
+            }
+
+            const sellBtnHtml = isUnsellable
+                ? `<button class="btn btn-ghost sm" disabled style="opacity: 0.45; cursor: not-allowed; border-color: rgba(255,255,255,0.08);">Unsellable</button>`
+                : `<button class="btn btn-ghost sm" onclick="window.InventoryManager.sellItem('${item.instanceId}'); window.MainEngine.renderInventoryView(); window.MainEngine.updateUI();">Sell ${price.toLocaleString()}g</button>`;
+
             card.innerHTML = `
                 <div class="item-top">
                     <div>
                         ${tagHtml}
                         <span class="item-name">${item.name}</span>
+                        ${timerHtml}
                     </div>
                     <span class="item-rar">${(rar.name || item.rarity || 'Common').toUpperCase()}</span>
                 </div>
                 <div class="item-stats">${statStr}</div>
                 <div class="item-actions">
                     ${actionBtn}
-                    <button class="btn btn-ghost sm" onclick="window.InventoryManager.sellItem('${item.instanceId}'); window.MainEngine.renderInventoryView(); window.MainEngine.updateUI();">Sell ${price.toLocaleString()}g</button>
+                    ${sellBtnHtml}
                 </div>
             `;
             grid.appendChild(card);

@@ -16,6 +16,7 @@
 
     <!-- WORLD EVENT BANNER OVERLAY -->
     <div class="event-banner" id="eventBanner"></div>
+    <div class="crown-atmosphere-vignette" id="crownAtmosphereVignette"></div>
 
     <div class="game">
 
@@ -261,6 +262,7 @@
                 <div class="eq-slot" id="eqSlot_weapon"><span class="eq-empty">Empty Weapon</span></div>
                 <div class="eq-slot" id="eqSlot_armor"><span class="eq-empty">Empty Armor</span></div>
                 <div class="eq-slot" id="eqSlot_ring"><span class="eq-empty">Empty Ring</span></div>
+                <div class="eq-slot" id="eqSlot_crown"><span class="eq-empty">Empty Crown</span></div>
             </section>
 
             <!-- KINGDOM BUILDINGS SECTION -->
@@ -660,6 +662,31 @@
 
         </div>
 
+                    <footer>
+
+                <div class="footer-buttons">
+                    <span>
+                        Auto-save enabled
+                    </span>
+                    <button id="btnNewGame" class="btn-new-hero">
+                        👑 New Hero
+                    </button>
+
+                    <button id="btnDevToggle" class="btn-dev-trigger">
+                        🐛 DEBUG (F2)
+                    </button>
+
+                    <button id="reset">
+                        Reset Progress
+                    </button>
+                </div>
+
+            </footer>
+
+        </div>
+
+
+        <!-- ==================== FIXED MODALS CONTAINER (OUTSIDE .GAME) ==================== -->
         <!-- ==================== OFFLINE PROGRESSION MODAL ==================== -->
         <div class="offline-modal" id="offlineModal">
             <div class="offline-card">
@@ -983,30 +1010,6 @@
                     </div>
                 </div>
             </div>
-
-            <footer>
-
-                <div class="footer-buttons">
-                    <span>
-                        Auto-save enabled
-                    </span>
-                    <button id="btnNewGame" class="btn-new-hero">
-                        👑 New Hero
-                    </button>
-
-                    <button id="btnDevToggle" class="btn-dev-trigger">
-                        🐛 DEBUG (F2)
-                    </button>
-
-                    <button id="reset">
-                        Reset Progress
-                    </button>
-                </div>
-
-            </footer>
-
-        </div>
-
 
         <!-- TINY FAST F2 DEBUG FLOATING CARD -->
         <div class="debug-widget" id="debugWidget">

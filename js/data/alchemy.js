@@ -49,7 +49,7 @@ window.AlchemyRecipes = [
         icon: "⚡",
         tier: 1,
         tierName: "Apprentice Cauldron",
-        reqLevel: 2,
+        reqLevel: 1,
         goldCost: 50,
         materials: { wood: 2, crystal: 1 },
         result: { id: "potion_stamina", type: "consumable", qty: 1 },

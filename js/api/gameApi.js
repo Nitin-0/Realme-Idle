@@ -338,8 +338,17 @@ window.GameAPI = {
                     if (data.maps) Object.assign(window.MapsData, data.maps);
                     if (data.weather) Object.assign(window.WeatherData, data.weather);
                     if (data.events) Object.assign(window.EventsData, data.events);
-                    if (data.scenarios) Object.assign(window.ScenariosData, data.scenarios);
-                    if (data.heroes) Object.assign(window.HeroesData, data.heroes);
+                    if (data.heroes) {
+                        Object.assign(window.HeroesData, data.heroes);
+                        Object.keys(window.HeroesData).forEach(hid => {
+                            const h = window.HeroesData[hid];
+                            if (!h.promotions || !Array.isArray(h.promotions) || h.promotions.length === 0) {
+                                if (window.DefaultHeroPromotions && window.DefaultHeroPromotions[hid]) {
+                                    h.promotions = JSON.parse(JSON.stringify(window.DefaultHeroPromotions[hid]));
+                                }
+                            }
+                        });
+                    }
                     if (data.items) Object.assign(window.ItemsData, data.items);
                     if (data.shop && Array.isArray(data.shop)) {
                         window.ShopData = data.shop.map(s => {
@@ -403,7 +412,17 @@ window.GameAPI = {
                 if (data.weather) Object.assign(window.WeatherData, data.weather);
                 if (data.events) Object.assign(window.EventsData, data.events);
                 if (data.scenarios) Object.assign(window.ScenariosData, data.scenarios);
-                if (data.heroes) Object.assign(window.HeroesData, data.heroes);
+                if (data.heroes) {
+                    Object.assign(window.HeroesData, data.heroes);
+                    Object.keys(window.HeroesData).forEach(hid => {
+                        const h = window.HeroesData[hid];
+                        if (!h.promotions || !Array.isArray(h.promotions) || h.promotions.length === 0) {
+                            if (window.DefaultHeroPromotions && window.DefaultHeroPromotions[hid]) {
+                                h.promotions = JSON.parse(JSON.stringify(window.DefaultHeroPromotions[hid]));
+                            }
+                        }
+                    });
+                }
                 if (data.items) Object.assign(window.ItemsData, data.items);
                 if (data.shop && Array.isArray(data.shop)) window.ShopData = data.shop;
                 if (data.alchemy && Array.isArray(data.alchemy)) window.AlchemyRecipes = data.alchemy;

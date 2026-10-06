@@ -8,6 +8,8 @@
 window.CrownManager = {
     audioCtx: null,
 
+    _lifespanInterval: null,
+
     init() {
         this.updateVisualAtmosphere();
         // Check coexistence periodically or on state notifications
@@ -16,6 +18,117 @@ window.CrownManager = {
                 this.updateVisualAtmosphere();
             });
         }
+        // 1-second interval to monitor 30-minute crown lifespans and update live countdown badges
+        if (!this._lifespanInterval) {
+            this._lifespanInterval = setInterval(() => {
+                this.checkCrownLifespans();
+                this.updateCrownTimerLabels();
+            }, 1000);
+        }
+    },
+
+    isCrownItem(item) {
+        if (!item) return false;
+        return item.slot === "crown" || ["demon_crown", "divine_crown", "equilibrium_crown"].includes(item.id);
+    },
+
+    getCrownRemainingSeconds(item) {
+        if (!item) return 0;
+        if (!item.expiresAt) {
+            item.expiresAt = Date.now() + (item.duration || 1800) * 1000;
+        }
+        return Math.max(0, Math.ceil((item.expiresAt - Date.now()) / 1000));
+    },
+
+    formatCrownTime(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+    },
+
+    checkCrownLifespans() {
+        const state = window.gameState;
+        if (!state || !state.player) return;
+        const now = Date.now();
+        let changed = false;
+
+        // Check equipped crown
+        const equipped = state.player.equipment && state.player.equipment.crown;
+        if (equipped && this.isCrownItem(equipped)) {
+            if (!equipped.expiresAt) {
+                equipped.expiresAt = now + (equipped.duration || 1800) * 1000;
+                changed = true;
+            } else if (now >= equipped.expiresAt) {
+                this.expireCrown(equipped, true);
+                changed = true;
+            }
+        }
+
+        // Check inventory crowns
+        if (state.player.inventory && state.player.inventory.length > 0) {
+            for (let i = state.player.inventory.length - 1; i >= 0; i--) {
+                const item = state.player.inventory[i];
+                if (item && this.isCrownItem(item)) {
+                    if (!item.expiresAt) {
+                        item.expiresAt = now + (item.duration || 1800) * 1000;
+                        changed = true;
+                    } else if (now >= item.expiresAt) {
+                        this.expireCrown(item, false);
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        if (changed && state.notify) {
+            state.notify();
+        }
+    },
+
+    expireCrown(item, wasEquipped) {
+        const state = window.gameState;
+        if (!state) return;
+        if (wasEquipped) {
+            state.player.equipment.crown = null;
+            if (state.combat && state.combat.isDestabilized) {
+                state.combat.isDestabilized = false;
+            }
+            this.updateVisualAtmosphere();
+            if (state.addLog) {
+                state.addLog(`⏳ ${item.name || 'Legendary Crown'} dissolved into astral ether! Its 30-minute celestial duration has expired.`, "warning", "👑");
+            }
+        } else {
+            if (state.player.inventory) {
+                state.player.inventory = state.player.inventory.filter(i => (i.instanceId ? i.instanceId !== item.instanceId : i !== item));
+            }
+            if (state.addLog) {
+                state.addLog(`⏳ ${item.name || 'Legendary Crown'} in your inventory dissolved into ether after 30 minutes!`, "warning", "👑");
+            }
+        }
+        if (window.MainEngine) {
+            if (window.MainEngine.renderEquipment) window.MainEngine.renderEquipment();
+            if (window.MainEngine.renderInventory) window.MainEngine.renderInventory();
+            if (window.MainEngine.updateUI) window.MainEngine.updateUI();
+        }
+    },
+
+    updateCrownTimerLabels() {
+        if (typeof document === "undefined") return;
+        document.querySelectorAll("[data-crown-instance]").forEach(el => {
+            const instId = el.getAttribute("data-crown-instance");
+            const state = window.gameState;
+            if (!state) return;
+            let item = null;
+            if (state.player.equipment && state.player.equipment.crown && state.player.equipment.crown.instanceId === instId) {
+                item = state.player.equipment.crown;
+            } else if (state.player.inventory) {
+                item = state.player.inventory.find(i => i.instanceId === instId);
+            }
+            if (item) {
+                const rem = this.getCrownRemainingSeconds(item);
+                el.textContent = `⏳ ${this.formatCrownTime(rem)} remaining`;
+            }
+        });
     },
 
     getAudioContext() {
@@ -144,14 +257,18 @@ window.CrownManager = {
         // Unequip separate crowns and set temporary unstable equilibrium
         state.player.equipment.crown = {
             id: "equilibrium_crown",
+            instanceId: "crown_eq_" + Date.now(),
             name: "Crown of Equilibrium (Destabilized)",
             slot: "crown",
             type: "equipment",
             rarity: "legendary",
-            baseValue: 100000,
+            baseValue: 0,
+            unsellable: true,
+            duration: 1800,
+            expiresAt: Date.now() + 1800 * 1000,
             icon: "👁️",
             stats: { attack: 300, defense: 140, hp: 500, critChance: 0.35, critDmg: 1.5, lifesteal: 0.12 },
-            description: "⚫ 50% Demon + ⚪ 50% Divine. Unstable duality tearing through reality!",
+            description: "⚫ 50% Demon + ⚪ 50% Divine. Unstable duality tearing through reality! (30m Lifespan)",
             isBreakTheRules: true,
             isDestabilized: true
         };
@@ -206,14 +323,18 @@ window.CrownManager = {
         // Award permanent true Crown of Equilibrium
         const trueCrown = {
             id: "equilibrium_crown",
+            instanceId: "crown_true_eq_" + Date.now(),
             name: "Crown of Equilibrium",
             slot: "crown",
             type: "equipment",
             rarity: "legendary",
-            baseValue: 150000,
+            baseValue: 0,
+            unsellable: true,
+            duration: 1800,
+            expiresAt: Date.now() + 1800 * 1000,
             icon: "👑",
             stats: { attack: 280, defense: 160, hp: 500, critChance: 0.25, critDmg: 1.0, lifesteal: 0.10, dodge: 0.08 },
-            description: "The Sovereign of Duality. Harmonizes void and light into supreme mastery without self-destruction.",
+            description: "The Sovereign of Duality. Harmonizes void and light into supreme mastery without self-destruction. (30m Lifespan)",
             crownType: "equilibrium",
             isBreakTheRules: true
         };

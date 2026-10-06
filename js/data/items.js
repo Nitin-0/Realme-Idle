@@ -211,10 +211,12 @@ window.ItemsData = {
         slot: "crown",
         type: "equipment",
         rarity: "legendary",
-        baseValue: 66666,
+        baseValue: 0,
+        unsellable: true,
+        duration: 1800,
         icon: "👑",
         stats: { attack: 350, defense: 150, critChance: 0.40, critDmg: 2.0, lifesteal: 0.15 },
-        description: "Power at a Price. Grants colossal ATK, Demonic Aura, and execution, but drains HP continuously and plunges the realm into eternal darkness.",
+        description: "Power at a Price (30 Min Relic · Bound). Grants colossal ATK, Demonic Aura, and execution, but drains HP continuously and plunges the realm into eternal darkness.",
         loreWarning: "The crown does not grant power. It borrows it from your life.",
         crownType: "demon",
         isBreakTheRules: true
@@ -225,10 +227,12 @@ window.ItemsData = {
         slot: "crown",
         type: "equipment",
         rarity: "legendary",
-        baseValue: 66666,
+        baseValue: 0,
+        unsellable: true,
+        duration: 1800,
         icon: "👑",
         stats: { defense: 120, hp: 600, dodge: 0.10, goldMult: 0.50 },
-        description: "Blessing of Heaven. Radiates holy aura, massively enhances healing, shields overheal, negates damage, and revives with Guardian Angel.",
+        description: "Blessing of Heaven (30 Min Relic · Bound). Radiates holy aura, massively enhances healing, shields overheal, negates damage, and revives with Guardian Angel.",
         crownType: "divine",
         isBreakTheRules: true
     },
@@ -238,10 +242,12 @@ window.ItemsData = {
         slot: "crown",
         type: "equipment",
         rarity: "legendary",
-        baseValue: 150000,
+        baseValue: 0,
+        unsellable: true,
+        duration: 1800,
         icon: "👁️",
         stats: { attack: 280, defense: 160, hp: 500, critChance: 0.25, critDmg: 1.0, lifesteal: 0.10, dodge: 0.08 },
-        description: "The Sovereign of Duality. Forged by transcending the cosmic clash of Demon and Divine. Harmonizes light and void into supreme, stable mastery.",
+        description: "The Sovereign of Duality (30 Min Relic · Bound). Harmonizes light and void into supreme, stable mastery without self-destruction.",
         crownType: "equilibrium",
         isBreakTheRules: true
     },
@@ -645,6 +651,28 @@ window.ItemsData = {
     },
 
     // Blacksmith Forge Blueprints
+    blueprint_steel_rapier: {
+        id: "blueprint_steel_rapier",
+        name: "Forge Blueprint: Steel Rapier",
+        type: "learnable",
+        learnType: "forge",
+        targetId: "steel_rapier",
+        rarity: "uncommon",
+        baseValue: 180,
+        icon: "📐",
+        description: "Study this schematic to forge agile Steel Rapiers at the Blacksmith."
+    },
+    blueprint_hardened_leather: {
+        id: "blueprint_hardened_leather",
+        name: "Forge Blueprint: Hardened Leather",
+        type: "learnable",
+        learnType: "forge",
+        targetId: "hardened_leather",
+        rarity: "uncommon",
+        baseValue: 160,
+        icon: "📐",
+        description: "Study this schematic to forge Hardened Leather Armor at the Blacksmith."
+    },
     blueprint_dragonbone_greatsword: {
         id: "blueprint_dragonbone_greatsword",
         name: "Forge Blueprint: Dragonbone Greatsword",
@@ -774,29 +802,31 @@ window.ShopData = [
     { id: "shop_pot_rejuvenation", itemId: "potion_elixir_rest", name: "Elixir of Pure Rejuvenation", icon: "🏺", category: "consumable", costGold: 500, reqLevel: 10, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Ancient secret brew that completely resets Fatigue to 0 and heals 250 HP." },
 
     // ---------------- SKILL SCROLLS (LEARNABLE SPECIAL SKILLS) ----------------
-    { id: "shop_sc_whirlwind", itemId: "scroll_whirlwind", name: "Scroll: Whirlwind Slash", icon: "📜", category: "scroll", costGold: 450, reqLevel: 3, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Teaches the Whirlwind Slash skill (Knight). High damage cleave with +10% Crit." },
+    { id: "shop_sc_whirlwind", itemId: "scroll_whirlwind", name: "Scroll: Whirlwind Slash", icon: "📜", category: "scroll", costGold: 200, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Teaches the Whirlwind Slash skill (Knight). High damage cleave with +10% Crit." },
     { id: "shop_sc_holy_bastion", itemId: "scroll_holy_bastion", name: "Scroll: Holy Bastion", icon: "📜", category: "scroll", costGold: 950, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches the Holy Bastion skill (Knight). Restores HP and grants +40 Defense." },
     { id: "shop_sc_judgment", itemId: "scroll_judgment", name: "Scroll: Heavenly Judgment", icon: "📜", category: "scroll", costGold: 2200, reqLevel: 15, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Teaches Heavenly Judgment (Knight). Devastating 380% lightning burst." },
     
-    { id: "shop_sc_poison_blade", itemId: "scroll_poison_blade", name: "Scroll: Venomous Flurry", icon: "📜", category: "scroll", costGold: 450, reqLevel: 3, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Teaches Venomous Flurry (Rogue). 260% attack and +8% Lifesteal." },
+    { id: "shop_sc_poison_blade", itemId: "scroll_poison_blade", name: "Scroll: Venomous Flurry", icon: "📜", category: "scroll", costGold: 200, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Teaches Venomous Flurry (Rogue). 260% attack and +8% Lifesteal." },
     { id: "shop_sc_smoke_bomb", itemId: "scroll_smoke_bomb", name: "Scroll: Smoke Veil Bomb", icon: "📜", category: "scroll", costGold: 950, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches Smoke Veil Bomb (Rogue). Blinds foes with +35% Dodge and +12% Crit." },
     { id: "shop_sc_assassinate", itemId: "scroll_assassinate", name: "Scroll: Death Blossom", icon: "📜", category: "scroll", costGold: 2200, reqLevel: 15, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Teaches Death Blossom (Rogue). 440% Critical Pierce execution strike." },
 
-    { id: "shop_sc_frost_nova", itemId: "scroll_frost_nova", name: "Scroll: Frost Nova", icon: "📜", category: "scroll", costGold: 450, reqLevel: 3, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Teaches Frost Nova (Mage). Deep freeze dealing 300% Ice damage + Defense." },
+    { id: "shop_sc_frost_nova", itemId: "scroll_frost_nova", name: "Scroll: Frost Nova", icon: "📜", category: "scroll", costGold: 200, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Teaches Frost Nova (Mage). Deep freeze dealing 300% Ice damage + Defense." },
     { id: "shop_sc_mana_shield", itemId: "scroll_mana_shield", name: "Scroll: Arcane Barrier", icon: "📜", category: "scroll", costGold: 950, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches Arcane Barrier (Mage). Restores 20% Max HP and creates +35 Def shield." },
     { id: "shop_sc_meteor", itemId: "scroll_meteor", name: "Scroll: Meteor Calamity", icon: "📜", category: "scroll", costGold: 2200, reqLevel: 15, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Teaches Meteor Calamity (Mage). Calls down 520% Astral Cataclysm." },
 
-    { id: "shop_sc_divine_retribution", itemId: "scroll_divine_retribution", name: "Scroll: Divine Retribution", icon: "📜", category: "scroll", costGold: 450, reqLevel: 3, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Teaches Divine Retribution (Paladin). Smites for 310% Holy damage + Shield." },
-    { id: "shop_sc_consecration", itemId: "scroll_consecration", name: "Scroll: Sacred Ground", icon: "📜", category: "scroll", costGold: 950, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches Sacred Ground (Paladin). 260% Holy damage and restores 18% Max HP." },
-    { id: "shop_sc_wrath_of_heavens", itemId: "scroll_wrath_of_heavens", name: "Scroll: Avatar of Light", icon: "📜", category: "scroll", costGold: 2200, reqLevel: 15, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Teaches Avatar of Light (Paladin). 420% damage, +40 Attack, and 22% Heal." },
+    { id: "shop_sc_divine_retribution", itemId: "scroll_divine_retribution", name: "Scroll: Divine Retribution", icon: "📜", category: "scroll", costGold: 200, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Teaches Divine Retribution (Paladin). 240% Holy damage + Attack buff." },
+    { id: "shop_sc_consecration", itemId: "scroll_consecration", name: "Scroll: Sacred Ground", icon: "📜", category: "scroll", costGold: 950, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches Sacred Ground (Paladin). Heals 25% Max HP and sanctifies the hero." },
+    { id: "shop_sc_wrath_of_heavens", itemId: "scroll_wrath_of_heavens", name: "Scroll: Avatar of Light", icon: "📜", category: "scroll", costGold: 2200, reqLevel: 15, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Teaches Avatar of Light (Paladin). 450% Divine Radiance burst." },
 
     // ---------------- ALCHEMY RECIPES (LEARNABLE BREWS) ----------------
-    { id: "shop_rec_stamina", itemId: "recipe_stamina_tonic", name: "Recipe: Stamina Tonic", icon: "📖", category: "recipe", costGold: 150, reqLevel: 2, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Study to permanently unlock Stamina Tonic at the Alchemy Table." },
+    { id: "shop_recipe_stamina", itemId: "recipe_stamina_tonic", name: "Recipe: Stamina Tonic", icon: "📖", category: "recipe", costGold: 150, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Alchemy recipe to brew fatigue-restoring Stamina Tonics (-40 Fatigue)." },
     { id: "shop_rec_shadowmeld", itemId: "recipe_elixir_shadow", name: "Recipe: Elixir of Shadowmeld", icon: "📖", category: "recipe", costGold: 450, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Study to unlock the elusive Elixir of Shadowmeld (+15% Dodge) recipe." },
-    { id: "shop_rec_rejuvenation", itemId: "recipe_elixir_rejuvenation", name: "Recipe: Pure Rejuvenation", icon: "📖", category: "recipe", costGold: 850, reqLevel: 12, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Study to permanently unlock the fatigue-clearing Elixir of Pure Rejuvenation." },
+    { id: "shop_rec_rejuvenation", itemId: "recipe_elixir_rejuvenation", name: "Recipe: Pure Rejuvenation", icon: "📖", category: "recipe", costGold: 600, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Study to permanently unlock the fatigue-clearing Elixir of Pure Rejuvenation." },
     { id: "shop_rec_titans", itemId: "recipe_draught_titans", name: "Recipe: Titan's Might Draught", icon: "📖", category: "recipe", costGold: 1600, reqLevel: 20, reqMap: "frostpeak", reqDepth: 1, stock: -1, description: "Study to permanently unlock the legendary Titan's Might Draught recipe." },
 
     // ---------------- BLACKSMITH BLUEPRINTS (LEARNABLE GEAR SCHEMATICS) ----------------
+    { id: "shop_bp_steel_rapier", itemId: "blueprint_steel_rapier", name: "Blueprint: Steel Rapier", icon: "📐", category: "blueprint", costGold: 220, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Master blacksmith blueprint to forge the Steel Rapier (+30 Attack, +6% Crit)." },
+    { id: "shop_bp_hardened_leather", itemId: "blueprint_hardened_leather", name: "Blueprint: Hardened Leather", icon: "📐", category: "blueprint", costGold: 200, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Master blacksmith blueprint to forge Hardened Leather Armor (+22 Def, +5% Dodge)." },
     { id: "shop_bp_dagger", itemId: "blueprint_shadowveil_dagger", name: "Blueprint: Shadowveil Dagger", icon: "📐", category: "blueprint", costGold: 600, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 3, stock: -1, description: "Unlocks forging for Shadowveil Dagger (+140 Atk, +15% Crit, +8% Dodge)." },
     { id: "shop_bp_greatsword", itemId: "blueprint_dragonbone_greatsword", name: "Blueprint: Dragonbone Greatsword", icon: "📐", category: "blueprint", costGold: 1200, reqLevel: 10, reqMap: "ashen_wastes", reqDepth: 2, stock: -1, description: "Unlocks forging for Dragonbone Greatsword (+165 Atk, +10% Crit, +5% Lifesteal)." },
     { id: "shop_bp_staff", itemId: "blueprint_astral_staff", name: "Blueprint: Astral Arch-Staff", icon: "📐", category: "blueprint", costGold: 1300, reqLevel: 11, reqMap: "ashen_wastes", reqDepth: 2, stock: -1, description: "Unlocks forging for Astral Arch-Staff (+185 Atk, +9% Crit)." },

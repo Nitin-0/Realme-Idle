@@ -164,6 +164,23 @@ window.CombatManager = {
         // Accumulate fatigue while actively fighting
         if (state.addFatigue) state.addFatigue(1.2);
 
+        // 100% Fatigue Exhaustion Recoil Penalty: Deplete HP on attack!
+        if (state.getFatigue && state.getFatigue() >= 100) {
+            const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+            const recoilDmg = Math.max(8, Math.floor(effMaxHp * 0.06));
+            state.player.hp -= recoilDmg;
+            this.showDamagePopup(`😫 -${recoilDmg} HP (100% Fatigue!)`, false, false, "incoming");
+            if (state.addLog) {
+                state.addLog(`⚠️ EXHAUSTION RECOIL: Attacking at 100% Fatigue tore into your body for -${recoilDmg} HP! Rest or quaff a tonic!`, "danger", "😫");
+            }
+            if (state.player.hp <= 0) {
+                state.player.hp = 0;
+                this.onPlayerDeath();
+                state.notify();
+                return;
+            }
+        }
+
         // Lifesteal Recovery
         const lifestealPct = state.getEffectiveLifesteal();
         if (lifestealPct > 0) {
@@ -235,6 +252,23 @@ window.CombatManager = {
 
         // Accumulate fatigue on strike
         if (state.addFatigue) state.addFatigue(1.0);
+
+        // 100% Fatigue Exhaustion Recoil Penalty: Deplete HP on attack!
+        if (state.getFatigue && state.getFatigue() >= 100) {
+            const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+            const recoilDmg = Math.max(8, Math.floor(effMaxHp * 0.06));
+            state.player.hp -= recoilDmg;
+            this.showDamagePopup(`😫 -${recoilDmg} HP (100% Fatigue!)`, false, false, "incoming");
+            if (state.addLog) {
+                state.addLog(`⚠️ EXHAUSTION RECOIL: Attacking at 100% Fatigue tore into your body for -${recoilDmg} HP! Rest or quaff a tonic!`, "danger", "😫");
+            }
+            if (state.player.hp <= 0) {
+                state.player.hp = 0;
+                this.onPlayerDeath();
+                state.notify();
+                return;
+            }
+        }
 
         const lifestealPct = state.getEffectiveLifesteal();
         if (lifestealPct > 0) {

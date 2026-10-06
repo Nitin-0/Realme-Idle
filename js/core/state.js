@@ -935,8 +935,11 @@ window.gameState = {
     getNextClassPromotion(classId = this.player.heroClass) {
         const rank = this.getClassRank(classId);
         const heroDef = window.HeroesData ? window.HeroesData[classId] : null;
-        if (!heroDef || !heroDef.promotions) return null;
-        return heroDef.promotions.find(p => p.rank === rank + 1) || null;
+        const promos = (heroDef && heroDef.promotions && heroDef.promotions.length > 0)
+            ? heroDef.promotions
+            : ((window.DefaultHeroPromotions && window.DefaultHeroPromotions[classId]) || null);
+        if (!promos) return null;
+        return promos.find(p => p.rank === rank + 1) || null;
     },
 
     canPromoteClass(classId = this.player.heroClass) {
