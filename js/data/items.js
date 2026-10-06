@@ -216,7 +216,7 @@ window.ItemsData = {
         duration: 1800,
         icon: "👑",
         stats: { attack: 350, defense: 150, critChance: 0.40, critDmg: 2.0, lifesteal: 0.15 },
-        description: "Power at a Price (30 Min Relic · Bound). Grants colossal ATK, Demonic Aura, and execution, but drains HP continuously and plunges the realm into eternal darkness.",
+        description: "Power at a Price (30 Min Relic · Bound). Grants colossal ATK, Demonic Aura, and execution, but drains 0.1% HP every strike and plunges the realm into eternal darkness.",
         loreWarning: "The crown does not grant power. It borrows it from your life.",
         crownType: "demon",
         isBreakTheRules: true
@@ -835,7 +835,7 @@ window.ShopData = [
     { id: "shop_bp_bulwark", itemId: "blueprint_divine_bulwark", name: "Blueprint: Divine Bulwark Cuirass", icon: "📐", category: "blueprint", costGold: 3200, reqLevel: 24, reqMap: "frostpeak", reqDepth: 2, stock: -1, description: "Unlocks forging for Legendary Divine Bulwark (+270 Def, +750 HP)." },
 
     // ---------------- LEGENDARY BREAK-THE-RULES CROWNS ----------------
-    { id: "shop_crown_demon", itemId: "demon_crown", name: "Demon Crown", icon: "👑", category: "equipment", costGold: 10000, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 2, stock: 1, description: "Power at a Price. Abyssal artifact granting colossal ATK and Demonic Aura, but exacts an unending Blood Price." },
+    { id: "shop_crown_demon", itemId: "demon_crown", name: "Demon Crown", icon: "👑", category: "equipment", costGold: 10000, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 2, stock: 1, description: "Power at a Price. Abyssal artifact granting colossal ATK and Demonic Aura, but exacts a Blood Price of 0.1% HP per strike." },
     { id: "shop_crown_divine", itemId: "divine_crown", name: "Divine Crown", icon: "👑", category: "equipment", costGold: 10000, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 2, stock: 1, description: "Blessing of Heaven. Radiant celestial artifact of unyielding HP regeneration, overheal shields, and Guardian Angel." }
 ];
 

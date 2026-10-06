@@ -76,7 +76,8 @@ window.gameState = {
         classRanks: { knight: 1, rogue: 1, mage: 1, paladin: 1 },
         moonlitVale3Cleared: false,
         unlockedRecipes: [],
-        unlockedBlueprints: []
+        unlockedBlueprints: [],
+        lastPassiveGoldAt: null
     },
 
     world: {
@@ -773,6 +774,29 @@ window.gameState = {
         };
     },
 
+    /* =========================================================
+       PASSIVE INCOME: ADD 1 GOLD TO PLAYER AFTER EVERY 10 MIN ONLY
+    ========================================================= */
+    tickPassiveIncome() {
+        const now = Date.now();
+        if (!this.player.lastPassiveGoldAt) {
+            this.player.lastPassiveGoldAt = now;
+            return;
+        }
+        const speed = (window.devMode && window.devMode.enabled) ? (window.devMode.gameSpeed || 1) : 1;
+        const tenMinutesMs = (10 * 60 * 1000) / (speed > 0 ? speed : 1);
+        if (now - this.player.lastPassiveGoldAt >= tenMinutesMs) {
+            this.addGold(1);
+            this.player.lastPassiveGoldAt = now;
+        }
+    },
+
+    triggerPassiveIncomePayout() {
+        this.addGold(1);
+        this.player.lastPassiveGoldAt = Date.now();
+        return 1;
+    },
+
     /* =========================
        SKILL UPGRADE & LOADOUT ENGINE
     ========================= */
@@ -1196,6 +1220,7 @@ window.gameState = {
         this.combat.currentMob = null;
         this.world.currentMapId = "moonlit_vale";
         this.world.unlockedMaps = ["moonlit_vale"];
+        this.player.lastPassiveGoldAt = Date.now();
         this.save();
         this.notify();
     },
@@ -1263,12 +1288,10 @@ window.gameState = {
         const cappedSec = Math.min(elapsedSec, 43200);
         const hoursAway = (cappedSec / 3600).toFixed(1);
 
-        // 1. Passive Guild Income
-        const guildRate = (this.guildIncome && this.guildIncome.enabled !== false)
-            ? (this.guildIncome.goldPerSecond !== undefined ? this.guildIncome.goldPerSecond : (this.costs.goldPerSecond || 3))
-            : 0;
-        const treasuryBonus = 1 + (this.kingdom.treasury - 1) * 0.10;
-        const passiveGold = Math.floor(cappedSec * guildRate * treasuryBonus);
+        // 1. Passive Income: add 1 gold to player after every 10 minutes only
+        const tenMinCycles = Math.floor(cappedSec / 600);
+        const passiveGold = tenMinCycles * 1;
+        this.player.lastPassiveGoldAt = now - (cappedSec % 600) * 1000;
 
         // Check if player was actively in combat with autofight enabled
         const wasFighting = (this.combat && this.combat.autoFight === true && !this.combat.inTemple);
@@ -1417,6 +1440,21 @@ window.gameState = {
                     if (this.player.guardianAngelUsed === undefined) this.player.guardianAngelUsed = false;
                     if (this.player.holyRetributionCharged === undefined) this.player.holyRetributionCharged = false;
                     if (this.player.equilibriumForged === undefined) this.player.equilibriumForged = false;
+                    if (!this.player.lastPassiveGoldAt) {
+                        this.player.lastPassiveGoldAt = Date.now();
+                    }
+                    if (this.player.inventory && Array.isArray(this.player.inventory)) {
+                        this.player.inventory.forEach(i => {
+                            if (i && (i.slot === "crown" || ["demon_crown", "divine_crown", "equilibrium_crown"].includes(i.id))) {
+                                // If unequipped in inventory, ensure timer has not prematurely expired or started
+                                if (!this.player.equipment || !this.player.equipment.crown || this.player.equipment.crown.instanceId !== i.instanceId) {
+                                    if (i.expiresAt && Date.now() >= i.expiresAt) {
+                                        i.expiresAt = null;
+                                    }
+                                }
+                            }
+                        });
+                    }
                 }
                 if (data.world) {
                     Object.assign(this.world, data.world);

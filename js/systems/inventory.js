@@ -23,10 +23,8 @@ window.InventoryManager = {
         if (itemDef.slot === "crown" || ["demon_crown", "divine_crown", "equilibrium_crown"].includes(itemDef.id)) {
             newItem.unsellable = true;
             newItem.baseValue = 0;
-            if (!newItem.expiresAt) {
-                newItem.duration = itemDef.duration || 1800;
-                newItem.expiresAt = Date.now() + newItem.duration * 1000;
-            }
+            newItem.duration = itemDef.duration || 1800;
+            newItem.expiresAt = null; // Timer starts ONLY when equipped, not while in inventory!
         }
 
         state.player.inventory.push(newItem);
@@ -360,17 +358,14 @@ window.InventoryManager = {
             state.addLog(`Equipped [${item.name}].`, "loot", "🗡️");
         }
 
-        // Crown Audio & Atmosphere feedback
-        if (window.CrownManager) {
-            if (item.id === "demon_crown") window.CrownManager.playDemonSound();
-            else if (item.id === "divine_crown") window.CrownManager.playDivineSound();
-            else if (item.id === "equilibrium_crown") window.CrownManager.playEquilibriumSound();
-
-            window.CrownManager.updateVisualAtmosphere();
-            window.CrownManager.checkCrownCoexistence();
+        // Crown on-equip handling (starts timer, executes blood sacrifice, updates visual atmosphere & audio)
+        if (slot === "crown" || (window.CrownManager && window.CrownManager.isCrownItem(item))) {
+            if (window.CrownManager) {
+                window.CrownManager.onCrownEquipped(item);
+            }
+        } else {
+            state.notify();
         }
-
-        state.notify();
     },
 
     unequipSlot(slot) {

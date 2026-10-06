@@ -63,7 +63,16 @@ window.DebugWidget = {
 
         // Instant Actions
         const btnHeal = document.getElementById("dbgBtnHeal");
-        if (btnHeal) btnHeal.addEventListener("click", () => api.player.heal());
+        if (btnHeal) {
+            btnHeal.addEventListener("click", () => {
+                api.player.heal();
+                const orig = btnHeal.innerHTML;
+                btnHeal.innerHTML = "✨ Healed!";
+                setTimeout(() => {
+                    if (btnHeal) btnHeal.innerHTML = orig;
+                }, 1000);
+            });
+        }
 
         const btnKill = document.getElementById("dbgBtnKill");
         if (btnKill) btnKill.addEventListener("click", () => api.combat.killCurrentEnemy());
@@ -99,6 +108,27 @@ window.DebugWidget = {
         const btnGiveEqCrown = document.getElementById("dbgBtnGiveEqCrown");
         if (btnGiveEqCrown) btnGiveEqCrown.addEventListener("click", () => {
             if (window.InventoryManager) window.InventoryManager.addItem("equilibrium_crown");
+        });
+
+        // Crown Time Adjustments
+        const btnCrownTime5 = document.getElementById("dbgBtnCrownTime5");
+        if (btnCrownTime5) btnCrownTime5.addEventListener("click", () => {
+            if (window.CrownManager) window.CrownManager.setEquippedCrownDuration(5);
+        });
+
+        const btnCrownTime30 = document.getElementById("dbgBtnCrownTime30");
+        if (btnCrownTime30) btnCrownTime30.addEventListener("click", () => {
+            if (window.CrownManager) window.CrownManager.setEquippedCrownDuration(30);
+        });
+
+        const btnCrownTime60 = document.getElementById("dbgBtnCrownTime60");
+        if (btnCrownTime60) btnCrownTime60.addEventListener("click", () => {
+            if (window.CrownManager) window.CrownManager.setEquippedCrownDuration(60);
+        });
+
+        const btnCrownTimeInf = document.getElementById("dbgBtnCrownTimeInf");
+        if (btnCrownTimeInf) btnCrownTimeInf.addEventListener("click", () => {
+            if (window.CrownManager) window.CrownManager.setEquippedCrownDuration(59940); // 999 hours
         });
 
         // Speed Select

@@ -312,7 +312,19 @@ window.CombatManager = {
 
         // Calculate skill damage with upgraded multiplier
         const baseAtk = this.calculatePlayerDamage();
-        const skillDmg = Math.floor(baseAtk * (skill.damageMult || 2.0));
+        let skillDmg = Math.floor(baseAtk * (skill.damageMult || 2.0));
+
+        // Crown hooks (Blood Price, Retribution, Execution)
+        if (window.CrownManager) {
+            const hook = window.CrownManager.onPlayerAttackHit(mob, false, skillDmg);
+            if (hook.executed) {
+                this.onMobDefeated();
+                return true;
+            }
+            if (hook.bonusDmg) {
+                skillDmg += hook.bonusDmg;
+            }
+        }
 
         // Damage mob
         mob.hp -= skillDmg;

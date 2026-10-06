@@ -398,8 +398,7 @@ window.MainEngine = {
         const btnTemplePray = document.getElementById("btnTemplePrayHeal");
         if (btnTemplePray) {
             btnTemplePray.addEventListener("click", () => {
-                state.player.hp = state.player.maxHp;
-                state.notify();
+                api.player.heal();
                 btnTemplePray.textContent = "✨ Full Health Restored!";
                 setTimeout(() => {
                     if (btnTemplePray) btnTemplePray.textContent = "❤️ Pray for Divine Health (+50% HP)";
@@ -551,18 +550,8 @@ window.MainEngine = {
 
         this.passiveGoldLoopId = setInterval(() => {
             const state = window.gameState;
-            if (state.guildIncome && state.guildIncome.enabled !== false) {
-                const baseRate = (state.guildIncome.goldPerSecond !== undefined) ? state.guildIncome.goldPerSecond : (state.costs.goldPerSecond || 3);
-                const upgradeBonus = (state.player.upgrades && state.player.upgrades.income) ? state.player.upgrades.income * 2.5 : 0;
-                let gearGps = 0;
-                Object.values(state.player.equipment).forEach(item => {
-                    if (item && item.stats && item.stats.gold) gearGps += item.stats.gold;
-                });
-                const treasuryBonus = 1 + (state.kingdom.treasury - 1) * 0.10;
-                const actualEarned = Math.floor((baseRate + upgradeBonus + gearGps) * treasuryBonus);
-                if (actualEarned > 0) {
-                    state.addGold(actualEarned);
-                }
+            if (state && typeof state.tickPassiveIncome === "function") {
+                state.tickPassiveIncome();
             }
         }, passiveInterval);
 
@@ -729,13 +718,22 @@ window.MainEngine = {
         const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : state.player.maxHp;
         if (state.player.hp > effMaxHp) state.player.hp = effMaxHp;
 
-        const currentHp = Math.max(0, Math.floor(state.player.hp));
+        const formatHp = (val) => {
+            if (val <= 0) return "0";
+            if (val % 1 !== 0 && val < 1000) {
+                return Number(val.toFixed(1)).toLocaleString();
+            }
+            return Math.floor(val).toLocaleString();
+        };
+
+        const currentHp = Math.max(0, state.player.hp);
+        const currentHpDisplay = formatHp(currentHp);
         const holyShield = Math.floor(state.player.holyShield || 0);
 
-        if (document.getElementById("playerHpCard")) document.getElementById("playerHpCard").textContent = currentHp.toLocaleString();
+        if (document.getElementById("playerHpCard")) document.getElementById("playerHpCard").textContent = currentHpDisplay;
         if (document.getElementById("playerMaxHpCard")) document.getElementById("playerMaxHpCard").textContent = Math.floor(effMaxHp).toLocaleString();
         if (document.getElementById("playerHpText")) {
-            document.getElementById("playerHpText").textContent = holyShield > 0 ? `${currentHp.toLocaleString()} (+${holyShield.toLocaleString()}🛡️)` : currentHp.toLocaleString();
+            document.getElementById("playerHpText").textContent = holyShield > 0 ? `${currentHpDisplay} (+${holyShield.toLocaleString()}🛡️)` : currentHpDisplay;
         }
         if (document.getElementById("playerMaxHpText")) document.getElementById("playerMaxHpText").textContent = Math.floor(effMaxHp).toLocaleString();
 
@@ -865,8 +863,12 @@ window.MainEngine = {
                     const upgStr = item.upgradeLevel ? ` <span class="eq-upg">+${item.upgradeLevel}</span>` : "";
                     let timerStr = "";
                     if (slot === "crown" && window.CrownManager) {
-                        const rem = window.CrownManager.getCrownRemainingSeconds(item);
-                        timerStr = ` <span class="eq-timer" data-crown-instance="${item.instanceId}">(${window.CrownManager.formatCrownTime(rem)})</span>`;
+                        if (!item.expiresAt) {
+                            timerStr = ` <span class="eq-timer" data-crown-instance="${item.instanceId}">(30:00)</span>`;
+                        } else {
+                            const rem = window.CrownManager.getCrownRemainingSeconds(item);
+                            timerStr = ` <span class="eq-timer" data-crown-instance="${item.instanceId}">(${window.CrownManager.formatCrownTime(rem)})</span>`;
+                        }
                     }
                     el.innerHTML = `<span class="eq-icon">${item.icon}</span> <span class="eq-name ${item.rarity}">${item.name}${upgStr}${timerStr}</span>`;
                     el.onclick = () => {
@@ -1094,13 +1096,15 @@ window.MainEngine = {
         const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : state.player.maxHp;
         const hpEl = document.getElementById("charStatHp");
         if (hpEl) {
+            const formatHpVal = (val) => (val % 1 !== 0 && val < 1000) ? Number(val.toFixed(1)).toLocaleString() : Math.floor(val).toLocaleString();
+            const curHpStr = formatHpVal(state.player.hp);
             if (state.getStatBreakdown) {
                 const bHp = state.getStatBreakdown("maxHp");
-                hpEl.textContent = `${Math.floor(state.player.hp)} / ${bHp.displayStr}`;
-                hpEl.title = `Current HP: ${Math.floor(state.player.hp)}  |  ${bHp.tooltip}`;
+                hpEl.textContent = `${curHpStr} / ${bHp.displayStr}`;
+                hpEl.title = `Current HP: ${curHpStr}  |  ${bHp.tooltip}`;
                 hpEl.classList.add("has-breakdown");
             } else {
-                hpEl.textContent = `${Math.floor(state.player.hp)} / ${Math.floor(effMaxHp)}`;
+                hpEl.textContent = `${curHpStr} / ${Math.floor(effMaxHp).toLocaleString()}`;
             }
         }
         if (document.getElementById("charStatGps")) {
@@ -1667,8 +1671,8 @@ window.MainEngine = {
                 const statStr = window.formatItemStatLine ? window.formatItemStatLine(item) : "";
                 let timerHtml = "";
                 if (s.id === "crown" && window.CrownManager) {
-                    const rem = window.CrownManager.getCrownRemainingSeconds(item);
-                    timerHtml = `<div class="crown-timer-badge" data-crown-instance="${item.instanceId}">⏳ ${window.CrownManager.formatCrownTime(rem)} remaining</div>`;
+                    const badgeText = window.CrownManager.getCrownTimerBadgeText(item);
+                    timerHtml = `<div class="crown-timer-badge" data-crown-instance="${item.instanceId}">${badgeText}</div>`;
                 }
                 card.className = "slot-card filled";
                 card.style.setProperty("--rc", rar.color);
@@ -1767,8 +1771,8 @@ window.MainEngine = {
 
             let timerHtml = "";
             if (isCrown && window.CrownManager) {
-                const rem = window.CrownManager.getCrownRemainingSeconds(item);
-                timerHtml = `<div class="crown-timer-badge" data-crown-instance="${item.instanceId}">⏳ ${window.CrownManager.formatCrownTime(rem)} remaining</div>`;
+                const badgeText = window.CrownManager.getCrownTimerBadgeText(item);
+                timerHtml = `<div class="crown-timer-badge" data-crown-instance="${item.instanceId}">${badgeText}</div>`;
             }
 
             const sellBtnHtml = isUnsellable

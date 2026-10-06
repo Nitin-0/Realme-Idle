@@ -89,6 +89,13 @@ window.DevCommands = {
                 }
                 break;
 
+            case "/payout":
+                if (state && typeof state.triggerPassiveIncomePayout === "function") {
+                    state.triggerPassiveIncomePayout();
+                    dev.logToConsole("Added +1 Gold (10-min passive income).", "success");
+                }
+                break;
+
             case "/power":
                 if (!arg1) {
                     dev.logToConsole("Usage: /power &lt;amount&gt;", "error");
@@ -200,9 +207,42 @@ window.DevCommands = {
                 break;
 
             case "/heal":
-                state.player.hp = state.player.maxHp;
-                state.notify();
+                if (window.GameAPI && window.GameAPI.player) {
+                    window.GameAPI.player.heal();
+                } else {
+                    const effMax = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+                    state.player.hp = effMax;
+                    state.notify();
+                }
                 dev.logToConsole("Player fully healed.", "success");
+                break;
+
+            case "/crowntime":
+                if (!arg1) {
+                    dev.logToConsole("Usage: /crowntime &lt;minutes&gt; (e.g. /crowntime 60, /crowntime +15, /crowntime inf)", "error");
+                } else if (!window.CrownManager) {
+                    dev.logToConsole("CrownManager not initialized.", "error");
+                } else {
+                    const eqCrown = state.player.equipment && state.player.equipment.crown;
+                    if (!eqCrown) {
+                        dev.logToConsole("No crown is currently equipped! Equip a crown first.", "warn");
+                    } else if (arg1 === "inf" || arg1 === "infinite" || arg1 === "max") {
+                        window.CrownManager.setEquippedCrownDuration(59940); // 999 hours
+                        dev.logToConsole(`Set ${eqCrown.name} duration to Infinite (999 hours)!`, "success");
+                    } else if (arg1.startsWith("+")) {
+                        const addedMins = parseFloat(arg1.slice(1)) || 10;
+                        window.CrownManager.addEquippedCrownTime(addedMins);
+                        dev.logToConsole(`Added +${addedMins} minutes to equipped ${eqCrown.name}!`, "success");
+                    } else {
+                        const mins = parseFloat(arg1);
+                        if (isNaN(mins) || mins <= 0) {
+                            dev.logToConsole("Please provide a valid duration in minutes (e.g. /crowntime 60).", "error");
+                        } else {
+                            window.CrownManager.setEquippedCrownDuration(mins);
+                            dev.logToConsole(`Set ${eqCrown.name} duration to ${mins} minutes!`, "success");
+                        }
+                    }
+                }
                 break;
 
             case "/clear":
@@ -214,10 +254,10 @@ window.DevCommands = {
                 dev.logToConsole("=== GM SLASH COMMANDS ===", "info");
                 dev.logToConsole("• /scenario &lt;id&gt; | /hero &lt;class&gt; | /giveitem &lt;id&gt; | /givemat &lt;key&gt; &lt;qty&gt;", "info");
                 dev.logToConsole("• /building &lt;name&gt; &lt;lvl&gt; | /unlockjournal | /craft &lt;id&gt;", "info");
-                dev.logToConsole("• /gold &lt;amt&gt; | /power &lt;amt&gt; | /xp &lt;amt&gt; | /level &lt;lvl&gt;", "info");
+                dev.logToConsole("• /gold &lt;amt&gt; | /payout | /power &lt;amt&gt; | /xp &lt;amt&gt; | /level &lt;lvl&gt;", "info");
                 dev.logToConsole("• /god | /onehit | /infgold | /infhp", "info");
                 dev.logToConsole("• /spawn &lt;mob_id&gt; [boss] | /map &lt;map_id&gt; | /weather &lt;weather_id&gt;", "info");
-                dev.logToConsole("• /time &lt;0-23&gt; | /speed &lt;mult&gt; | /kill | /heal | /clear", "info");
+                dev.logToConsole("• /time &lt;0-23&gt; | /speed &lt;mult&gt; | /crowntime &lt;mins&gt; | /kill | /heal | /clear", "info");
                 break;
 
             default:

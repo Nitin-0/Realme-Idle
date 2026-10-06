@@ -12,14 +12,37 @@ window.GameAPI = {
         setGold(amount) { window.gameState.player.gold = Math.max(0, amount); window.gameState.notify(); },
         addPower(amount) { window.gameState.player.power += amount; window.gameState.notify(); },
         setPower(amount) { window.gameState.player.power = Math.max(1, amount); window.gameState.notify(); },
-        addXp(amount) { window.gameState.addXp(amount); },
-        setLevel(level) { window.gameState.player.level = Math.max(1, level); window.gameState.notify(); },
-        heal() { window.gameState.player.hp = window.gameState.player.maxHp; window.gameState.notify(); },
-        setHeroClass(classId) { window.gameState.setHeroClass(classId); },
+        heal() {
+            const state = window.gameState;
+            if (!state || !state.player) return;
+            const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+            state.player.hp = effMaxHp;
+            if (state.reduceFatigue) state.reduceFatigue(100);
+            if (state.player.fatigue !== undefined) state.player.fatigue = 0;
+            if (state.combat && state.combat.inTemple) {
+                state.combat.inTemple = false;
+            }
+            if (window.CombatManager) {
+                window.CombatManager.showDamagePopup(`❤️ +${Math.floor(effMaxHp)} HP (Full Heal)`, false, false, "heal");
+            }
+            if (state.addLog) {
+                state.addLog("❤️ Full health and stamina restored!", "level", "❤️");
+            }
+            state.notify();
+            if (window.MainEngine && typeof window.MainEngine.updateUI === "function") {
+                window.MainEngine.updateUI();
+            }
+        },
         enableGodMode(enable) { window.devMode.godMode = enable; if (window.DebugWidget) window.DebugWidget.syncUI(); },
         enableOneHit(enable) { window.devMode.oneHitKill = enable; if (window.DebugWidget) window.DebugWidget.syncUI(); },
         enableInfiniteGold(enable) { window.devMode.infiniteGold = enable; window.gameState.notify(); },
         enableInfiniteHp(enable) { window.devMode.infiniteHealth = enable; },
+        triggerPassivePayout() {
+            if (window.gameState && typeof window.gameState.triggerPassiveIncomePayout === "function") {
+                return window.gameState.triggerPassiveIncomePayout();
+            }
+            return 0;
+        },
 
         castSkill() {
             if (window.CombatManager) window.CombatManager.triggerSkill();
@@ -73,6 +96,18 @@ window.GameAPI = {
         },
         completeOnboarding(name, gender, heroClass) {
             window.gameState.completeOnboarding(name, gender, heroClass);
+        },
+        setCrownTime(minutes) {
+            if (window.CrownManager) {
+                return window.CrownManager.setEquippedCrownDuration(minutes);
+            }
+            return false;
+        },
+        addCrownTime(minutes) {
+            if (window.CrownManager) {
+                return window.CrownManager.addEquippedCrownTime(minutes);
+            }
+            return false;
         },
         resetToNewGame() {
             window.gameState.resetToNewGame();

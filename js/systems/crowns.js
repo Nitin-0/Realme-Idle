@@ -18,9 +18,10 @@ window.CrownManager = {
                 this.updateVisualAtmosphere();
             });
         }
-        // 1-second interval to monitor 30-minute crown lifespans and update live countdown badges
+        // 1-second interval to monitor continuous crown passives and 30-minute crown lifespans
         if (!this._lifespanInterval) {
             this._lifespanInterval = setInterval(() => {
+                this.passiveCrownTick();
                 this.checkCrownLifespans();
                 this.updateCrownTimerLabels();
             }, 1000);
@@ -35,9 +36,19 @@ window.CrownManager = {
     getCrownRemainingSeconds(item) {
         if (!item) return 0;
         if (!item.expiresAt) {
-            item.expiresAt = Date.now() + (item.duration || 1800) * 1000;
+            // Timer starts on equip only; unequipped crowns return full duration
+            return item.duration || 1800;
         }
         return Math.max(0, Math.ceil((item.expiresAt - Date.now()) / 1000));
+    },
+
+    getCrownTimerBadgeText(item) {
+        if (!item) return "";
+        if (!item.expiresAt) {
+            return "⏳ 30:00 (Starts on equip)";
+        }
+        const rem = this.getCrownRemainingSeconds(item);
+        return `⏳ ${this.formatCrownTime(rem)} remaining`;
     },
 
     formatCrownTime(seconds) {
@@ -52,11 +63,12 @@ window.CrownManager = {
         const now = Date.now();
         let changed = false;
 
-        // Check equipped crown
+        // Check equipped crown: if timer not yet started, start it upon equipping
         const equipped = state.player.equipment && state.player.equipment.crown;
         if (equipped && this.isCrownItem(equipped)) {
             if (!equipped.expiresAt) {
-                equipped.expiresAt = now + (equipped.duration || 1800) * 1000;
+                equipped.duration = equipped.duration || 1800;
+                equipped.expiresAt = now + equipped.duration * 1000;
                 changed = true;
             } else if (now >= equipped.expiresAt) {
                 this.expireCrown(equipped, true);
@@ -64,15 +76,13 @@ window.CrownManager = {
             }
         }
 
-        // Check inventory crowns
+        // Check inventory crowns: ONLY expire if their timer was already started by being equipped!
         if (state.player.inventory && state.player.inventory.length > 0) {
             for (let i = state.player.inventory.length - 1; i >= 0; i--) {
                 const item = state.player.inventory[i];
                 if (item && this.isCrownItem(item)) {
-                    if (!item.expiresAt) {
-                        item.expiresAt = now + (item.duration || 1800) * 1000;
-                        changed = true;
-                    } else if (now >= item.expiresAt) {
+                    // Do NOT auto-start timer for unequipped crowns in inventory!
+                    if (item.expiresAt && now >= item.expiresAt) {
                         this.expireCrown(item, false);
                         changed = true;
                     }
@@ -125,10 +135,62 @@ window.CrownManager = {
                 item = state.player.inventory.find(i => i.instanceId === instId);
             }
             if (item) {
-                const rem = this.getCrownRemainingSeconds(item);
-                el.textContent = `⏳ ${this.formatCrownTime(rem)} remaining`;
+                if (el.classList.contains("eq-timer")) {
+                    if (!item.expiresAt) {
+                        el.textContent = `(30:00)`;
+                    } else {
+                        const rem = this.getCrownRemainingSeconds(item);
+                        el.textContent = `(${this.formatCrownTime(rem)})`;
+                    }
+                } else {
+                    el.textContent = this.getCrownTimerBadgeText(item);
+                }
             }
         });
+    },
+
+    setEquippedCrownDuration(minutes) {
+        const state = window.gameState;
+        if (!state || !state.player) return false;
+        const crown = state.player.equipment && state.player.equipment.crown;
+        if (!crown) return false;
+
+        const mins = Math.max(0.1, parseFloat(minutes) || 30);
+        crown.duration = Math.round(mins * 60);
+        crown.expiresAt = Date.now() + Math.round(mins * 60 * 1000);
+        this.updateCrownTimerLabels();
+        if (window.MainEngine) {
+            if (window.MainEngine.renderEquipment) window.MainEngine.renderEquipment();
+            if (window.MainEngine.renderInventory) window.MainEngine.renderInventory();
+            if (window.MainEngine.updateUI) window.MainEngine.updateUI();
+        }
+        if (state.addLog) {
+            const timeStr = mins >= 50000 ? "Infinite (999h)" : `${mins}m`;
+            state.addLog(`⏳ ${crown.name} duration set to ${timeStr} via Admin!`, "warning", "👑");
+        }
+        return true;
+    },
+
+    addEquippedCrownTime(minutes) {
+        const state = window.gameState;
+        if (!state || !state.player) return false;
+        const crown = state.player.equipment && state.player.equipment.crown;
+        if (!crown) return false;
+
+        const mins = parseFloat(minutes) || 10;
+        const base = crown.expiresAt ? Math.max(Date.now(), crown.expiresAt) : Date.now();
+        crown.expiresAt = base + Math.round(mins * 60 * 1000);
+        crown.duration = Math.round((crown.expiresAt - Date.now()) / 1000);
+        this.updateCrownTimerLabels();
+        if (window.MainEngine) {
+            if (window.MainEngine.renderEquipment) window.MainEngine.renderEquipment();
+            if (window.MainEngine.renderInventory) window.MainEngine.renderInventory();
+            if (window.MainEngine.updateUI) window.MainEngine.updateUI();
+        }
+        if (state.addLog) {
+            state.addLog(`⏳ ${crown.name} time extended by +${mins}m via Admin!`, "warning", "👑");
+        }
+        return true;
     },
 
     getAudioContext() {
@@ -366,16 +428,57 @@ window.CrownManager = {
     },
 
     /* =========================
-       COMBAT TICK & PASSIVES
+       ON-EQUIP EFFECTS & CONTINUOUS PASSIVES
     ========================= */
-    combatTick() {
+    onCrownEquipped(item) {
         const state = window.gameState;
-        if (!state || state.combat.inTemple) return;
+        if (!state || !state.player) return;
+        const now = Date.now();
+
+        // 1. Start timer ONLY when equipped!
+        if (!item.expiresAt) {
+            item.duration = item.duration || 1800;
+            item.expiresAt = now + item.duration * 1000;
+            if (state.addLog) {
+                state.addLog(`⏳ ${item.name} donned! Its 30-minute relic timer has begun!`, "warning", "👑");
+            }
+        }
 
         const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
-        const mob = state.combat.currentMob;
 
-        // ---------------- DEMON CROWN OR DESTABILIZED ----------------
+        // 2. Demon Crown: Immediate Blood Price & Sacrifice upon brow!
+        if (item.id === "demon_crown") {
+            const initialSacrifice = Math.max(0.1, +(effMaxHp * 0.001).toFixed(2)); // 0.1% HP drop
+            if (state.player.hp > 1) {
+                state.player.hp = Math.max(1, +(state.player.hp - initialSacrifice).toFixed(2));
+                const displayVal = initialSacrifice >= 1 ? Math.floor(initialSacrifice) : initialSacrifice.toFixed(1);
+                if (window.CombatManager) {
+                    window.CombatManager.showDamagePopup(`🩸 -${displayVal} HP (Blood Price)`, false, false, "incoming");
+                }
+                if (state.addLog) {
+                    state.addLog(`🩸 BLOOD PRICE: The Demon Crown claims ${displayVal} HP from your life force!`, "danger", "🩸");
+                }
+            }
+            this.playDemonSound();
+        } else if (item.id === "divine_crown") {
+            this.playDivineSound();
+        } else if (item.id === "equilibrium_crown") {
+            this.playEquilibriumSound();
+        }
+
+        this.updateVisualAtmosphere();
+        this.checkCrownCoexistence();
+        state.notify();
+    },
+
+    /* Continuous 1-second passive loop for equipped crown effects */
+    passiveCrownTick() {
+        const state = window.gameState;
+        if (!state || !state.player) return;
+
+        const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+
+        // ---------------- DEMON CROWN OR DESTABILIZED: BLOOD PRICE & DARKNESS ----------------
         if (this.isDemonCrownEquipped() || this.isDestabilized()) {
             // 1. Darken environment over time
             if (state.player.darknessLevel === undefined) state.player.darknessLevel = 0;
@@ -383,7 +486,49 @@ window.CrownManager = {
                 state.player.darknessLevel = Math.min(100, state.player.darknessLevel + 1);
             }
 
-            // 2. Demonic Aura — periodic damage to nearby enemy
+            // 2. Low HP Glitch check
+            if ((state.player.hp / effMaxHp) <= 0.30) {
+                this.triggerLowHpGlitch();
+            }
+        } else {
+            // Gradually recover darkness level when Demon Crown is unequipped
+            if (state.player.darknessLevel > 0) {
+                state.player.darknessLevel = Math.max(0, state.player.darknessLevel - 4);
+            }
+        }
+
+        // ---------------- DIVINE CROWN OR DESTABILIZED: HOLY REGEN ----------------
+        if (this.isDivineCrownEquipped() || this.isDestabilized()) {
+            // Holy Regeneration
+            const holyRegen = Math.floor(effMaxHp * 0.035) + 15;
+            this.healPlayer(holyRegen, "Holy Regen");
+
+            // Purification — removes fatigue
+            if (state.reduceFatigue) {
+                state.reduceFatigue(3.5);
+            }
+            state.notify();
+        }
+
+        // ---------------- EQUILIBRIUM CROWN: HARMONY REGEN ----------------
+        if (this.isEquilibriumCrownEquipped()) {
+            const eqRegen = Math.floor(effMaxHp * 0.025) + 12;
+            this.healPlayer(eqRegen, "Cosmic Harmony");
+            state.notify();
+        }
+    },
+
+    /* =========================
+       COMBAT TICK & AURA DAMAGE
+    ========================= */
+    combatTick() {
+        const state = window.gameState;
+        if (!state || state.combat.inTemple) return;
+
+        const mob = state.combat.currentMob;
+
+        // ---------------- DEMON CROWN OR DESTABILIZED: AURA DAMAGE ----------------
+        if (this.isDemonCrownEquipped() || this.isDestabilized()) {
             if (mob && mob.hp > 0) {
                 const auraDmg = Math.max(12, Math.floor(state.getEffectiveAttack() * 0.12));
                 mob.hp = Math.max(0, mob.hp - auraDmg);
@@ -395,39 +540,10 @@ window.CrownManager = {
                     return;
                 }
             }
-
-            // 3. Blood Price — HP constantly drains while equipped (never drops below 1 HP)
-            const bloodDrain = Math.max(4, Math.floor(effMaxHp * 0.022));
-            if (state.player.hp > 1) {
-                state.player.hp = Math.max(1, state.player.hp - bloodDrain);
-                if (window.CombatManager) {
-                    window.CombatManager.showDamagePopup(`🩸 -${bloodDrain} HP (Blood Price)`, false, false, "incoming");
-                }
-            }
-
-            // 4. Low HP Glitch check
-            if ((state.player.hp / effMaxHp) <= 0.30) {
-                this.triggerLowHpGlitch();
-            }
-        } else {
-            // Gradually recover darkness level when Demon Crown is unequipped
-            if (state.player.darknessLevel > 0) {
-                state.player.darknessLevel = Math.max(0, state.player.darknessLevel - 4);
-            }
         }
 
-        // ---------------- DIVINE CROWN OR DESTABILIZED ----------------
+        // ---------------- DIVINE CROWN OR DESTABILIZED: BLIND ENEMY ----------------
         if (this.isDivineCrownEquipped() || this.isDestabilized()) {
-            // 1. Holy Regeneration
-            const holyRegen = Math.floor(effMaxHp * 0.035) + 15;
-            this.healPlayer(holyRegen, "Holy Regen");
-
-            // 2. Purification — removes fatigue and active debuffs
-            if (state.reduceFatigue) {
-                state.reduceFatigue(3.5);
-            }
-
-            // 3. Radiant Presence — chance to blind current mob
             if (mob && !mob.isBlind && Math.random() < 0.20) {
                 mob.isBlind = true;
                 if (window.CombatManager) {
@@ -526,7 +642,24 @@ window.CrownManager = {
         const state = window.gameState;
         if (!mob || mob.hp <= 0) return { executed: false, bonusDmg: 0 };
 
-        // 1. Executioner (Demon Crown / Equilibrium)
+        // 1. Blood Price (Demon Crown / Destabilized): 0.1% HP drop every strike
+        if (this.isDemonCrownEquipped() || this.isDestabilized()) {
+            const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+            const strikeDrain = Math.max(0.01, +(effMaxHp * 0.001).toFixed(2));
+            if (state.player.hp > 1) {
+                state.player.hp = Math.max(1, +(state.player.hp - strikeDrain).toFixed(2));
+                const displayVal = strikeDrain >= 1 ? Math.floor(strikeDrain) : strikeDrain.toFixed(1);
+                if (window.CombatManager) {
+                    window.CombatManager.showDamagePopup(`🩸 -${displayVal} HP (Blood Price)`, false, false, "incoming");
+                }
+                state.notify();
+            }
+            if ((state.player.hp / effMaxHp) <= 0.30) {
+                this.triggerLowHpGlitch();
+            }
+        }
+
+        // 2. Executioner (Demon Crown / Equilibrium)
         // Enemies below 15% HP have 45% chance to be executed
         if ((this.isDemonCrownEquipped() || this.isEquilibriumCrownEquipped() || this.isDestabilized()) && !mob.isBoss) {
             if ((mob.hp / mob.maxHp) <= 0.15 && Math.random() < 0.45) {
@@ -539,7 +672,7 @@ window.CrownManager = {
             }
         }
 
-        // 2. Holy Retribution (Divine Crown / Equilibrium)
+        // 3. Holy Retribution (Divine Crown / Equilibrium)
         let bonusDmg = 0;
         if (state.player.holyRetributionCharged && (this.isDivineCrownEquipped() || this.isEquilibriumCrownEquipped() || this.isDestabilized())) {
             bonusDmg = Math.floor(baseDmg * 1.5);
