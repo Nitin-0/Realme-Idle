@@ -990,4 +990,250 @@ body {
         width: 100%;
         box-sizing: border-box;
     }
+
+    .mgr-search-bar-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+}
+
+/* =========================================================
+   FIELD VALIDATION ERROR STATES
+========================================================= */
+.is-invalid {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3) !important;
+    background-color: rgba(239, 68, 68, 0.06) !important;
+}
+
+.is-invalid:focus {
+    outline: none !important;
+    border-color: #f87171 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4) !important;
+}
+
+.mgr-search-bar-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+/* =========================================================
+   MOBILE RESPONSIVENESS: SCREENS UNDER 375PX (e.g. 320px - 360px)
+========================================================= */
+@media (max-width: 375px) {
+    html, body {
+        overflow-x: hidden;
+    }
+
+    .mgr-app {
+        overflow-x: hidden;
+        width: 100%;
+    }
+
+    .mgr-header {
+        padding: 8px 10px;
+        gap: 6px;
+    }
+
+    .btn-mgr-hamburger {
+        padding: 6px 8px;
+        font-size: 15px;
+        border-radius: 6px;
+    }
+
+    .mgr-header-left {
+        gap: 6px;
+        max-width: 65%;
+    }
+
+    .mgr-header-left h3 {
+        font-size: 13px;
+        max-width: 130px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mgr-header-actions {
+        gap: 6px;
+    }
+
+    .mgr-header-actions .btn-secondary,
+    .mgr-header-actions button {
+        padding: 5px 8px;
+        font-size: 10px;
+    }
+
+    .mgr-content {
+        padding: 8px 6px;
+    }
+
+    .mgr-card {
+        padding: 10px 8px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+
+    .mgr-card-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+
+    .mgr-card-toolbar h4 {
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+
+    .mgr-card-toolbar button,
+    .mgr-card-toolbar .btn-xs {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        padding: 6px 8px;
+        font-size: 11px;
+    }
+
+    .mgr-search-bar-row {
+        flex-direction: column;
+        gap: 6px;
+        align-items: stretch;
+    }
+
+    .mgr-search-bar-row input,
+    .mgr-search-bar-row select {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .mgr-search-input {
+        font-size: 12px;
+        padding: 7px 9px;
+        box-sizing: border-box;
+        width: 100%;
+    }
+
+    .form-group label {
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 13px !important;
+        padding: 7px 8px;
+        border-radius: 6px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-actions button {
+        width: 100%;
+        min-height: 38px;
+        font-size: 12px;
+        padding: 8px;
+        box-sizing: border-box;
+    }
+
+    .mgr-sidebar {
+        width: min(270px, 86vw);
+        padding: 14px 10px;
+    }
+
+    .mgr-brand {
+        gap: 8px;
+        padding-bottom: 14px;
+    }
+
+    .mgr-brand h2 {
+        font-size: 14px;
+    }
+
+    .mgr-nav {
+        gap: 4px;
+        margin-top: 14px;
+    }
+
+    .mgr-nav-btn {
+        padding: 9px 10px;
+        font-size: 11px;
+        border-radius: 8px;
+    }
+
+    .metric-card {
+        padding: 9px 8px;
+    }
+
+    .metric-card strong {
+        font-size: 14px;
+    }
+
+    .mgr-list {
+        max-height: 220px;
+    }
+
+    .mgr-list-item {
+        padding: 8px;
+        font-size: 11px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .mgr-list-item-badge {
+        font-size: 9px;
+        align-self: flex-start;
+    }
+
+    .drop-row {
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px 6px;
+    }
+
+    .drop-col-type,
+    .drop-col-target,
+    .drop-col-chance,
+    .drop-col-qty {
+        width: 100% !important;
+        flex: none;
+    }
+
+    .drop-row select,
+    .drop-row input {
+        width: 100% !important;
+        font-size: 11px !important;
+        padding: 5px 6px;
+    }
+
+    .btn-delete-drop-row {
+        width: 100%;
+        min-height: 32px;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mgr-toast-container {
+        left: 6px;
+        right: 6px;
+        top: 6px;
+    }
+
+    .mgr-toast {
+        font-size: 11px;
+        padding: 7px 10px;
+        box-sizing: border-box;
+        width: 100%;
+    }
 }

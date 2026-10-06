@@ -826,10 +826,10 @@ window.gameState = {
         return this.player.skills.levels[skillId] || 1;
     },
 
-    getSkillEffectiveStats(skillId) {
+    getSkillEffectiveStats(skillId, customLevel = null) {
         const def = this.getSkillDefinition(skillId);
         if (!def) return null;
-        const level = this.getSkillLevel(skillId);
+        const level = (customLevel !== null && customLevel !== undefined) ? Math.max(1, customLevel) : this.getSkillLevel(skillId);
         const damageMult = +( (def.damageMult || 2.0) + (level - 1) * 0.30 ).toFixed(2);
         const cooldown = Math.max(3, +( (def.cooldown || 8) - (level - 1) * 0.5 ).toFixed(1));
         const healPct = def.healPct ? +( def.healPct + (level - 1) * 0.02 ).toFixed(2) : 0;
@@ -843,13 +843,25 @@ window.gameState = {
             };
         }
 
+        // Dynamic description reflecting upgraded stats
+        let description = def.description || "";
+        if (def.damageMult) {
+            const basePct = Math.round(def.damageMult * 100) + "%";
+            const newPct = Math.round(damageMult * 100) + "%";
+            description = description.replace(basePct, newPct);
+        }
+        if (def.buff && def.buff.bonus && buff && buff.bonus) {
+            description = description.replace("+" + def.buff.bonus, "+" + buff.bonus);
+        }
+
         return {
             ...def,
             level,
             damageMult,
             cooldown,
             healPct,
-            buff
+            buff,
+            description
         };
     },
 
@@ -896,6 +908,9 @@ window.gameState = {
 
         if (!this.player.skills.levels) this.player.skills.levels = {};
         this.player.skills.levels[skillId] = cost.nextLevel;
+        if (!this.player.skills.activeSkillId) {
+            this.player.skills.activeSkillId = skillId;
+        }
 
         const skillDef = this.getSkillDefinition(skillId);
         const skillName = skillDef ? skillDef.name : skillId;

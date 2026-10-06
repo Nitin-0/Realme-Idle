@@ -40,6 +40,41 @@ window.ManagerApp = {
         }, 3200);
     },
 
+    validateInput(fieldId, isValid, errorMessage) {
+        const el = document.getElementById(fieldId);
+        if (!el) return isValid;
+        if (!isValid) {
+            el.classList.add("is-invalid");
+            this.showToast(errorMessage, "error");
+            try {
+                el.focus();
+                if (typeof el.scrollIntoView === "function") {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            } catch (err) {}
+            const clearInvalid = () => {
+                el.classList.remove("is-invalid");
+                el.removeEventListener("input", clearInvalid);
+                el.removeEventListener("change", clearInvalid);
+            };
+            el.addEventListener("input", clearInvalid);
+            el.addEventListener("change", clearInvalid);
+            return false;
+        }
+        el.classList.remove("is-invalid");
+        return true;
+    },
+
+    isValidId(id) {
+        return typeof id === "string" && /^[a-z0-9_-]{2,50}$/i.test(id.trim());
+    },
+
+    isValidNumber(val, min = -Infinity, max = Infinity) {
+        if (val === "" || val === null || val === undefined) return false;
+        const n = Number(val);
+        return !isNaN(n) && isFinite(n) && n >= min && n <= max;
+    },
+
     bindTabs() {
         document.querySelectorAll("[data-mgr-tab]").forEach(btn => {
             btn.addEventListener("click", () => {
@@ -104,9 +139,15 @@ window.ManagerApp = {
             formRules.addEventListener("submit", (e) => {
                 e.preventDefault();
                 const guildEnabled = document.getElementById("cfg_guildIncomeEnabled").checked;
-                const guildRate = parseInt(document.getElementById("cfg_guildIncomeRate").value, 10) || 0;
+                const guildRateStr = document.getElementById("cfg_guildIncomeRate").value.trim();
                 const templeEnabled = document.getElementById("cfg_templeDonationEnabled").checked;
-                const templeCost = parseInt(document.getElementById("cfg_templeDonationCost").value, 10) || 0;
+                const templeCostStr = document.getElementById("cfg_templeDonationCost").value.trim();
+
+                if (!this.validateInput("cfg_guildIncomeRate", this.isValidNumber(guildRateStr, 0), "Guild Income Rate must be 0 or greater.")) return;
+                if (!this.validateInput("cfg_templeDonationCost", this.isValidNumber(templeCostStr, 0), "Temple Donation Cost must be 0 or greater.")) return;
+
+                const guildRate = parseInt(guildRateStr, 10) || 0;
+                const templeCost = parseInt(templeCostStr, 10) || 0;
 
                 api.settings.saveRules({
                     guildIncome: { enabled: guildEnabled, goldPerSecond: Math.max(0, guildRate) },
@@ -163,8 +204,29 @@ window.ManagerApp = {
                 e.preventDefault();
                 const mobId = document.getElementById("mobEdit_id").value.trim();
                 const mobName = document.getElementById("mobEdit_name").value.trim();
-                if (!mobId || !mobName) {
-                    this.showToast("Mob ID and Name are required.", "error");
+                const mobHp = document.getElementById("mobEdit_hp").value.trim();
+                const mobDmg = document.getElementById("mobEdit_dmg").value.trim();
+                const mobGold = document.getElementById("mobEdit_gold").value.trim();
+                const mobXp = document.getElementById("mobEdit_xp").value.trim();
+                const mobDropChance = document.getElementById("mobEdit_dropChance").value.trim();
+
+                if (!this.validateInput("mobEdit_id", this.isValidId(mobId), "Mob ID must be 2-50 characters (letters, numbers, underscores, hyphens only, no spaces).")) return;
+                if (!this.validateInput("mobEdit_name", mobName.length >= 2, "Mob Name must be at least 2 characters.")) return;
+                if (!this.validateInput("mobEdit_hp", this.isValidNumber(mobHp, 1), "Base HP must be a positive number (minimum 1).")) return;
+                if (!this.validateInput("mobEdit_dmg", this.isValidNumber(mobDmg, 0), "Base Damage must be 0 or greater.")) return;
+                if (!this.validateInput("mobEdit_gold", this.isValidNumber(mobGold, 0), "Gold reward cannot be negative.")) return;
+                if (!this.validateInput("mobEdit_xp", this.isValidNumber(mobXp, 0), "XP reward cannot be negative.")) return;
+
+                let parsedDropChance = parseFloat(mobDropChance);
+                if (isNaN(parsedDropChance) || parsedDropChance < 0) {
+                    this.validateInput("mobEdit_dropChance", false, "Drop chance must be a valid number (e.g. 0.45 or 45%).");
+                    return;
+                }
+                if (parsedDropChance > 1 && parsedDropChance <= 100) {
+                    parsedDropChance = parsedDropChance / 100;
+                }
+                if (parsedDropChance > 1) {
+                    this.validateInput("mobEdit_dropChance", false, "Drop chance cannot exceed 1.0 (or 100%).");
                     return;
                 }
 
@@ -176,11 +238,11 @@ window.ManagerApp = {
                     name: mobName,
                     icon: document.getElementById("mobEdit_icon").value.trim() || "👹",
                     type: document.getElementById("mobEdit_type").value.trim() || "MONSTER",
-                    baseHp: parseInt(document.getElementById("mobEdit_hp").value, 10) || 1000,
-                    baseDmg: parseInt(document.getElementById("mobEdit_dmg").value, 10) || 50,
-                    goldReward: parseInt(document.getElementById("mobEdit_gold").value, 10) || 200,
-                    xpReward: parseInt(document.getElementById("mobEdit_xp").value, 10) || 100,
-                    dropChance: parseFloat(document.getElementById("mobEdit_dropChance").value) || 0.45,
+                    baseHp: parseInt(mobHp, 10),
+                    baseDmg: parseInt(mobDmg, 10),
+                    goldReward: parseInt(mobGold, 10),
+                    xpReward: parseInt(mobXp, 10),
+                    dropChance: parsedDropChance,
                     isBoss: document.getElementById("mobEdit_isBoss").checked,
                     isUniversal: document.getElementById("mobEdit_isUniversal").checked,
                     assignedMap: document.getElementById("mobEdit_assignedMap").value,
@@ -244,10 +306,21 @@ window.ManagerApp = {
                 e.preventDefault();
                 const classId = document.getElementById("classEdit_id").value.trim();
                 const className = document.getElementById("classEdit_name").value.trim();
-                if (!classId || !className) {
-                    this.showToast("Class ID and Name are required.", "error");
-                    return;
-                }
+                const classHp = document.getElementById("classEdit_hp").value.trim();
+                const classAtk = document.getElementById("classEdit_atk").value.trim();
+                const classDef = document.getElementById("classEdit_def").value.trim();
+                const skillName = document.getElementById("classEdit_skillName").value.trim();
+                const skillCd = document.getElementById("classEdit_skillCd").value.trim();
+                const skillMult = document.getElementById("classEdit_skillMult").value.trim();
+
+                if (!this.validateInput("classEdit_id", this.isValidId(classId), "Class ID must be 2-50 characters (letters, numbers, hyphens, underscores).")) return;
+                if (!this.validateInput("classEdit_name", className.length >= 2, "Class Name is required.")) return;
+                if (!this.validateInput("classEdit_hp", this.isValidNumber(classHp, 10), "Base HP must be at least 10.")) return;
+                if (!this.validateInput("classEdit_atk", this.isValidNumber(classAtk, 1), "Base Attack must be at least 1.")) return;
+                if (!this.validateInput("classEdit_def", this.isValidNumber(classDef, 0), "Base Defense cannot be negative.")) return;
+                if (!this.validateInput("classEdit_skillName", skillName.length >= 2, "Skill Name is required.")) return;
+                if (!this.validateInput("classEdit_skillCd", this.isValidNumber(skillCd, 1, 60), "Skill Cooldown must be between 1 and 60 seconds.")) return;
+                if (!this.validateInput("classEdit_skillMult", this.isValidNumber(skillMult, 0.1, 50), "Skill Damage Multiplier must be between 0.1x and 50.0x.")) return;
 
                 const heroObj = {
                     id: classId,
@@ -255,18 +328,18 @@ window.ManagerApp = {
                     icon: document.getElementById("classEdit_icon").value.trim() || "⚔️",
                     unlocked: document.getElementById("classEdit_unlocked").checked,
                     reqLevel: parseInt(document.getElementById("classEdit_reqLevel").value, 10) || 1,
-                    baseHp: parseInt(document.getElementById("classEdit_hp").value, 10) || 100,
-                    baseAttack: parseInt(document.getElementById("classEdit_atk").value, 10) || 10,
-                    baseDefense: parseInt(document.getElementById("classEdit_def").value, 10) || 10,
-                    baseDodge: parseFloat(document.getElementById("classEdit_dodge").value) || 0.05,
-                    baseCritChance: parseFloat(document.getElementById("classEdit_crit").value) || 0.05,
-                    baseLifesteal: parseFloat(document.getElementById("classEdit_lifesteal").value) || 0,
+                    baseHp: parseInt(classHp, 10),
+                    baseAttack: parseInt(classAtk, 10),
+                    baseDefense: parseInt(classDef, 10),
+                    baseDodge: Math.min(0.9, Math.max(0, parseFloat(document.getElementById("classEdit_dodge").value) || 0.05)),
+                    baseCritChance: Math.min(1.0, Math.max(0, parseFloat(document.getElementById("classEdit_crit").value) || 0.05)),
+                    baseLifesteal: Math.min(1.0, Math.max(0, parseFloat(document.getElementById("classEdit_lifesteal").value) || 0)),
                     skill: {
                         id: (classId + "_skill"),
-                        name: document.getElementById("classEdit_skillName").value.trim() || "Strike",
+                        name: skillName,
                         icon: document.getElementById("classEdit_skillIcon").value.trim() || "⚡",
-                        cooldown: parseInt(document.getElementById("classEdit_skillCd").value, 10) || 8,
-                        damageMult: parseFloat(document.getElementById("classEdit_skillMult").value) || 2.0,
+                        cooldown: parseInt(skillCd, 10),
+                        damageMult: parseFloat(skillMult),
                         description: document.getElementById("classEdit_skillDesc").value.trim() || "Attacks enemy."
                     },
                     promotions: [
@@ -424,10 +497,17 @@ window.ManagerApp = {
                 e.preventDefault();
                 const itemId = document.getElementById("itemEdit_id").value.trim();
                 const itemName = document.getElementById("itemEdit_name").value.trim();
-                if (!itemId || !itemName) {
-                    this.showToast("Item ID and Name are required.", "error");
-                    return;
-                }
+                const sellVal = document.getElementById("itemEdit_sellValue").value.trim();
+                const atk = document.getElementById("itemEdit_atk").value.trim();
+                const def = document.getElementById("itemEdit_def").value.trim();
+                const hp = document.getElementById("itemEdit_hp").value.trim();
+
+                if (!this.validateInput("itemEdit_id", this.isValidId(itemId), "Item ID must be 2-50 characters (letters, numbers, hyphens, underscores).")) return;
+                if (!this.validateInput("itemEdit_name", itemName.length >= 2, "Item Name is required.")) return;
+                if (!this.validateInput("itemEdit_sellValue", this.isValidNumber(sellVal, 0), "Item Sell Value cannot be negative.")) return;
+                if (atk && !this.validateInput("itemEdit_atk", this.isValidNumber(atk, 0), "Attack bonus must be 0 or greater.")) return;
+                if (def && !this.validateInput("itemEdit_def", this.isValidNumber(def, 0), "Defense bonus must be 0 or greater.")) return;
+                if (hp && !this.validateInput("itemEdit_hp", this.isValidNumber(hp, 0), "HP bonus must be 0 or greater.")) return;
 
                 const itemObj = {
                     id: itemId,
@@ -526,10 +606,17 @@ window.ManagerApp = {
                 e.preventDefault();
                 const sId = document.getElementById("shopEdit_id").value.trim();
                 const sName = document.getElementById("shopEdit_name").value.trim();
-                if (!sId || !sName) {
-                    this.showToast("Shop Item ID and Name are required.", "error");
-                    return;
-                }
+                const sItemId = document.getElementById("shopEdit_itemId").value.trim();
+                const sCostGold = document.getElementById("shopEdit_costGold").value.trim();
+                const sReqLevel = document.getElementById("shopEdit_reqLevel").value.trim();
+                const sMatQty = document.getElementById("shopEdit_matQty").value.trim();
+
+                if (!this.validateInput("shopEdit_id", this.isValidId(sId), "Shop Item ID must be 2-50 characters (letters, numbers, hyphens, underscores).")) return;
+                if (!this.validateInput("shopEdit_name", sName.length >= 2, "Shop Item Name must be at least 2 characters.")) return;
+                if (!this.validateInput("shopEdit_itemId", this.isValidId(sItemId), "Linked Item ID must be valid and cannot be empty.")) return;
+                if (!this.validateInput("shopEdit_costGold", this.isValidNumber(sCostGold, 0), "Gold cost cannot be negative.")) return;
+                if (!this.validateInput("shopEdit_reqLevel", this.isValidNumber(sReqLevel, 1), "Required player level must be 1 or higher.")) return;
+                if (sMatQty && !this.validateInput("shopEdit_matQty", this.isValidNumber(sMatQty, 1), "Material quantity must be 1 or higher.")) return;
 
                 const reqMapVal = document.getElementById("shopEdit_reqMap") ? document.getElementById("shopEdit_reqMap").value : "any";
                 const reqDepthVal = document.getElementById("shopEdit_reqDepth") ? (parseInt(document.getElementById("shopEdit_reqDepth").value, 10) || 1) : 1;
@@ -539,13 +626,13 @@ window.ManagerApp = {
                     name: sName,
                     category: document.getElementById("shopEdit_category").value,
                     icon: document.getElementById("shopEdit_icon").value.trim() || "🛍️",
-                    itemId: document.getElementById("shopEdit_itemId").value.trim(),
-                    costGold: parseInt(document.getElementById("shopEdit_costGold").value, 10) || 100,
-                    reqLevel: parseInt(document.getElementById("shopEdit_reqLevel").value, 10) || 1,
+                    itemId: sItemId,
+                    costGold: parseInt(sCostGold, 10) || 0,
+                    reqLevel: parseInt(sReqLevel, 10) || 1,
                     reqMap: reqMapVal,
                     reqDepth: reqDepthVal,
-                    matKey: document.getElementById("shopEdit_itemId").value.trim(),
-                    matQty: parseInt(document.getElementById("shopEdit_matQty").value, 10) || 1,
+                    matKey: sItemId,
+                    matQty: parseInt(sMatQty, 10) || 1,
                     description: document.getElementById("shopEdit_desc").value.trim()
                 };
                 api.data.saveShopItem(shopObj);
@@ -579,17 +666,20 @@ window.ManagerApp = {
                 e.preventDefault();
                 const mapId = document.getElementById("mapEdit_id").value.trim();
                 const mapName = document.getElementById("mapEdit_name").value.trim();
-                if (!mapId || !mapName) {
-                    this.showToast("Map ID and Name are required.", "error");
-                    return;
-                }
+                const realmIndex = document.getElementById("mapEdit_realmIndex").value.trim();
+                const maxDepth = document.getElementById("mapEdit_maxDepth") ? document.getElementById("mapEdit_maxDepth").value.trim() : "";
+
+                if (!this.validateInput("mapEdit_id", this.isValidId(mapId), "Map ID must be 2-50 characters (letters, numbers, hyphens, underscores).")) return;
+                if (!this.validateInput("mapEdit_name", mapName.length >= 2, "Map Name must be at least 2 characters.")) return;
+                if (!this.validateInput("mapEdit_realmIndex", this.isValidNumber(realmIndex, 1), "Realm index must be 1 or higher.")) return;
+                if (maxDepth && !this.validateInput("mapEdit_maxDepth", this.isValidNumber(maxDepth, 1, 10), "Max depth must be between 1 and 10.")) return;
 
                 const existing = (window.MapsData && window.MapsData[mapId]) || {};
                 const bossVal = document.getElementById("mapEdit_bossId").value.trim();
                 const mobsRaw = document.getElementById("mapEdit_mobs").value.trim();
                 const mobsArr = mobsRaw ? mobsRaw.split(",").map(s => s.trim()).filter(Boolean) : (existing.mobs || ["goblin"]);
 
-                const maxDepthVal = parseInt(document.getElementById("mapEdit_maxDepth")?.value, 10) || 3;
+                const maxDepthVal = parseInt(maxDepth, 10) || 3;
                 const subsRaw = (document.getElementById("mapEdit_depthSubtitles")?.value || "").split("|").map(s => s.trim()).filter(Boolean);
                 const romans = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
                 const depthTiers = [];
@@ -664,15 +754,27 @@ window.ManagerApp = {
             formWeather.addEventListener("submit", (e) => {
                 e.preventDefault();
                 const wId = document.getElementById("weatherEdit_id").value;
-                if (window.WeatherData[wId]) {
-                    const w = window.WeatherData[wId];
-                    w.playerDmgMult = parseFloat(document.getElementById("weatherEdit_playerDmg").value);
-                    w.enemyDmgMult = parseFloat(document.getElementById("weatherEdit_enemyDmg").value);
-                    w.goldMult = parseFloat(document.getElementById("weatherEdit_gold").value);
-                    w.xpMult = parseFloat(document.getElementById("weatherEdit_xp").value);
-                    api.data.saveWeather(w);
-                    this.showToast(`Weather '${w.name}' updated!`, "success");
+                if (!wId || !window.WeatherData || !window.WeatherData[wId]) {
+                    this.showToast("Select a valid weather condition.", "error");
+                    return;
                 }
+                const playerDmg = document.getElementById("weatherEdit_playerDmg").value.trim();
+                const enemyDmg = document.getElementById("weatherEdit_enemyDmg").value.trim();
+                const gold = document.getElementById("weatherEdit_gold").value.trim();
+                const xp = document.getElementById("weatherEdit_xp").value.trim();
+
+                if (!this.validateInput("weatherEdit_playerDmg", this.isValidNumber(playerDmg, 0.01), "Player Damage multiplier must be greater than 0.")) return;
+                if (!this.validateInput("weatherEdit_enemyDmg", this.isValidNumber(enemyDmg, 0.01), "Enemy Damage multiplier must be greater than 0.")) return;
+                if (!this.validateInput("weatherEdit_gold", this.isValidNumber(gold, 0.01), "Gold multiplier must be greater than 0.")) return;
+                if (!this.validateInput("weatherEdit_xp", this.isValidNumber(xp, 0.01), "XP multiplier must be greater than 0.")) return;
+
+                const w = window.WeatherData[wId];
+                w.playerDmgMult = parseFloat(playerDmg);
+                w.enemyDmgMult = parseFloat(enemyDmg);
+                w.goldMult = parseFloat(gold);
+                w.xpMult = parseFloat(xp);
+                api.data.saveWeather(w);
+                this.showToast(`Weather '${w.name}' updated!`, "success");
             });
         }
 
@@ -720,22 +822,34 @@ window.ManagerApp = {
                 e.preventDefault();
                 const scId = document.getElementById("scenEdit_id").value.trim();
                 const scName = document.getElementById("scenEdit_name").value.trim();
-                if (!scId || !scName) {
-                    this.showToast("Scenario ID and Name required.", "error");
-                    return;
-                }
+                const duration = document.getElementById("scenEdit_duration").value.trim();
+                const enemyHp = document.getElementById("scenEdit_enemyHp").value.trim();
+                const enemyDmg = document.getElementById("scenEdit_enemyDmg").value.trim();
+                const gold = document.getElementById("scenEdit_gold").value.trim();
+                const xp = document.getElementById("scenEdit_xp").value.trim();
+                const dropMult = document.getElementById("scenEdit_dropMult").value.trim();
+
+                if (!this.validateInput("scenEdit_id", this.isValidId(scId), "Scenario ID must be 2-50 characters (letters, numbers, hyphens, underscores).")) return;
+                if (!this.validateInput("scenEdit_name", scName.length >= 2, "Scenario Name must be at least 2 characters.")) return;
+                if (!this.validateInput("scenEdit_duration", this.isValidNumber(duration, 5, 86400), "Duration must be between 5 and 86,400 seconds.")) return;
+                if (!this.validateInput("scenEdit_enemyHp", this.isValidNumber(enemyHp, 0.01), "Enemy HP multiplier must be greater than 0.")) return;
+                if (!this.validateInput("scenEdit_enemyDmg", this.isValidNumber(enemyDmg, 0.01), "Enemy Dmg multiplier must be greater than 0.")) return;
+                if (!this.validateInput("scenEdit_gold", this.isValidNumber(gold, 0.01), "Gold multiplier must be greater than 0.")) return;
+                if (!this.validateInput("scenEdit_xp", this.isValidNumber(xp, 0.01), "XP multiplier must be greater than 0.")) return;
+                if (!this.validateInput("scenEdit_dropMult", this.isValidNumber(dropMult, 0.01), "Drop multiplier must be greater than 0.")) return;
+
                 const scObj = {
                     id: scId,
                     name: scName,
-                    duration: parseInt(document.getElementById("scenEdit_duration").value, 10) || 60,
+                    duration: parseInt(duration, 10) || 60,
                     bannerText: document.getElementById("scenEdit_banner").value.trim(),
                     modifiers: {
                         playerDmgMult: 1.0,
-                        enemyHpMult: parseFloat(document.getElementById("scenEdit_enemyHp").value) || 1.0,
-                        enemyDmgMult: parseFloat(document.getElementById("scenEdit_enemyDmg").value) || 1.0,
-                        goldMult: parseFloat(document.getElementById("scenEdit_gold").value) || 1.0,
-                        xpMult: parseFloat(document.getElementById("scenEdit_xp").value) || 1.0,
-                        dropMult: parseFloat(document.getElementById("scenEdit_dropMult").value) || 1.0
+                        enemyHpMult: parseFloat(enemyHp) || 1.0,
+                        enemyDmgMult: parseFloat(enemyDmg) || 1.0,
+                        goldMult: parseFloat(gold) || 1.0,
+                        xpMult: parseFloat(xp) || 1.0,
+                        dropMult: parseFloat(dropMult) || 1.0
                     }
                 };
                 api.data.saveScenario(scObj);
@@ -776,10 +890,21 @@ window.ManagerApp = {
                 e.preventDefault();
                 const id = document.getElementById("alchEdit_id").value.trim();
                 const name = document.getElementById("alchEdit_name").value.trim();
-                if (!id || !name) {
-                    this.showToast("Recipe ID and Name are required.", "error");
-                    return;
-                }
+                const resultId = document.getElementById("alchEdit_resultId").value.trim();
+                const resultQty = document.getElementById("alchEdit_resultQty").value.trim();
+                const goldCost = document.getElementById("alchEdit_goldCost").value.trim();
+                const reqLevel = document.getElementById("alchEdit_reqLevel").value.trim();
+                const effectVal = document.getElementById("alchEdit_effectVal").value.trim();
+                const effectDuration = document.getElementById("alchEdit_effectDuration").value.trim();
+
+                if (!this.validateInput("alchEdit_id", this.isValidId(id), "Recipe ID must be 2-50 characters (letters, numbers, hyphens, underscores).")) return;
+                if (!this.validateInput("alchEdit_name", name.length >= 2, "Recipe Name must be at least 2 characters.")) return;
+                if (!this.validateInput("alchEdit_resultId", this.isValidId(resultId), "Result Item ID is required.")) return;
+                if (!this.validateInput("alchEdit_resultQty", this.isValidNumber(resultQty, 1), "Result Quantity must be at least 1.")) return;
+                if (!this.validateInput("alchEdit_goldCost", this.isValidNumber(goldCost, 0), "Gold cost cannot be negative.")) return;
+                if (!this.validateInput("alchEdit_reqLevel", this.isValidNumber(reqLevel, 1), "Required level must be at least 1.")) return;
+                if (effectVal && !this.validateInput("alchEdit_effectVal", this.isValidNumber(effectVal, 0), "Effect value cannot be negative.")) return;
+                if (effectDuration && !this.validateInput("alchEdit_effectDuration", this.isValidNumber(effectDuration, 1), "Effect duration must be at least 1 second.")) return;
 
                 const mats = {};
                 const rawMats = document.getElementById("alchEdit_materials").value.trim();
@@ -799,19 +924,19 @@ window.ManagerApp = {
                     icon: document.getElementById("alchEdit_icon").value.trim() || "🧪",
                     tier: tier,
                     tierName: tierNames[tier] || `Tier ${tier}`,
-                    reqLevel: parseInt(document.getElementById("alchEdit_reqLevel").value, 10) || 1,
-                    goldCost: parseInt(document.getElementById("alchEdit_goldCost").value, 10) || 0,
+                    reqLevel: parseInt(reqLevel, 10) || 1,
+                    goldCost: parseInt(goldCost, 10) || 0,
                     materials: mats,
                     result: {
-                        id: document.getElementById("alchEdit_resultId").value.trim() || "potion_minor",
+                        id: resultId || "potion_minor",
                         type: "consumable",
-                        qty: parseInt(document.getElementById("alchEdit_resultQty").value, 10) || 1
+                        qty: parseInt(resultQty, 10) || 1
                     },
                     effect: {
                         type: document.getElementById("alchEdit_effectType").value,
                         stat: document.getElementById("alchEdit_effectStat").value,
-                        value: parseFloat(document.getElementById("alchEdit_effectVal").value) || 0,
-                        duration: parseInt(document.getElementById("alchEdit_effectDuration").value, 10) || 60
+                        value: parseFloat(effectVal) || 0,
+                        duration: parseInt(effectDuration, 10) || 60
                     },
                     description: document.getElementById("alchEdit_desc").value.trim()
                 };

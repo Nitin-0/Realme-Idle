@@ -1320,6 +1320,20 @@ window.MainEngine = {
                 bonusNotes += ` · ✨ Grants ${activeSkill.buff.name || 'Buff'}`;
             }
 
+            let buffStatBox = "";
+            if (activeSkill.buff && nextStats.buff && activeSkill.buff.bonus && nextStats.buff.bonus) {
+                const bDiff = nextStats.buff.bonus - activeSkill.buff.bonus;
+                buffStatBox = `
+                    <div class="skill-stat-box">
+                        <div class="skill-stat-lbl">${activeSkill.buff.name || 'Buff'} Bonus</div>
+                        <div class="skill-stat-val">
+                            +${activeSkill.buff.bonus}
+                            <span class="skill-stat-next">➜ +${nextStats.buff.bonus} (+${bDiff})</span>
+                        </div>
+                    </div>
+                `;
+            }
+
             upgradeCenter.innerHTML = `
                 <div class="skill-active-hero-box">
                     <div class="skill-active-info-col">
@@ -1346,6 +1360,7 @@ window.MainEngine = {
                             <span class="skill-stat-next">➜ ${nextStats.cooldown}s (-${cdDiff}s)</span>
                         </div>
                     </div>
+                    ${buffStatBox}
                 </div>
 
                 <div class="skill-upgrade-footer">
