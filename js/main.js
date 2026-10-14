@@ -18,7 +18,7 @@ window.MainEngine = {
         step: 1,
         name: "Roland",
         gender: "male",
-        selectedClass: "knight"
+        selectedClass: "martial_artist"
     },
     victoryDetails: null,
 
@@ -66,15 +66,17 @@ window.MainEngine = {
         this.updateUI();
 
         // 12. Expose Developer & User Console Shortcuts
+        window.newGame = () => this.showNewGameModal();
+        window.showNewGameModal = () => this.showNewGameModal();
         window.wipeAllSaveData = () => this.wipeAllSaveData();
         window.clearSave = () => this.wipeAllSaveData();
-        window.resetGame = () => this.wipeAllSaveData();
-        window.startNewAdventure = () => this.wipeAllSaveData();
+        window.resetGame = () => this.showNewGameModal();
+        window.startNewAdventure = () => this.showNewGameModal();
         window.clearLogs = () => {
             if (window.gameState) window.gameState.clearLogs();
             console.log("%c📜 REALM IDLE: Adventure logs cleared.", "color: #00e676;");
         };
-        console.log("%c👑 REALM IDLE: Type clearSave() or resetGame() in console anytime to wipe storage and restart adventure!", "color: #edc76f; font-weight: bold; font-size: 12px;");
+        console.log("%c👑 REALM IDLE: Type newGame() or clearSave() in console anytime to manage adventure saves!", "color: #edc76f; font-weight: bold; font-size: 12px;");
 
         console.log("👑 Realm Idle RPG & GM Engine Initialized!");
     },
@@ -150,10 +152,15 @@ window.MainEngine = {
             });
         }
 
-        // Reset & Full Wipe
+        // New Game & Reset Hub Triggers
         const btnReset = document.getElementById("reset");
         if (btnReset) {
-            btnReset.addEventListener("click", () => this.wipeAllSaveData());
+            btnReset.addEventListener("click", () => this.showNewGameModal());
+        }
+
+        const btnOpenNewGame = document.getElementById("btnOpenNewGameModal");
+        if (btnOpenNewGame) {
+            btnOpenNewGame.addEventListener("click", () => this.showNewGameModal());
         }
 
         // Hero Class Icon Quick Access Menu
@@ -173,11 +180,11 @@ window.MainEngine = {
             });
         }
 
-        const btnQuickNewHero = document.getElementById("btnQuickNewHero");
-        if (btnQuickNewHero) {
-            btnQuickNewHero.addEventListener("click", () => {
+        const btnQuickNewGame = document.getElementById("btnQuickNewGame") || document.getElementById("btnQuickNewHero");
+        if (btnQuickNewGame) {
+            btnQuickNewGame.addEventListener("click", () => {
                 this.hideHeroQuickMenu();
-                this.showOnboardingModal(true);
+                this.showNewGameModal();
             });
         }
 
@@ -198,12 +205,51 @@ window.MainEngine = {
 
         const btnQuickWipe = document.getElementById("btnQuickWipe");
         if (btnQuickWipe) {
-            btnQuickWipe.addEventListener("click", () => this.wipeAllSaveData());
+            btnQuickWipe.addEventListener("click", () => this.showNewGameModal());
         }
 
         const dbgWipe = document.getElementById("dbgBtnWipeRestart");
         if (dbgWipe) {
-            dbgWipe.addEventListener("click", () => this.wipeAllSaveData());
+            dbgWipe.addEventListener("click", () => this.showNewGameModal());
+        }
+
+        // New Game Modal Buttons & Handlers
+        const btnNewGameClose = document.getElementById("btnNewGameClose");
+        if (btnNewGameClose) {
+            btnNewGameClose.addEventListener("click", () => this.hideNewGameModal());
+        }
+
+        const newGameModal = document.getElementById("newGameModal");
+        if (newGameModal) {
+            newGameModal.addEventListener("click", (e) => {
+                if (e.target === newGameModal) this.hideNewGameModal();
+            });
+        }
+
+        const btnConfirmNewHero = document.getElementById("btnConfirmNewHero");
+        if (btnConfirmNewHero) {
+            btnConfirmNewHero.addEventListener("click", () => this.startNewHeroAdventure());
+        }
+
+        const btnConfirmWipeData = document.getElementById("btnConfirmWipeData");
+        if (btnConfirmWipeData) {
+            btnConfirmWipeData.addEventListener("click", () => this.wipeAllSaveData());
+        }
+
+        const btnBackupExport = document.getElementById("btnBackupExportSave");
+        if (btnBackupExport) {
+            btnBackupExport.addEventListener("click", () => this.exportSaveFile());
+        }
+
+        const btnBackupImport = document.getElementById("btnBackupImportSave");
+        const fileInputImport = document.getElementById("fileInputSaveImport");
+        if (btnBackupImport && fileInputImport) {
+            btnBackupImport.addEventListener("click", () => fileInputImport.click());
+            fileInputImport.addEventListener("change", (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    this.importSaveFile(e.target.files[0]);
+                }
+            });
         }
 
         // Kingdom building buttons
@@ -236,6 +282,85 @@ window.MainEngine = {
         const chkAutoPotion = document.getElementById("chkAutoPotion");
         if (chkAutoPotion) {
             chkAutoPotion.addEventListener("change", (e) => api.player.toggleAutoPotion(e.target.checked));
+        }
+
+        // Food Belt: Quick Eat, Cycle Food, and Auto-Eat
+        const btnQuickEatFood = document.getElementById("btnQuickEatFood");
+        if (btnQuickEatFood) {
+            btnQuickEatFood.addEventListener("click", () => {
+                state.eatFood();
+                this.updateUI();
+            });
+        }
+
+        const btnSwapFood = document.getElementById("btnSwapFood");
+        if (btnSwapFood) {
+            btnSwapFood.addEventListener("click", () => {
+                const foods = ["food_bread", "food_pie", "food_meat", "food_stew", "food_feast"];
+                const currIdx = foods.indexOf(state.player.equippedFood || "food_bread");
+                let nextFood = null;
+                for (let i = 1; i <= foods.length; i++) {
+                    const candidate = foods[(currIdx + i) % foods.length];
+                    if ((state.player.food && (state.player.food[candidate] || 0) > 0) || candidate === "food_bread") {
+                        nextFood = candidate;
+                        break;
+                    }
+                }
+                if (nextFood) {
+                    state.equipFood(nextFood);
+                    this.updateUI();
+                }
+            });
+        }
+
+        const chkAutoFood = document.getElementById("chkAutoFood");
+        if (chkAutoFood) {
+            chkAutoFood.addEventListener("change", (e) => {
+                state.player.autoEatFood = e.target.checked;
+                state.save();
+            });
+        }
+
+        // Kingdom Domain: Redirect to Bestiary & Granary Journal
+        const btnOpenKingdomJournal = document.getElementById("btnOpenKingdomJournal");
+        if (btnOpenKingdomJournal) {
+            btnOpenKingdomJournal.addEventListener("click", () => {
+                this.switchTab("journal");
+            });
+        }
+
+        // Journal Sub-Navigation Tabs (Bestiary vs Granary)
+        document.querySelectorAll("[data-journal-view]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const targetView = btn.dataset.journalView;
+                document.querySelectorAll("[data-journal-view]").forEach(b => b.classList.toggle("active", b === btn));
+                const bestiaryPanel = document.getElementById("journalView_bestiary");
+                const farmsPanel = document.getElementById("journalView_farms");
+                if (bestiaryPanel && farmsPanel) {
+                    bestiaryPanel.style.display = targetView === "bestiary" ? "block" : "none";
+                    farmsPanel.style.display = targetView === "farms" ? "block" : "none";
+                }
+                this.renderJournalView();
+            });
+        });
+
+        // Bestiary Filter Buttons
+        document.querySelectorAll("[data-bestiary-filter]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                this.bestiaryFilter = btn.dataset.bestiaryFilter;
+                document.querySelectorAll("[data-bestiary-filter]").forEach(b => b.classList.toggle("active", b === btn));
+                this.renderJournalView();
+            });
+        });
+
+        // Granary Manual Harvest Button
+        const btnHarvestFarms = document.getElementById("btnHarvestFarms");
+        if (btnHarvestFarms) {
+            btnHarvestFarms.addEventListener("click", () => {
+                state.harvestFarms(true);
+                this.renderJournalView();
+                this.updateUI();
+            });
         }
 
         // Rest at Camp Button
@@ -361,7 +486,7 @@ window.MainEngine = {
             btnEmbark.addEventListener("click", () => {
                 const chosenName = this.onboardState.name || "Hero";
                 const chosenGender = this.onboardState.gender || "male";
-                const chosenClass = this.onboardState.selectedClass || "knight";
+                const chosenClass = this.onboardState.selectedClass || "martial_artist";
                 api.player.completeOnboarding(chosenName, chosenGender, chosenClass);
                 this.hideOnboardingModal();
             });
@@ -454,12 +579,35 @@ window.MainEngine = {
         }
 
         // New Game / Reset Hero
-        const btnNewHero = document.getElementById("btnNewGame");
+        const btnNewHero = document.getElementById("btnNewGame") || document.getElementById("btnOpenNewGameModal");
         if (btnNewHero) {
-            btnNewHero.addEventListener("click", () => {
-                if (confirm("👑 Create a new hero and restart the realm journey? Current hero progress will be reset.")) {
-                    api.player.resetToNewGame();
-                    this.showOnboardingModal();
+            btnNewHero.addEventListener("click", () => this.showNewGameModal());
+        }
+
+        // Attribute Stat Points Allocation Delegation
+        const statPanel = document.getElementById("statAllocationPanel");
+        if (statPanel) {
+            statPanel.addEventListener("click", (e) => {
+                const btn = e.target.closest(".btn-stat-alloc");
+                if (btn && !btn.disabled) {
+                    const stat = btn.dataset.stat;
+                    const count = parseInt(btn.dataset.count, 10) || 1;
+                    if (stat && state.allocateStat(stat, count)) {
+                        this.renderCharacterView();
+                        this.updateUI();
+                    }
+                }
+            });
+        }
+
+        const btnResetStats = document.getElementById("btnResetStats");
+        if (btnResetStats) {
+            btnResetStats.addEventListener("click", () => {
+                const totalAlloc = Object.values(state.player.allocatedStats || {}).reduce((a, b) => a + (Number(b) || 0), 0);
+                if (totalAlloc > 0 && confirm("🔄 Refund and reset all allocated attribute stat points?")) {
+                    state.resetStats();
+                    this.renderCharacterView();
+                    this.updateUI();
                 }
             });
         }
@@ -480,6 +628,10 @@ window.MainEngine = {
 
         if (tabId === "arena" && window.WeatherManager) {
             setTimeout(() => window.WeatherManager.resize(), 50);
+        }
+
+        if (tabId === "journal") {
+            this.renderJournalView();
         }
     },
 
@@ -553,6 +705,9 @@ window.MainEngine = {
             if (state && typeof state.tickPassiveIncome === "function") {
                 state.tickPassiveIncome();
             }
+            if (state && typeof state.tickFarmProduction === "function") {
+                state.tickFarmProduction();
+            }
         }, passiveInterval);
 
         this.eventLoopId = setInterval(() => {
@@ -568,7 +723,7 @@ window.MainEngine = {
     updateUI() {
         const state = window.gameState;
         const map = window.MapsData[state.world.currentMapId] || window.MapsData.moonlit_vale;
-        const heroDef = window.HeroesData[state.player.heroClass] || window.HeroesData.knight;
+        const heroDef = window.HeroesData[state.player.heroClass] || window.HeroesData.martial_artist;
 
         // Player & Resources
         if (document.getElementById("gold")) document.getElementById("gold").textContent = Math.floor(state.player.gold).toLocaleString();
@@ -581,8 +736,9 @@ window.MainEngine = {
         if (document.getElementById("realm")) document.getElementById("realm").textContent = `${map.roman || 1}.${curTier.roman}`;
         if (document.getElementById("realmName")) document.getElementById("realmName").textContent = `${map.name} ${curTier.roman}${depthSuffix}`;
 
-        if (document.getElementById("heroClassIcon")) document.getElementById("heroClassIcon").textContent = heroDef.icon;
-        if (document.getElementById("heroClassName")) document.getElementById("heroClassName").textContent = heroDef.name;
+        const curSub = state.getSubclass ? state.getSubclass() : null;
+        if (document.getElementById("heroClassIcon")) document.getElementById("heroClassIcon").textContent = (curSub && curSub.icon) ? curSub.icon : heroDef.icon;
+        if (document.getElementById("heroClassName")) document.getElementById("heroClassName").textContent = curSub ? `${heroDef.name} (${curSub.name})` : heroDef.name;
 
         // Player Level, XP & Health
         if (document.getElementById("playerLevel")) document.getElementById("playerLevel").textContent = state.player.level;
@@ -824,6 +980,19 @@ window.MainEngine = {
         const chkAutoCast = document.getElementById("chkAutoCast");
         if (chkAutoCast) chkAutoCast.checked = !!state.player.skills.autoCast;
 
+        // Food Quick Belt
+        const eqFoodId = state.player.equippedFood || "food_bread";
+        const fDef = (window.FoodData && window.FoodData[eqFoodId]) || (window.ItemsData && window.ItemsData[eqFoodId]);
+        const foodCount = (state.player.food && state.player.food[eqFoodId]) || 0;
+        const quickIconEl = document.getElementById("quickFoodIcon");
+        const quickNameEl = document.getElementById("quickFoodName");
+        const quickCountEl = document.getElementById("quickFoodCount");
+        const chkAutoFood = document.getElementById("chkAutoFood");
+        if (quickIconEl && fDef) quickIconEl.textContent = fDef.icon || "🍞";
+        if (quickNameEl && fDef) quickNameEl.textContent = fDef.name || "Warm Bread";
+        if (quickCountEl) quickCountEl.textContent = `x${foodCount}`;
+        if (chkAutoFood) chkAutoFood.checked = state.player.autoEatFood !== false;
+
         // Active Buffs Strip
         const buffsStrip = document.getElementById("activeBuffsStrip");
         if (buffsStrip) {
@@ -926,7 +1095,7 @@ window.MainEngine = {
             }
         }
 
-        ["castle", "treasury", "blacksmith", "mageTower", "barracks"].forEach(bldg => {
+        ["castle", "treasury", "farms", "blacksmith", "mageTower", "barracks"].forEach(bldg => {
             const lvlEl = document.getElementById(`bldgLvl_${bldg}`);
             const costEl = document.getElementById(`bldgCost_${bldg}`);
             const btnEl = document.getElementById(`btnBldg_${bldg}`);
@@ -938,6 +1107,17 @@ window.MainEngine = {
                 if (btnEl) btnEl.disabled = !kingdomUnlocked || !state.canAfford(cost);
             }
         });
+
+        const farmDescEl = document.getElementById("bldgDesc_farms");
+        if (farmDescEl && state.getFarmLevel) {
+            const fLvl = state.getFarmLevel();
+            let fName = "Warm Crust Bread";
+            if (fLvl >= 5) fName = "Royal Ambrosia Feast";
+            else if (fLvl >= 4) fName = "Dragon-Fire Stew";
+            else if (fLvl >= 3) fName = "Roasted Boar Shank";
+            else if (fLvl >= 2) fName = "Hearty Meat Pie";
+            farmDescEl.textContent = `Produces ${fName} · +${fLvl * 15} Max HP`;
+        }
 
         // Dynamic Quests UI
         const questsListEl = document.getElementById("questsList");
@@ -1058,23 +1238,93 @@ window.MainEngine = {
         if (document.getElementById("incomeUpgrade")) document.getElementById("incomeUpgrade").disabled = !state.canAfford(state.costs.incomeCost);
         if (document.getElementById("nextRealm")) document.getElementById("nextRealm").disabled = !state.canAfford(state.costs.realmCost);
 
+        // Render Item Loot Feed (Battle Tab)
+        this.renderItemLootLog();
+
         // Render Page-Specific Views
         if (this.activeTab === "character") this.renderCharacterView();
         if (this.activeTab === "inventory") this.renderInventoryView();
         if (this.activeTab === "shop") this.renderShop();
+        if (this.activeTab === "journal") this.renderJournalView();
 
         // Sync Dev Panel UI if open
         if (window.DevPanel) window.DevPanel.syncUI();
     },
 
+    renderItemLootLog() {
+        const feed = document.getElementById("itemLootFeed");
+        const countTag = document.getElementById("itemLootCountTag");
+        if (!feed) return;
+
+        const state = window.gameState;
+        const loot = (state && state.itemLootLog) ? state.itemLootLog : [];
+
+        if (countTag) {
+            countTag.textContent = `${loot.length} / 300 LOGS`;
+        }
+
+        if (loot.length === 0) {
+            feed.innerHTML = `
+                <div class="loot-empty-hint">
+                    <span class="loot-empty-icon">🎁</span>
+                    <p>No items looted yet. Slay monsters, claim gold, and delve into dungeons to acquire weapons, armor, materials, and scrolls!</p>
+                </div>
+            `;
+            return;
+        }
+
+        feed.innerHTML = loot.slice(0, 300).map(item => {
+            const rarity = (item.rarity || 'common').toLowerCase();
+            const rarityClass = `rarity-${rarity}`;
+            const timeDisplay = item.timeStr || "";
+            const catBadge = item.category ? `[${item.category.toUpperCase()}]` : '';
+            const count = (item.count !== undefined && item.count !== null) ? Number(item.count) : 1;
+            const showMultiplier = (count > 1 || item.category === "gold");
+            const multiplierBadge = showMultiplier
+                ? `<span class="loot-multiplier-badge ${count >= 5 ? 'is-high' : ''}">x${count.toLocaleString()}</span>`
+                : '';
+
+            return `
+                <div class="loot-item-entry ${rarityClass}">
+                    <div class="loot-item-icon">${item.icon || '🎁'}</div>
+                    <div class="loot-item-info">
+                        <div class="loot-item-title-row">
+                            <div class="loot-item-name-wrap">
+                                <span class="loot-item-name" title="${item.name}">${item.name}</span>
+                                ${multiplierBadge}
+                            </div>
+                            <span class="loot-item-rarity">${(item.rarity || 'common').toUpperCase()}</span>
+                        </div>
+                        <div class="loot-item-details-row">
+                            <span class="loot-item-sub" title="${item.details || ''}">${item.details || catBadge}</span>
+                            <span class="loot-item-time">${timeDisplay}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    },
+
     renderCharacterView() {
         const state = window.gameState;
-        const heroDef = window.HeroesData[state.player.heroClass] || window.HeroesData.knight;
+        const heroDef = window.HeroesData[state.player.heroClass] || window.HeroesData.martial_artist;
+        const curSub = state.getSubclass ? state.getSubclass() : null;
 
-        if (document.getElementById("charSheetIcon")) document.getElementById("charSheetIcon").textContent = heroDef.icon;
+        if (document.getElementById("charSheetIcon")) document.getElementById("charSheetIcon").textContent = (curSub && curSub.icon) ? curSub.icon : heroDef.icon;
         if (document.getElementById("charSheetName")) document.getElementById("charSheetName").textContent = `${heroDef.name} (Lv. ${state.player.level})`;
         if (document.getElementById("charSheetDesc")) document.getElementById("charSheetDesc").textContent = heroDef.description;
         if (document.getElementById("charSheetPerks")) document.getElementById("charSheetPerks").textContent = `Class Perk: ${heroDef.perks || "None"}`;
+
+        const subBadge = document.getElementById("charSheetSubclassBadge");
+        if (subBadge) {
+            if (curSub) {
+                subBadge.style.display = "inline-flex";
+                subBadge.textContent = curSub.name;
+                subBadge.title = `Specialization: ${curSub.name} (${curSub.role || 'Specialist'})\n${curSub.description || ''}`;
+            } else {
+                subBadge.style.display = "none";
+            }
+        }
 
         const updateStatDisplay = (id, statKey, fallbackVal) => {
             const el = document.getElementById(id);
@@ -1262,11 +1512,142 @@ window.MainEngine = {
             });
         }
 
+        // Render Attribute Stat Points Allocation
+        this.renderStatAllocation();
+
+        // Render Subclass Specialization Path
+        this.renderSubclasses();
+
         // Render Special Skills & Ability Mastery Center
         this.renderSpecialSkills();
 
         // Render Divine Blessings & Passives ("Blessed by the Gods")
         this.renderDivineBlessings();
+    },
+
+    renderStatAllocation() {
+        const state = window.gameState;
+        if (!state || !state.player) return;
+        const unspent = state.player.unspentStatPoints || 0;
+        const stats = state.player.allocatedStats || { str: 0, int: 0, vit: 0, def: 0, rng: 0 };
+
+        const badge = document.getElementById("unspentStatBadge");
+        if (badge) {
+            badge.textContent = `⭐ ${unspent} Point${unspent === 1 ? '' : 's'} Available`;
+            if (unspent > 0) {
+                badge.classList.remove("zero");
+            } else {
+                badge.classList.add("zero");
+            }
+        }
+
+        ["str", "int", "vit", "def", "rng"].forEach(k => {
+            const valEl = document.getElementById(`allocVal_${k}`);
+            if (valEl) {
+                const count = stats[k] || 0;
+                valEl.textContent = `+${count}`;
+            }
+        });
+
+        // Enable / disable alloc buttons based on unspent points
+        const allocBtns = document.querySelectorAll(".btn-stat-alloc");
+        allocBtns.forEach(btn => {
+            const count = parseInt(btn.dataset.count, 10) || 1;
+            btn.disabled = (unspent < count);
+        });
+
+        // Enable / disable reset button based on whether any stats have been allocated
+        const resetBtn = document.getElementById("btnResetStats");
+        if (resetBtn) {
+            const totalAllocated = Object.values(stats).reduce((a, b) => a + (Number(b) || 0), 0);
+            resetBtn.disabled = (totalAllocated <= 0);
+        }
+    },
+
+    renderSubclasses() {
+        const grid = document.getElementById("subclassCardsGrid");
+        const headerTag = document.getElementById("currentSubclassHeaderTag");
+        if (!grid) return;
+
+        const state = window.gameState;
+        const heroDef = (window.HeroesData && window.HeroesData[state.player.heroClass]) || null;
+        if (!heroDef || !heroDef.subclasses || heroDef.subclasses.length === 0) {
+            grid.innerHTML = `<div class="empty-hint" style="grid-column: 1/-1; padding: 18px; text-align: center; color: var(--muted);">No subclasses available for this class.</div>`;
+            return;
+        }
+
+        const activeSub = state.getSubclass ? state.getSubclass() : null;
+        const activeSubId = activeSub ? activeSub.id : heroDef.subclasses[0].id;
+
+        if (headerTag) {
+            headerTag.textContent = `${heroDef.name.toUpperCase()} SPECIALIZATIONS`;
+        }
+
+        grid.innerHTML = "";
+        heroDef.subclasses.forEach(sub => {
+            const isCurrent = (activeSubId === sub.id);
+            const card = document.createElement("div");
+            card.className = `subclass-card ${isCurrent ? 'active-subclass' : ''}`;
+
+            // Build bonus pills
+            let bonusPillsHtml = "";
+            if (sub.bonus) {
+                const bonusLabels = {
+                    atk: "⚔️ Atk",
+                    attack: "⚔️ Atk",
+                    def: "🛡️ Def",
+                    defense: "🛡️ Def",
+                    hp: "❤️ Max HP",
+                    maxHp: "❤️ Max HP",
+                    crit: "🎯 Crit",
+                    critChance: "🎯 Crit",
+                    eva: "💨 Dodge",
+                    dodge: "💨 Dodge",
+                    vamp: "🩸 Lifesteal",
+                    lifesteal: "🩸 Lifesteal",
+                    critDmg: "💥 Crit Dmg"
+                };
+                bonusPillsHtml = Object.entries(sub.bonus).map(([k, v]) => {
+                    const label = bonusLabels[k] || k;
+                    const isPct = k.toLowerCase().includes("crit") || k.toLowerCase().includes("dodge") || k.toLowerCase().includes("eva") || k.toLowerCase().includes("vamp") || k.toLowerCase().includes("lifesteal");
+                    const formatted = (typeof v === "number" && isPct && v < 1) ? `+${Math.round(v * 100)}%` : (isPct ? `+${v}%` : `+${v}`);
+                    return `<span class="subclass-bonus-pill">${label} ${formatted}</span>`;
+                }).join("");
+            }
+
+            card.innerHTML = `
+                <div class="subclass-card-header">
+                    <span class="subclass-card-icon">${sub.icon || "⚔️"}</span>
+                    <div class="subclass-card-title-col">
+                        <h4>${sub.name} ${sub.primaryStat ? `<span class="subclass-primary-pill">${sub.primaryStat.toUpperCase()}</span>` : ''}</h4>
+                        <span class="subclass-card-role">${sub.role || "Specialist"}</span>
+                    </div>
+                </div>
+                <p class="subclass-card-desc">${sub.description || ""}</p>
+                <div class="subclass-card-bonuses">
+                    ${bonusPillsHtml || '<span class="muted" style="font-size:11px;">Balanced martial discipline</span>'}
+                </div>
+                ${sub.skill ? `
+                    <div class="subclass-skill-preview">
+                        <span>✨ <strong>Signature Skill:</strong> ${sub.skill.name} (${sub.skill.description})</span>
+                    </div>
+                ` : ''}
+                <button type="button" class="btn btn-select-subclass ${isCurrent ? 'is-active' : ''}" ${isCurrent ? 'disabled' : ''} data-subclass="${sub.id}">
+                    ${isCurrent ? '✓ Active Discipline' : `Specialize as ${sub.name}`}
+                </button>
+            `;
+
+            const btn = card.querySelector(".btn-select-subclass");
+            if (btn && !isCurrent) {
+                btn.addEventListener("click", () => {
+                    state.setSubclass(sub.id);
+                    this.renderCharacterView();
+                    this.updateUI();
+                });
+            }
+
+            grid.appendChild(card);
+        });
     },
 
     renderSpecialSkills() {
@@ -1276,7 +1657,7 @@ window.MainEngine = {
         if (!upgradeCenter || !arsenalGrid) return;
 
         const state = window.gameState;
-        const heroDef = (window.HeroesData && window.HeroesData[state.player.heroClass]) || window.HeroesData.knight;
+        const heroDef = (window.HeroesData && window.HeroesData[state.player.heroClass]) || window.HeroesData.martial_artist;
         const activeSkill = state.getActiveSkill ? state.getActiveSkill() : heroDef.skill;
         const activeSkillId = state.getActiveSkillId ? state.getActiveSkillId() : (activeSkill ? activeSkill.id : null);
         const curLevel = state.getSkillLevel ? state.getSkillLevel(activeSkillId) : 1;
@@ -1412,9 +1793,15 @@ window.MainEngine = {
             } else if (isUnlocked) {
                 actionBtn = `<button class="btn-equip-skill btn-purple" onclick="window.gameState.equipSkill('${skill.id}'); window.MainEngine.renderSpecialSkills(); window.MainEngine.updateUI();">⚔️ Equip Active Skill</button>`;
             } else {
-                const scrollItem = window.ItemsData ? window.ItemsData[skill.scrollId] : null;
-                const scrollName = scrollItem ? scrollItem.name : "Skill Scroll";
-                actionBtn = `<button class="btn-equip-skill btn-disabled" disabled title="Acquire and study [${scrollName}] from the Realm Shop or monsters to master this ability">🔒 Locked (${scrollName})</button>`;
+                if (skill.subclassReq) {
+                    const subDef = (heroDef.subclasses || []).find(s => s.id === skill.subclassReq);
+                    const subName = subDef ? subDef.name : skill.subclassReq;
+                    actionBtn = `<button class="btn-equip-skill btn-disabled" disabled title="Specialize as ${subName} to master this signature ability">🔒 Requires ${subName}</button>`;
+                } else {
+                    const scrollItem = window.ItemsData ? window.ItemsData[skill.scrollId] : null;
+                    const scrollName = scrollItem ? scrollItem.name : "Skill Scroll";
+                    actionBtn = `<button class="btn-equip-skill btn-disabled" disabled title="Acquire and study [${scrollName}] from the Realm Shop or monsters to master this ability">🔒 Locked (${scrollName})</button>`;
+                }
             }
 
             card.innerHTML = `
@@ -2014,6 +2401,264 @@ window.MainEngine = {
         }
     },
 
+    renderJournalView() {
+        const state = window.gameState;
+        if (!state) return;
+
+        const allMobs = Object.values(window.MobsData || {});
+        let totalDiscovered = 0;
+        let totalKills = 0;
+
+        allMobs.forEach(m => {
+            const count = window.JournalManager ? window.JournalManager.getMobKillCount(m.id) : (state.journal && state.journal.discoveredMobs && state.journal.discoveredMobs[m.id] ? state.journal.discoveredMobs[m.id].count : 0);
+            if (count > 0) {
+                totalDiscovered++;
+                totalKills += count;
+            }
+        });
+
+        // Update counts in header & badges
+        const slainCountEl = document.getElementById("journalSlainCount");
+        const totalMobsEl = document.getElementById("journalTotalMobsCount");
+        const progressBadge = document.getElementById("bestiaryProgressBadge");
+        if (slainCountEl) slainCountEl.textContent = totalDiscovered;
+        if (totalMobsEl) totalMobsEl.textContent = allMobs.length;
+        if (progressBadge) progressBadge.textContent = `${totalDiscovered} / ${allMobs.length} DISCOVERED (${totalKills} TOTAL KILLS)`;
+
+        // Granary badge counts
+        let totalFood = 0;
+        if (state.player.food) {
+            Object.values(state.player.food).forEach(qty => { totalFood += (qty || 0); });
+        }
+        const granaryFoodCount = document.getElementById("granaryFoodCount");
+        if (granaryFoodCount) granaryFoodCount.textContent = totalFood;
+
+        const farmLvl = state.getFarmLevel ? state.getFarmLevel() : (state.kingdom.farms || 1);
+        const farmBadge = document.getElementById("farmStatusBadge");
+        if (farmBadge) farmBadge.textContent = `🌾 FARMS LV. ${farmLvl}`;
+
+        const farmTitle = document.getElementById("granaryFarmTitle");
+        if (farmTitle) farmTitle.textContent = `Royal Farms & Granary (Lv. ${farmLvl})`;
+
+        const farmDesc = document.getElementById("granaryFarmDesc");
+        if (farmDesc) {
+            let nextUnlock = "";
+            if (farmLvl < 2) nextUnlock = " · Lv. 2 unlocks Hearty Meat Pie";
+            else if (farmLvl < 3) nextUnlock = " · Lv. 3 unlocks Roasted Boar Shank";
+            else if (farmLvl < 4) nextUnlock = " · Lv. 4 unlocks Dragon-Fire Stew";
+            else if (farmLvl < 5) nextUnlock = " · Lv. 5 unlocks Royal Ambrosia Feast";
+            farmDesc.textContent = `Produces wholesome food to sustain your champion. Upgrades grant +15 Max HP per level and unlock higher cuisine tiers.${nextUnlock}`;
+        }
+
+        const nutritionBadge = document.getElementById("granaryNutritionBadge");
+        if (nutritionBadge) nutritionBadge.textContent = `+${farmLvl * 15} Max HP (Nutrition)`;
+
+        // Harvest timer
+        const harvestTimerEl = document.getElementById("granaryHarvestTimer");
+        if (harvestTimerEl && state.player.lastFarmHarvestAt && state.getFarmHarvestIntervalSec) {
+            const intervalSec = state.getFarmHarvestIntervalSec();
+            const elapsedSec = (Date.now() - state.player.lastFarmHarvestAt) / 1000;
+            const remainSec = Math.max(0, Math.ceil(intervalSec - elapsedSec));
+            if (remainSec <= 0) {
+                harvestTimerEl.textContent = "✨ Crops are ripe! Harvest available now!";
+                harvestTimerEl.style.color = "#4ade80";
+            } else {
+                const mins = Math.floor(remainSec / 60);
+                const secs = remainSec % 60;
+                harvestTimerEl.textContent = `Next harvest in: ${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
+                harvestTimerEl.style.color = "#94a3b8";
+            }
+        }
+
+        // 1. Render Bestiary Grid
+        const bestiaryGrid = document.getElementById("bestiaryGrid");
+        if (bestiaryGrid) {
+            bestiaryGrid.innerHTML = "";
+            const filter = this.bestiaryFilter || "all";
+
+            const filteredMobs = allMobs.filter(mob => {
+                const count = window.JournalManager ? window.JournalManager.getMobKillCount(mob.id) : (state.journal && state.journal.discoveredMobs && state.journal.discoveredMobs[mob.id] ? state.journal.discoveredMobs[mob.id].count : 0);
+                if (filter === "discovered") return count > 0;
+                if (filter === "boss") return mob.isBoss;
+                return true;
+            });
+
+            if (filteredMobs.length === 0) {
+                bestiaryGrid.innerHTML = `<div class="journal-legend" style="grid-column: 1 / -1; text-align: center;">No monsters matching the selected filter.</div>`;
+            } else {
+                filteredMobs.forEach(mob => {
+                    const count = window.JournalManager ? window.JournalManager.getMobKillCount(mob.id) : (state.journal && state.journal.discoveredMobs && state.journal.discoveredMobs[mob.id] ? state.journal.discoveredMobs[mob.id].count : 0);
+                    const isDiscovered = count > 0;
+                    const card = document.createElement("div");
+                    card.className = `bestiary-card ${mob.isBoss ? 'is-boss' : ''} ${!isDiscovered ? 'is-locked' : ''}`;
+
+                    if (!isDiscovered) {
+                        const mapDef = window.MapsData && mob.assignedMap ? window.MapsData[mob.assignedMap] : null;
+                        const realmName = mapDef ? mapDef.name : "Realm Unknown";
+                        card.innerHTML = `
+                            <div class="bestiary-card-header">
+                                <div class="bestiary-icon">❓</div>
+                                <div class="bestiary-mob-meta">
+                                    <div class="bestiary-mob-name">??? Undiscovered Beast</div>
+                                    <div class="bestiary-mob-type">Territory: ${realmName}</div>
+                                </div>
+                            </div>
+                            <div class="bestiary-locked-desc">
+                                🔒 Defeat this enemy in combat to record its vital signs, attack capabilities, and drop chances.
+                            </div>
+                            <div class="bestiary-stats-row">
+                                <div class="bestiary-stat">HP: <strong>???</strong></div>
+                                <div class="bestiary-stat">ATK: <strong>???</strong></div>
+                                <div class="bestiary-stat">Gold: <strong>???</strong></div>
+                                <div class="bestiary-stat">XP: <strong>???</strong></div>
+                            </div>
+                        `;
+                    } else {
+                        const mapDef = window.MapsData && mob.assignedMap ? window.MapsData[mob.assignedMap] : null;
+                        const realmName = mapDef ? `${mapDef.name} (R${mapDef.roman || ''})` : "";
+
+                        // Format drop pills
+                        let dropsHtml = "";
+                        if (mob.dropTable && mob.dropTable.length > 0) {
+                            dropsHtml = mob.dropTable.map(d => {
+                                let dropIcon = "🎁";
+                                let dropName = d.key || d.id || "Loot";
+                                let dropTypeCls = "drop-item";
+
+                                if (d.type === "material") {
+                                    dropTypeCls = "drop-material";
+                                    const matNames = {
+                                        wood: { icon: "🪵", name: "Timber" },
+                                        ironOre: { icon: "⛏️", name: "Iron Ore" },
+                                        crystal: { icon: "💎", name: "Crystal" },
+                                        dragonScale: { icon: "🐉", name: "Dragon Scale" },
+                                        meteorFragment: { icon: "☄️", name: "Meteorite" },
+                                        astralEssence: { icon: "✨", name: "Astral Essence" },
+                                        soulShards: { icon: "🔮", name: "Soul Shards" },
+                                        paradoxCore: { icon: "🌀", name: "Paradox Core" }
+                                    };
+                                    if (matNames[d.key]) {
+                                        dropIcon = matNames[d.key].icon;
+                                        dropName = matNames[d.key].name;
+                                    }
+                                    const qtyStr = (d.min !== undefined && d.max !== undefined) ? ` (${d.min}-${d.max})` : "";
+                                    dropName += qtyStr;
+                                } else if (d.type === "consumable") {
+                                    dropTypeCls = "drop-consumable";
+                                    const itemDef = window.ItemsData && window.ItemsData[d.id];
+                                    if (itemDef) {
+                                        dropIcon = itemDef.icon || "🧪";
+                                        dropName = itemDef.name;
+                                    }
+                                } else if (d.type === "item") {
+                                    const itemDef = window.ItemsData && window.ItemsData[d.id];
+                                    if (itemDef) {
+                                        dropIcon = itemDef.icon || "🗡️";
+                                        dropName = itemDef.name;
+                                    }
+                                }
+
+                                const pct = Math.round((d.chance || 0.1) * 100);
+                                return `<span class="bestiary-drop-pill ${dropTypeCls}">${dropIcon} ${dropName} <span class="bestiary-drop-chance">${pct}%</span></span>`;
+                            }).join("");
+                        } else {
+                            dropsHtml = `<span style="font-size: 11px; color: #94a3b8;">None recorded</span>`;
+                        }
+
+                        card.innerHTML = `
+                            <div class="bestiary-card-header">
+                                <div class="bestiary-icon">${mob.icon || '👹'}</div>
+                                <div class="bestiary-mob-meta">
+                                    <div class="bestiary-mob-name">
+                                        ${mob.name}
+                                        ${mob.isBoss ? '<span class="bestiary-boss-tag">BOSS</span>' : ''}
+                                    </div>
+                                    <div class="bestiary-mob-type">${mob.type || 'MONSTER'} ${realmName ? `· ${realmName}` : ''}</div>
+                                </div>
+                            </div>
+                            <div class="bestiary-kills-badge">
+                                💀 Slain: ${count.toLocaleString()} times
+                            </div>
+                            <div class="bestiary-stats-row">
+                                <div class="bestiary-stat">Base HP: <strong>${(mob.baseHp || 100).toLocaleString()}</strong></div>
+                                <div class="bestiary-stat">Attack: <strong>${mob.baseDmg || 10}</strong></div>
+                                <div class="bestiary-stat">Gold Drop: <strong>${mob.goldReward || 0}g</strong></div>
+                                <div class="bestiary-stat">XP Yield: <strong>${mob.xpReward || 0} XP</strong></div>
+                            </div>
+                            <div class="bestiary-drops-section">
+                                <div class="bestiary-drops-title">Revealed Drop Tables:</div>
+                                <div class="bestiary-drops-list">${dropsHtml}</div>
+                            </div>
+                        `;
+                    }
+                    bestiaryGrid.appendChild(card);
+                });
+            }
+        }
+
+        // 2. Render Food Pantry Grid
+        const foodGrid = document.getElementById("foodGrid");
+        if (foodGrid && window.FoodData) {
+            foodGrid.innerHTML = "";
+            const currentEquipped = state.player.equippedFood || "food_bread";
+
+            Object.entries(window.FoodData).forEach(([foodId, foodDef]) => {
+                const stock = (state.player.food && state.player.food[foodId]) || 0;
+                const isEquipped = currentEquipped === foodId;
+                const isUnlocked = farmLvl >= (foodDef.reqFarmLevel || 1);
+
+                const card = document.createElement("div");
+                card.className = `food-card ${isEquipped ? 'is-equipped' : ''} ${!isUnlocked ? 'is-locked' : ''}`;
+
+                let unlockNotice = "";
+                if (!isUnlocked) {
+                    unlockNotice = `<div class="food-unlock-tag">🔒 Requires Royal Farms Lv. ${foodDef.reqFarmLevel}</div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="food-card-header">
+                        <div class="food-icon">${foodDef.icon || '🍞'}</div>
+                        <div class="food-meta">
+                            <div class="food-name">${foodDef.name}</div>
+                            <div class="food-stock">Pantry Stock: ${stock}</div>
+                            ${unlockNotice}
+                        </div>
+                    </div>
+                    <p class="food-desc">${foodDef.description || ''}</p>
+                    <div class="food-actions">
+                        <button class="btn-equip-food ${isEquipped ? 'active' : ''}" ${!isUnlocked || isEquipped ? 'disabled' : ''} data-equip-food="${foodId}">
+                            ${isEquipped ? '✓ EQUIPPED' : 'ASSIGN TO BELT'}
+                        </button>
+                        <button class="btn-eat-food" ${stock <= 0 ? 'disabled' : ''} data-eat-food="${foodId}">
+                            EAT NOW
+                        </button>
+                    </div>
+                `;
+
+                // Wire food card buttons
+                const btnEquip = card.querySelector("[data-equip-food]");
+                if (btnEquip && !isEquipped && isUnlocked) {
+                    btnEquip.addEventListener("click", () => {
+                        state.equipFood(foodId);
+                        this.renderJournalView();
+                        this.updateUI();
+                    });
+                }
+
+                const btnEat = card.querySelector("[data-eat-food]");
+                if (btnEat && stock > 0) {
+                    btnEat.addEventListener("click", () => {
+                        state.eatFood(foodId);
+                        this.renderJournalView();
+                        this.updateUI();
+                    });
+                }
+
+                foodGrid.appendChild(card);
+            });
+        }
+    },
+
     /* =========================================================
        NEW PLAYER ONBOARDING & PROGRESSION MODALS
     ========================================================= */
@@ -2104,12 +2749,11 @@ window.MainEngine = {
         if (!summary) return;
 
         const starterGear = {
-            knight: { weapon: "iron_sword", armor: "iron_chestplate" },
-            mage: { weapon: "apprentice_wand", armor: "apprentice_robes" },
-            rogue: { weapon: "shadow_daggers", armor: "leather_armor" },
-            paladin: { weapon: "blessed_mace", armor: "crusader_plate" }
+            martial_artist: { weapon: "iron_knuckles", armor: "monk_silk_gi" },
+            weapon_master: { weapon: "steel_broadsword", armor: "reinforced_battle_tunic" },
+            mage: { weapon: "apprentice_elemental_wand", armor: "astral_spellweave_robe" }
         };
-        const gear = starterGear[this.onboardState.selectedClass] || starterGear.knight;
+        const gear = starterGear[this.onboardState.selectedClass] || starterGear.martial_artist;
         const weaponItem = (window.ItemsData && gear.weapon) ? window.ItemsData[gear.weapon] : null;
         const armorItem = (window.ItemsData && gear.armor) ? window.ItemsData[gear.armor] : null;
 
@@ -2176,12 +2820,13 @@ window.MainEngine = {
         const modal = document.getElementById("heroQuickMenuModal");
         if (!modal) return;
         const state = window.gameState;
-        const heroDef = window.HeroesData[state.player.heroClass] || window.HeroesData.knight;
+        const heroDef = window.HeroesData[state.player.heroClass] || window.HeroesData.martial_artist;
+        const curSub = state.getSubclass ? state.getSubclass() : null;
         const map = window.MapsData[state.world.currentMapId] || window.MapsData.moonlit_vale;
 
-        if (document.getElementById("quickMenuIcon")) document.getElementById("quickMenuIcon").textContent = heroDef.icon;
+        if (document.getElementById("quickMenuIcon")) document.getElementById("quickMenuIcon").textContent = (curSub && curSub.icon) ? curSub.icon : heroDef.icon;
         if (document.getElementById("quickMenuName")) document.getElementById("quickMenuName").textContent = state.player.name || "Hero";
-        if (document.getElementById("quickMenuClass")) document.getElementById("quickMenuClass").textContent = heroDef.name;
+        if (document.getElementById("quickMenuClass")) document.getElementById("quickMenuClass").textContent = curSub ? `${heroDef.name} (${curSub.name})` : heroDef.name;
         if (document.getElementById("quickMenuGender")) {
             const g = state.player.gender || "male";
             document.getElementById("quickMenuGender").textContent = g === "female" ? "♀ Female" : (g === "other" ? "⚧ Other" : "♂ Male");
@@ -2201,10 +2846,137 @@ window.MainEngine = {
         }
     },
 
+    /* =========================================================
+       NEW GAME & REALM REBIRTH FEATURE
+    ========================================================= */
+    showNewGameModal() {
+        const modal = document.getElementById("newGameModal");
+        if (!modal) return;
+        const state = window.gameState;
+        if (!state || !state.player) return;
+
+        const heroDef = (window.HeroesData && window.HeroesData[state.player.heroClass]) || window.HeroesData.martial_artist;
+        const curSub = state.getSubclass ? state.getSubclass() : null;
+        const map = (window.MapsData && window.MapsData[state.world.currentMapId]) || window.MapsData.moonlit_vale;
+
+        if (document.getElementById("ngCurrentAvatar")) {
+            document.getElementById("ngCurrentAvatar").textContent = (curSub && curSub.icon) ? curSub.icon : heroDef.icon;
+        }
+        if (document.getElementById("ngCurrentName")) {
+            document.getElementById("ngCurrentName").textContent = state.player.name || "Hero";
+        }
+        if (document.getElementById("ngCurrentClassBadge")) {
+            document.getElementById("ngCurrentClassBadge").textContent = curSub ? `${heroDef.name} (${curSub.name})` : heroDef.name;
+        }
+        if (document.getElementById("ngCurrentLevel")) {
+            document.getElementById("ngCurrentLevel").textContent = state.player.level || 1;
+        }
+        if (document.getElementById("ngCurrentGold")) {
+            document.getElementById("ngCurrentGold").textContent = `${Math.floor(state.player.gold || 0).toLocaleString()}g`;
+        }
+        if (document.getElementById("ngCurrentRealm")) {
+            document.getElementById("ngCurrentRealm").textContent = `📍 Realm ${map.roman || "I"}: ${map.name}`;
+        }
+
+        modal.classList.add("visible");
+    },
+
+    hideNewGameModal() {
+        const modal = document.getElementById("newGameModal");
+        if (modal) modal.classList.remove("visible");
+    },
+
+    startNewHeroAdventure() {
+        if (!confirm("👑 Begin a New Hero Adventure?\n\nYour current hero and realm progress will be reset back to Realm I, and you will enter the character creation sanctuary to choose a new name, class, and discipline.")) {
+            return;
+        }
+        this.hideNewGameModal();
+        const api = window.GameAPI;
+        if (api && api.player && api.player.resetToNewGame) {
+            api.player.resetToNewGame();
+        } else if (window.gameState) {
+            window.gameState.resetToNewGame();
+        }
+        this.showOnboardingModal(true);
+    },
+
     wipeAllSaveData() {
-        if (!confirm("Are you sure you want to completely wipe all saved game data and restart with a fresh hero?")) return;
+        if (!confirm("⚠️ FACTORY RESET WARNING:\n\nAre you absolutely sure you want to completely erase ALL saved game data and browser storage?\n\nThis will permanently wipe your heroes, progress, items, and settings. This cannot be undone!")) {
+            return;
+        }
         localStorage.removeItem("realmIdleRootSave");
+        localStorage.removeItem("realmIdleCustomData");
+        localStorage.removeItem("realmIdle_cfg_guildIncome");
+        localStorage.removeItem("realmIdle_cfg_templeDonation");
         window.location.reload();
+    },
+
+    exportSaveFile() {
+        try {
+            const rootSave = localStorage.getItem("realmIdleRootSave") || "{}";
+            const customData = localStorage.getItem("realmIdleCustomData") || "{}";
+            const state = window.gameState;
+            const payload = {
+                version: "1.0",
+                timestamp: Date.now(),
+                date: new Date().toISOString(),
+                heroName: (state && state.player) ? state.player.name : "Hero",
+                heroLevel: (state && state.player) ? state.player.level : 1,
+                heroClass: (state && state.player) ? state.player.heroClass : "martial_artist",
+                realmIdleRootSave: rootSave,
+                realmIdleCustomData: customData
+            };
+
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            const nameSanitized = (payload.heroName || "Hero").replace(/[^a-zA-Z0-9]/g, "_");
+            a.download = `realm_idle_save_${nameSanitized}_lv${payload.heroLevel}_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            if (state && state.addLog) state.addLog("💾 Save backup file successfully downloaded.", "system", "💾");
+        } catch (err) {
+            alert("Failed to export save: " + err.message);
+        }
+    },
+
+    importSaveFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const text = e.target.result;
+                const data = JSON.parse(text);
+                let rootStr = null;
+
+                if (data.realmIdleRootSave) {
+                    rootStr = typeof data.realmIdleRootSave === "string" ? data.realmIdleRootSave : JSON.stringify(data.realmIdleRootSave);
+                } else if (data.player && data.world) {
+                    rootStr = JSON.stringify(data);
+                }
+
+                if (!rootStr) {
+                    alert("Invalid save file format. Missing game state payload.");
+                    return;
+                }
+
+                if (confirm(`Restore save from backup file?\n\nHero: ${data.heroName || "Hero"} (Lv. ${data.heroLevel || 1})\nBackup Date: ${data.date || "Unknown"}\n\nThis will replace your current game state.`)) {
+                    localStorage.setItem("realmIdleRootSave", rootStr);
+                    if (data.realmIdleCustomData) {
+                        const customStr = typeof data.realmIdleCustomData === "string" ? data.realmIdleCustomData : JSON.stringify(data.realmIdleCustomData);
+                        localStorage.setItem("realmIdleCustomData", customStr);
+                    }
+                    window.location.reload();
+                }
+            } catch (err) {
+                console.error("Save import error:", err);
+                alert("Failed to read save file: " + err.message);
+            }
+        };
+        reader.readAsText(file);
     },
 
     /* =========================================================

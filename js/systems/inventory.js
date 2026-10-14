@@ -40,6 +40,31 @@ window.InventoryManager = {
             state.addLog(`🎁 RARE LOOT! Found [${itemDef.name}] (${itemDef.rarity.toUpperCase()})!`, "loot", "🎁");
         }
 
+        // Record in item loot log
+        if (state.recordItemLoot) {
+            let details = "";
+            const s = itemDef.stats || {};
+            const atk = itemDef.attack || s.attack || s.power;
+            const def = itemDef.defense || s.defense;
+            const hp = itemDef.hp || s.hp || s.maxHp;
+            const crit = itemDef.critChance || s.critChance;
+            if (atk) details += `+${atk} ATK `;
+            if (def) details += `+${def} DEF `;
+            if (hp) details += `+${hp} HP `;
+            if (crit) details += `+${Math.round(crit * 100)}% CRIT `;
+            if (!details && itemDef.slot) details = itemDef.slot.toUpperCase();
+            if (!details && itemDef.type) details = itemDef.type;
+            state.recordItemLoot({
+                key: itemDef.id || (itemDef.name ? itemDef.name.toLowerCase() : "equipment"),
+                name: itemDef.name || "Equipment",
+                icon: itemDef.icon || "🗡️",
+                rarity: itemDef.rarity || "common",
+                category: "equipment",
+                count: 1,
+                details: details.trim() || itemDef.slot || "Gear"
+            });
+        }
+
         // Crown Coexistence trigger check
         if (window.CrownManager) {
             window.CrownManager.checkCrownCoexistence();
@@ -191,8 +216,16 @@ window.InventoryManager = {
             if (window.CombatManager) {
                 window.CombatManager.showDamagePopup(`⚡ -${fReduce} Fatigue!`, false, false, "potion");
             }
-            if (state.addLog) {
-                state.addLog(`Quaffed ${itemDef.name}. Fatigue reduced by ${fReduce} points!`, "combat", "⚡");
+            if (state.recordItemLoot) {
+                state.recordItemLoot({
+                    key: "used_" + potionId,
+                    name: `Used: ${itemDef.name}`,
+                    icon: itemDef.icon || "⚡",
+                    rarity: "use",
+                    category: "use",
+                    count: 1,
+                    details: `-${fReduce} Fatigue`
+                });
             }
             state.save();
             state.notify();
@@ -237,6 +270,26 @@ window.InventoryManager = {
             });
             if (window.CombatManager) window.CombatManager.showDamagePopup(`🧪 ${itemDef.name}!`, false, false, "potion");
             if (state.addLog) state.addLog(`Consumed ${itemDef.name}! Active combat buff applied.`, "combat", "🧪");
+        }
+
+        if (state.recordItemLoot) {
+            let details = "";
+            if (effect.type === "heal") {
+                details = "Restored HP";
+            } else if (effect.type === "heal_pct") {
+                details = "Full HP + Barrier";
+            } else if (effect.type === "buff") {
+                details = `+${effect.value !== undefined ? effect.value : (effect.bonus || 10)} ${effect.stat || "Buff"}`;
+            }
+            state.recordItemLoot({
+                key: "used_" + potionId,
+                name: `Used: ${itemDef.name}`,
+                icon: itemDef.icon || "🧪",
+                rarity: "use",
+                category: "use",
+                count: 1,
+                details: details
+            });
         }
 
         state.notify();
@@ -321,6 +374,17 @@ window.InventoryManager = {
 
         // Consume scroll/blueprint from inventory
         state.player.inventory.splice(index, 1);
+        if (state.recordItemLoot) {
+            state.recordItemLoot({
+                key: "used_" + (item.id || itemInstanceId),
+                name: `Used: ${item.name}`,
+                icon: item.icon || "📜",
+                rarity: "use",
+                category: "use",
+                count: 1,
+                details: lType === "skill" ? "Skill Mastered" : lType === "alchemy" ? "Recipe Mastered" : "Blueprint Mastered"
+            });
+        }
         state.save();
         state.notify();
         return true;
@@ -440,10 +504,36 @@ window.InventoryManager = {
 
     addMaterial(matKey, amount) {
         const state = window.gameState;
-        if (state.player.materials[matKey] !== undefined) {
-            state.player.materials[matKey] += amount;
-            state.notify();
+        if (!state.player.materials) state.player.materials = {};
+        if (state.player.materials[matKey] === undefined) {
+            state.player.materials[matKey] = 0;
         }
+        state.player.materials[matKey] += amount;
+
+        const matLabels = {
+            ironOre: { name: "Iron Ore", icon: "⛏️", rarity: "common" },
+            iron_ore: { name: "Iron Ore", icon: "⛏️", rarity: "common" },
+            wood: { name: "Lumber", icon: "🪵", rarity: "common" },
+            crystal: { name: "Crystal Shard", icon: "💎", rarity: "uncommon" },
+            magic_shard: { name: "Magic Shard", icon: "✨", rarity: "uncommon" },
+            shadow_cloth: { name: "Shadow Cloth", icon: "🧵", rarity: "rare" },
+            dragonScale: { name: "Dragon Scale", icon: "🐲", rarity: "epic" },
+            dragon_scale: { name: "Dragon Scale", icon: "🐲", rarity: "epic" },
+            shadowEssence: { name: "Shadow Essence", icon: "🌑", rarity: "legendary" }
+        };
+        const info = matLabels[matKey] || { name: matKey.replace(/_/g, " "), icon: "📦", rarity: "common" };
+        if (state.recordItemLoot) {
+            state.recordItemLoot({
+                key: matKey,
+                name: info.name,
+                icon: info.icon,
+                rarity: info.rarity,
+                category: "material",
+                count: amount,
+                details: `Stock: ${state.player.materials[matKey]} in pouch`
+            });
+        }
+        state.notify();
     },
 
     craftItem(itemId) {
@@ -589,6 +679,18 @@ window.InventoryManager = {
                             this.addMaterial(entry.key, qty);
                         } else if (entry.type === "consumable") {
                             state.player.potions[entry.id] = (state.player.potions[entry.id] || 0) + 1;
+                            const itemDef = window.ItemsData ? window.ItemsData[entry.id] : null;
+                            if (state.recordItemLoot) {
+                                state.recordItemLoot({
+                                    key: entry.id,
+                                    name: itemDef ? itemDef.name : entry.id.replace(/_/g, " "),
+                                    icon: itemDef ? itemDef.icon : "🧪",
+                                    rarity: itemDef ? (itemDef.rarity || "uncommon") : "uncommon",
+                                    category: "consumable",
+                                    details: `Stock: ${state.player.potions[entry.id]} in pouch`,
+                                    count: 1
+                                });
+                            }
                             state.notify();
                         } else if (entry.type === "item") {
                             this.addItem(entry.id);

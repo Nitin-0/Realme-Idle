@@ -1,402 +1,589 @@
 /* =========================================================
-   REALM IDLE DATA - HERO CLASSES DICTIONARY
+   REALM IDLE DATA - HERO CLASSES & SUBCLASSES DICTIONARY
+   Classes: Martial Artist, Weapon Master, Mage
+   Subclasses:
+     - Martial Artist: Warrior, Qi Warrior, Berserker
+     - Weapon Master: Swordsman, Spearman, Archer
+     - Mage: Elemental Mage (6 Elements), Necromancer, Divine Sorcerer, Dark Sorcerer, Spirit Mage
 ========================================================= */
 
 window.HeroesData = {
-    knight: {
-        id: "knight",
-        name: "Knight Templar",
-        icon: "🛡️",
-        description: "Stalwart defender with high Defense, armor block, and damage mitigation.",
+    // =========================================================
+    // 1. MARTIAL ARTIST (Body & Qi Mastery)
+    // =========================================================
+    martial_artist: {
+        id: "martial_artist",
+        name: "Martial Artist",
+        icon: "🥋",
+        description: "Master of physical discipline, internal Qi energy, and close-quarters hand-to-hand combat.",
         unlocked: true,
-        baseAttack: 40,
-        baseDefense: 15,
-        baseCritChance: 0.10,
-        baseCritDmg: 1.5,
-        baseDodge: 0.05,
-        baseLifesteal: 0.0,
-        perks: "+50% bonus from Shields and Armor; high baseline durability.",
+        baseAttack: 46,
+        baseDefense: 14,
+        baseCritChance: 0.12,
+        baseCritDmg: 1.6,
+        baseDodge: 0.10,
+        baseLifesteal: 0.02,
+        perks: "High baseline agility and balance; gains +20% bonus from unarmed wraps, cestus, and robes.",
+        subclasses: [
+            {
+                id: "warrior",
+                name: "Warrior",
+                icon: "🛡️",
+                role: "Iron Vanguard & Armor Breaker",
+                description: "Hardens the body into living steel. Excels at high defense, sustained physical damage, and crushing enemy armor.",
+                bonus: { defense: 18, maxHp: 120, attack: 15 },
+                primaryStat: "STR",
+                specialSkill: {
+                    id: "colossus_strike",
+                    name: "Colossus Stomp & Strike",
+                    icon: "💥",
+                    cooldown: 8,
+                    damageMult: 2.8,
+                    healPct: 0.0,
+                    buff: { name: "Iron Body", stat: "defense", bonus: 35, duration: 5 },
+                    description: "Smashes the ground with colossal force for 280% damage and fortifies defense by +35 for 5s."
+                }
+            },
+            {
+                id: "qi_warrior",
+                name: "Qi Warrior",
+                icon: "☯️",
+                role: "Internal Energy & Spirit Palm",
+                description: "Channels ancestral Ki / Qi meridians. Harmonizes internal energy for celestial palm blasts, spirit shields, and healing.",
+                bonus: { attack: 22, maxHp: 80, lifesteal: 0.04, dodge: 0.05 },
+                primaryStat: "INT",
+                specialSkill: {
+                    id: "celestial_qi_palm",
+                    name: "Celestial Qi Palm Blast",
+                    icon: "✨",
+                    cooldown: 7,
+                    damageMult: 3.2,
+                    healPct: 0.14,
+                    buff: { name: "Qi Harmony", stat: "critChance", bonus: 0.12, duration: 4 },
+                    description: "Unleashes concentrated spiritual Qi for 320% damage, restores 14% Max HP, and gains +12% Crit for 4s."
+                }
+            },
+            {
+                id: "berserker",
+                name: "Berserker",
+                icon: "🪓",
+                role: "Fury Rampage & Savage Cleave",
+                description: "Surrenders to untamed battle rage. Unleashes blistering multi-strikes, colossal critical bursts, and savage lifesteal.",
+                bonus: { attack: 35, critChance: 0.08, critDmg: 0.35 },
+                primaryStat: "STR",
+                specialSkill: {
+                    id: "bloodlust_frenzy",
+                    name: "Bloodlust Rampage",
+                    icon: "🩸",
+                    cooldown: 8,
+                    damageMult: 3.8,
+                    healPct: 0.08,
+                    buff: { name: "Primal Frenzy", stat: "attack", bonus: 50, duration: 5 },
+                    description: "Rages into a whirlwind frenzy for 380% savage damage, heals 8% Max HP on hit, and gains +50 Attack for 5s."
+                }
+            }
+        ],
         skill: {
-            id: "shield_slam",
-            name: "Shield Slam",
-            icon: "🛡️",
-            cooldown: 8,
-            damageMult: 2.2,
-            healPct: 0.0,
-            buff: { name: "Iron Bastion", stat: "defense", bonus: 25, duration: 4 },
-            description: "Crushes enemy for 220% Attack damage and increases Defense by +25 for 4s."
+            id: "tiger_palm",
+            name: "Iron Tiger Palm",
+            icon: "🐅",
+            cooldown: 7,
+            damageMult: 2.5,
+            healPct: 0.05,
+            buff: { name: "Tiger Stance", stat: "attack", bonus: 20, duration: 4 },
+            description: "Strikes with fierce martial pressure for 250% damage, heals 5% Max HP, and increases Attack by +20 for 4s."
         },
         skillsPool: [
             {
-                id: "shield_slam",
-                name: "Shield Slam",
-                icon: "🛡️",
-                cooldown: 8,
-                damageMult: 2.2,
-                healPct: 0.0,
-                buff: { name: "Iron Bastion", stat: "defense", bonus: 25, duration: 4 },
-                description: "Crushes enemy for 220% Attack damage and increases Defense by +25 for 4s.",
+                id: "tiger_palm",
+                name: "Iron Tiger Palm",
+                icon: "🐅",
+                cooldown: 7,
+                damageMult: 2.5,
+                healPct: 0.05,
+                buff: { name: "Tiger Stance", stat: "attack", bonus: 20, duration: 4 },
+                description: "Strikes with fierce martial pressure for 250% damage, heals 5% Max HP, and increases Attack by +20 for 4s.",
                 isDefault: true
             },
             {
-                id: "whirlwind_slash",
-                name: "Whirlwind Slash",
-                icon: "🌪️",
-                cooldown: 7,
+                id: "colossus_strike",
+                name: "Colossus Stomp & Strike",
+                icon: "💥",
+                cooldown: 8,
                 damageMult: 2.8,
                 healPct: 0.0,
-                buff: { name: "Battle Trance", stat: "critChance", bonus: 0.10, duration: 4 },
-                description: "Spins through enemy defenses for 280% Attack damage and +10% Crit for 4s.",
-                scrollId: "scroll_whirlwind"
+                buff: { name: "Iron Body", stat: "defense", bonus: 35, duration: 5 },
+                description: "Smashes the ground with colossal force for 280% damage and fortifies defense by +35 for 5s.",
+                subclassReq: "warrior"
             },
             {
-                id: "holy_bastion",
-                name: "Holy Bastion",
-                icon: "🏰",
-                cooldown: 9,
-                damageMult: 1.8,
-                healPct: 0.15,
-                buff: { name: "Aegis Wall", stat: "defense", bonus: 40, duration: 5 },
-                description: "Fortifies stance for 180% damage, recovers 15% Max HP, and +40 Defense for 5s.",
-                scrollId: "scroll_holy_bastion"
-            },
-            {
-                id: "judgment_blade",
-                name: "Heavenly Judgment",
-                icon: "⚡",
-                cooldown: 11,
-                damageMult: 3.8,
-                healPct: 0.08,
-                buff: { name: "Divine Retribution", stat: "attack", bonus: 45, duration: 5 },
-                description: "Strikes with divine thunder for 380% damage, +45 Attack, and 8% Max HP heal.",
-                scrollId: "scroll_judgment"
-            }
-        ],
-        promotions: [
-            {
-                rank: 2,
-                title: "Knight Captain",
-                reqLevel: 10,
-                materials: { ironOre: 10, wood: 5 },
-                goldCost: 500,
-                bonus: { attack: 20, defense: 15, maxHp: 80 },
-                description: "Rank 2 Mastery: +20 Attack, +15 Defense, +80 Max HP."
-            },
-            {
-                rank: 3,
-                title: "Grand Templar",
-                reqLevel: 20,
-                materials: { crystal: 5, dragonScale: 2 },
-                goldCost: 2500,
-                bonus: { attack: 45, defense: 30, maxHp: 200, dodge: 0.03 },
-                description: "Rank 3 Mastery: +45 Attack, +30 Defense, +200 Max HP, +3% Dodge."
-            }
-        ],
-        passives: [
-            { id: "k_p1", reqLevel: 1, name: "Aegis of the Sun God", icon: "🛡️", lore: "You have been blessed by the gods: Sol Invictus infuses your shield with impenetrable radiant light.", bonus: { maxHp: 30, defense: 8 }, description: "+30 Max HP, +8 Defense" },
-            { id: "k_p5", reqLevel: 5, name: "Titan's Granite Bulwark", icon: "🪨", lore: "You have been blessed by the gods: The Earth Mother strengthens your bones like ancient mountain stone.", bonus: { maxHp: 60, defense: 16, attack: 12 }, description: "+60 Max HP, +16 Defense, +12 Attack" },
-            { id: "k_p10", reqLevel: 10, name: "Vow of the Iron Fortress", icon: "🏰", lore: "You have been blessed by the gods: Hephaestus tempers your soul and armor in sacred celestial flame.", bonus: { maxHp: 110, defense: 26, attack: 22, critChance: 0.03 }, description: "+110 Max HP, +26 Defense, +22 Attack, +3% Crit" },
-            { id: "k_p15", reqLevel: 15, name: "Divine Aegis of Aincrad", icon: "🛡️", lore: "You have been blessed by the gods: Towering celestials grant supreme fortress deflection.", bonus: { maxHp: 160, defense: 38, attack: 34, dodge: 0.03 }, description: "+160 Max HP, +38 Defense, +34 Attack, +3% Dodge" },
-            { id: "k_p20", reqLevel: 20, name: "Ascendant Templar Avatar", icon: "⚜️", lore: "You have been blessed by the gods: The highest pantheon makes your blade unbreakable.", bonus: { maxHp: 240, defense: 55, attack: 50, critChance: 0.05 }, description: "+240 Max HP, +55 Defense, +50 Attack, +5% Crit" },
-            { id: "k_p25", reqLevel: 25, name: "God of Iron & Thunder", icon: "⚡", lore: "You have been blessed by the gods: Thunderous divinities crown your eternal vigilance.", bonus: { maxHp: 340, defense: 80, attack: 70, dodge: 0.05 }, description: "+340 Max HP, +80 Defense, +70 Attack, +5% Dodge" },
-            { id: "k_p30", reqLevel: 30, name: "Immortal World-Breaker", icon: "🌟", lore: "You have been blessed by the gods: The celestial gods manifest entirely through your armor.", bonus: { maxHp: 520, defense: 120, attack: 105, dodge: 0.08, critChance: 0.05 }, description: "+520 Max HP, +120 Defense, +105 Attack, +8% Dodge, +5% Crit" }
-        ]
-    },
-    rogue: {
-        id: "rogue",
-        name: "Shadow Rogue",
-        icon: "🗡️",
-        description: "Deadly assassin specializing in high Critical strike chance, Dodge, and burst strikes.",
-        unlocked: true,
-        baseAttack: 48,
-        baseDefense: 8,
-        baseCritChance: 0.25,
-        baseCritDmg: 2.0,
-        baseDodge: 0.15,
-        baseLifesteal: 0.0,
-        perks: "+15% inherent Dodge; 200% base Critical damage multiplier.",
-        skill: {
-            id: "shadowstrike",
-            name: "Shadowstrike",
-            icon: "🗡️",
-            cooldown: 7,
-            damageMult: 3.2,
-            healPct: 0.0,
-            buff: { name: "Smoke Veil", stat: "dodge", bonus: 0.25, duration: 4 },
-            description: "Strikes from stealth for 320% Attack damage with +25% Dodge for 4s."
-        },
-        skillsPool: [
-            {
-                id: "shadowstrike",
-                name: "Shadowstrike",
-                icon: "🗡️",
+                id: "celestial_qi_palm",
+                name: "Celestial Qi Palm Blast",
+                icon: "✨",
                 cooldown: 7,
                 damageMult: 3.2,
-                healPct: 0.0,
-                buff: { name: "Smoke Veil", stat: "dodge", bonus: 0.25, duration: 4 },
-                description: "Strikes from stealth for 320% Attack damage with +25% Dodge for 4s.",
-                isDefault: true
+                healPct: 0.14,
+                buff: { name: "Qi Harmony", stat: "critChance", bonus: 0.12, duration: 4 },
+                description: "Unleashes concentrated spiritual Qi for 320% damage, restores 14% Max HP, and gains +12% Crit for 4s.",
+                subclassReq: "qi_warrior"
             },
             {
-                id: "poison_blade",
-                name: "Venomous Flurry",
-                icon: "🐍",
-                cooldown: 6,
-                damageMult: 2.6,
-                healPct: 0.0,
-                buff: { name: "Viper Essence", stat: "lifesteal", bonus: 0.08, duration: 6 },
-                description: "Coats daggers in deadly venom for 260% damage and +8% Lifesteal for 6s.",
-                scrollId: "scroll_poison_blade"
-            },
-            {
-                id: "smoke_bomb",
-                name: "Smoke Veil Bomb",
-                icon: "💨",
-                cooldown: 8,
-                damageMult: 2.0,
-                healPct: 0.0,
-                buff: { name: "Total Concealment", stat: "dodge", bonus: 0.35, duration: 5 },
-                description: "Blinds the foe for 200% damage, granting +35% Dodge and +12% Crit for 5s.",
-                scrollId: "scroll_smoke_bomb"
-            },
-            {
-                id: "assassinate",
-                name: "Death Blossom",
+                id: "bloodlust_frenzy",
+                name: "Bloodlust Rampage",
                 icon: "🩸",
+                cooldown: 8,
+                damageMult: 3.8,
+                healPct: 0.08,
+                buff: { name: "Primal Frenzy", stat: "attack", bonus: 50, duration: 5 },
+                description: "Rages into a whirlwind frenzy for 380% savage damage, heals 8% Max HP on hit, and gains +50 Attack for 5s.",
+                subclassReq: "berserker"
+            },
+            {
+                id: "dragon_breath_kick",
+                name: "Dragon Ascension Kick",
+                icon: "🐉",
                 cooldown: 10,
-                damageMult: 4.4,
-                healPct: 0.0,
-                buff: { name: "Blood Rush", stat: "critChance", bonus: 0.20, duration: 4 },
-                description: "Lethal execution dealing 440% Critical Pierce damage with +20% Crit for 4s.",
-                scrollId: "scroll_assassinate"
+                damageMult: 4.5,
+                healPct: 0.10,
+                buff: { name: "Dragon Presence", stat: "attack", bonus: 65, duration: 5 },
+                description: "Leaps with soaring dragon energy for 450% devastation, heals 10% Max HP, and increases Attack by +65 for 5s.",
+                scrollId: "scroll_dragon_kick"
             }
         ],
         promotions: [
             {
                 rank: 2,
-                title: "Shadowblade",
+                title: "Grand Martial Master",
                 reqLevel: 10,
                 materials: { ironOre: 8, wood: 8 },
                 goldCost: 500,
-                bonus: { attack: 28, critChance: 0.05, maxHp: 50 },
-                description: "Rank 2 Mastery: +28 Attack, +5% Crit Chance, +50 Max HP."
+                bonus: { attack: 28, defense: 18, maxHp: 100 },
+                description: "Rank 2 Mastery: +28 Attack, +18 Defense, +100 Max HP."
             },
             {
                 rank: 3,
-                title: "Phantom Assassin",
+                title: "Enlightened Sovereign",
                 reqLevel: 20,
-                materials: { crystal: 4, shadowEssence: 2 },
+                materials: { crystal: 5, dragonScale: 2 },
                 goldCost: 2500,
-                bonus: { attack: 60, critChance: 0.10, dodge: 0.08, maxHp: 120 },
-                description: "Rank 3 Mastery: +60 Attack, +10% Crit Chance, +8% Dodge, +120 Max HP."
+                bonus: { attack: 65, defense: 35, maxHp: 260, dodge: 0.06 },
+                description: "Rank 3 Mastery: +65 Attack, +35 Defense, +260 Max HP, +6% Dodge."
             }
         ],
         passives: [
-            { id: "r_p1", reqLevel: 1, name: "Shadow Mother's Whisper", icon: "🗡️", lore: "You have been blessed by the gods: The Night Mother shrouds your footsteps in silent dread.", bonus: { attack: 15, dodge: 0.04 }, description: "+15 Attack, +4% Dodge" },
-            { id: "r_p5", reqLevel: 5, name: "Eye of the Moon Raven", icon: "👁️", lore: "You have been blessed by the gods: Raven divinities guide your daggers to mortal seams.", bonus: { attack: 26, critChance: 0.05, dodge: 0.04 }, description: "+26 Attack, +5% Crit Chance, +4% Dodge" },
-            { id: "r_p10", reqLevel: 10, name: "Zephyr of the Wind God", icon: "💨", lore: "You have been blessed by the gods: The God of Gales grants miraculous velocity.", bonus: { attack: 48, critChance: 0.08, dodge: 0.06, maxHp: 50 }, description: "+48 Attack, +8% Crit, +6% Dodge, +50 HP" },
-            { id: "r_p15", reqLevel: 15, name: "Divine Daggerstorm", icon: "🗡️", lore: "You have been blessed by the gods: Gods of slaughter double the swiftness of your strikes.", bonus: { attack: 80, critChance: 0.10, dodge: 0.08, lifesteal: 0.04 }, description: "+80 Attack, +10% Crit, +8% Dodge, +4% Lifesteal" },
-            { id: "r_p20", reqLevel: 20, name: "Void Walker Avatar", icon: "✨", lore: "You have been blessed by the gods: You walk between planes where blades cannot graze you.", bonus: { attack: 125, critChance: 0.12, dodge: 0.10, maxHp: 110 }, description: "+125 Attack, +12% Crit, +10% Dodge, +110 HP" },
-            { id: "r_p25", reqLevel: 25, name: "Reaper of Astral Void", icon: "💀", lore: "You have been blessed by the gods: Cosmic deities bestow devastating execution prowess.", bonus: { attack: 185, critChance: 0.15, lifesteal: 0.08, dodge: 0.12 }, description: "+185 Attack, +15% Crit, +8% Lifesteal, +12% Dodge" },
-            { id: "r_p30", reqLevel: 30, name: "Incarnate of Eternal Dusk", icon: "🌟", lore: "You have been blessed by the gods: You are become death, blessed by primordial night gods.", bonus: { attack: 270, critChance: 0.20, dodge: 0.15, maxHp: 220 }, description: "+270 Attack, +20% Crit, +15% Dodge, +220 HP" }
+            { id: "ma_p1", reqLevel: 1, name: "Iron Bone Tempering", icon: "🥋", lore: "Your flesh and bone are tempered in ancient martial kilns.", bonus: { maxHp: 40, defense: 10 }, description: "+40 Max HP, +10 Defense" },
+            { id: "ma_p5", reqLevel: 5, name: "Flowing Wind Stance", icon: "💨", lore: "Footwork as unpredictable and swift as mountain gale.", bonus: { attack: 18, dodge: 0.05, critChance: 0.04 }, description: "+18 Attack, +5% Dodge, +4% Crit" },
+            { id: "ma_p10", reqLevel: 10, name: "Meridian Enlightenment", icon: "☯️", lore: "Opening all eight internal extraordinary vessels.", bonus: { attack: 42, maxHp: 90, lifesteal: 0.04 }, description: "+42 Attack, +90 HP, +4% Lifesteal" },
+            { id: "ma_p15", reqLevel: 15, name: "Vajra Adamantine Shell", icon: "🛡️", lore: "Your body becomes an adamantine bell impenetrable to mortal strikes.", bonus: { defense: 45, maxHp: 180, attack: 35 }, description: "+45 Defense, +180 HP, +35 Attack" },
+            { id: "ma_p20", reqLevel: 20, name: "Avatar of the Nine Dragons", icon: "🐉", lore: "Nine dragons of pure primordial force spiral around your aura.", bonus: { attack: 110, defense: 50, critChance: 0.08, maxHp: 250 }, description: "+110 Attack, +50 Def, +8% Crit, +250 HP" },
+            { id: "ma_p25", reqLevel: 25, name: "World-Shaking War God", icon: "⚡", lore: "Gods of war infuse your strikes with shattering shockwaves.", bonus: { attack: 180, defense: 75, dodge: 0.08, critChance: 0.10 }, description: "+180 Attack, +75 Def, +8% Dodge, +10% Crit" },
+            { id: "ma_p30", reqLevel: 30, name: "Transcendent Grandmaster", icon: "🌟", lore: "Transcendence beyond mortality; one with the infinite cosmos.", bonus: { attack: 280, defense: 110, maxHp: 500, critChance: 0.15, lifesteal: 0.08 }, description: "+280 Attack, +110 Def, +500 HP, +15% Crit, +8% Lifesteal" }
         ]
     },
-    mage: {
-        id: "mage",
-        name: "Arcane Archmage",
-        icon: "🔮",
-        description: "Master of devastating elemental burst damage and arcane energy drain.",
+
+    // =========================================================
+    // 2. WEAPON MASTER (Blades, Polearms & Marksmanship)
+    // =========================================================
+    weapon_master: {
+        id: "weapon_master",
+        name: "Weapon Master",
+        icon: "⚔️",
+        description: "Versatile supreme combatant master of blades, polearms, spears, bows, and tactical warfare.",
         unlocked: true,
-        baseAttack: 55,
-        baseDefense: 5,
+        baseAttack: 48,
+        baseDefense: 12,
         baseCritChance: 0.15,
-        baseCritDmg: 1.6,
-        baseDodge: 0.05,
-        baseLifesteal: 0.05,
-        perks: "Highest base attack power; innate 5% arcane lifesteal on all strikes.",
+        baseCritDmg: 1.75,
+        baseDodge: 0.08,
+        baseLifesteal: 0.0,
+        perks: "Weapon versatility mastery; gains +25% bonus attack and critical scaling from all forged arms.",
+        subclasses: [
+            {
+                id: "swordsman",
+                name: "Swordsman",
+                icon: "🗡️",
+                role: "Blade Master & Precision Slashes",
+                description: "Pure blade discipline. Slices through armor with blinding speed, devastating critical thrusts, and parry counterattacks.",
+                bonus: { attack: 26, critChance: 0.08, critDmg: 0.30 },
+                primaryStat: "STR",
+                specialSkill: {
+                    id: "blade_dance_cleave",
+                    name: "Bladestorm Dance",
+                    icon: "⚔️",
+                    cooldown: 7,
+                    damageMult: 3.4,
+                    healPct: 0.0,
+                    buff: { name: "Razor Edge", stat: "critChance", bonus: 0.18, duration: 4 },
+                    description: "Dances forward with razor blades for 340% damage and increases Critical Chance by +18% for 4s."
+                }
+            },
+            {
+                id: "spearman",
+                name: "Spearman",
+                icon: "🔱",
+                role: "Armor Pierce & Sweeping Reach",
+                description: "Commands the battlefield with extended spear reach, armor-shattering impales, and impenetrable defensive stances.",
+                bonus: { attack: 22, defense: 18, maxHp: 100 },
+                primaryStat: "RNG",
+                specialSkill: {
+                    id: "dragon_spear_pierce",
+                    name: "Heaven-Piercing Dragon Spear",
+                    icon: "🐉",
+                    cooldown: 8,
+                    damageMult: 3.2,
+                    healPct: 0.06,
+                    buff: { name: "Spear Wall", stat: "defense", bonus: 40, duration: 5 },
+                    description: "Impales the enemy line for 320% armor-piercing damage, heals 6% Max HP, and raises Defense by +40 for 5s."
+                }
+            },
+            {
+                id: "archer",
+                name: "Archer",
+                icon: "🏹",
+                role: "Long-Range Sniper & Arrow Volleys",
+                description: "Lethal deadeye sniper. Strikes from safe distance with arrow volleys, eagle-eyed precision, and evasive acrobatics.",
+                bonus: { attack: 28, dodge: 0.12, critChance: 0.12 },
+                primaryStat: "RNG",
+                specialSkill: {
+                    id: "rain_of_arrows",
+                    name: "Celestial Arrow Storm",
+                    icon: "🎯",
+                    cooldown: 7,
+                    damageMult: 3.6,
+                    healPct: 0.0,
+                    buff: { name: "Eagle Eye", stat: "dodge", bonus: 0.20, duration: 4 },
+                    description: "Rains down a tempest of piercing arrows for 360% damage with +20% Dodge for 4s."
+                }
+            }
+        ],
         skill: {
-            id: "arcane_meteor",
-            name: "Arcane Meteor",
-            icon: "☄️",
-            cooldown: 10,
-            damageMult: 4.2,
-            healPct: 0.05,
-            buff: { name: "Arcane Surge", stat: "critChance", bonus: 0.15, duration: 5 },
-            description: "Calls down an arcane meteor for 420% Attack damage and +15% Crit for 5s."
+            id: "tactical_strike",
+            name: "Tactical Arsenal Strike",
+            icon: "⚔️",
+            cooldown: 7,
+            damageMult: 2.6,
+            healPct: 0.0,
+            buff: { name: "Tactical Edge", stat: "critChance", bonus: 0.10, duration: 4 },
+            description: "A calculated martial strike dealing 260% Attack damage with +10% Crit Chance for 4s."
         },
         skillsPool: [
             {
-                id: "arcane_meteor",
-                name: "Arcane Meteor",
-                icon: "☄️",
-                cooldown: 10,
-                damageMult: 4.2,
-                healPct: 0.05,
-                buff: { name: "Arcane Surge", stat: "critChance", bonus: 0.15, duration: 5 },
-                description: "Calls down an arcane meteor for 420% Attack damage and +15% Crit for 5s.",
+                id: "tactical_strike",
+                name: "Tactical Arsenal Strike",
+                icon: "⚔️",
+                cooldown: 7,
+                damageMult: 2.6,
+                healPct: 0.0,
+                buff: { name: "Tactical Edge", stat: "critChance", bonus: 0.10, duration: 4 },
+                description: "A calculated martial strike dealing 260% Attack damage with +10% Crit Chance for 4s.",
                 isDefault: true
             },
             {
-                id: "frost_nova",
-                name: "Frost Nova",
-                icon: "❄️",
-                cooldown: 8,
-                damageMult: 3.0,
+                id: "blade_dance_cleave",
+                name: "Bladestorm Dance",
+                icon: "⚔️",
+                cooldown: 7,
+                damageMult: 3.4,
                 healPct: 0.0,
-                buff: { name: "Permafrost Shield", stat: "defense", bonus: 25, duration: 5 },
-                description: "Deep freezes enemy for 300% Ice damage and grants +25 Defense for 5s.",
-                scrollId: "scroll_frost_nova"
+                buff: { name: "Razor Edge", stat: "critChance", bonus: 0.18, duration: 4 },
+                description: "Dances forward with razor blades for 340% damage and increases Critical Chance by +18% for 4s.",
+                subclassReq: "swordsman"
             },
             {
-                id: "mana_shield",
-                name: "Arcane Barrier",
-                icon: "🔮",
-                cooldown: 9,
-                damageMult: 2.2,
-                healPct: 0.20,
-                buff: { name: "Rune Ward", stat: "defense", bonus: 35, duration: 6 },
-                description: "Conjures an astral sphere for 220% damage, recovers 20% Max HP, and +35 Def for 6s.",
-                scrollId: "scroll_mana_shield"
+                id: "dragon_spear_pierce",
+                name: "Heaven-Piercing Dragon Spear",
+                icon: "🐉",
+                cooldown: 8,
+                damageMult: 3.2,
+                healPct: 0.06,
+                buff: { name: "Spear Wall", stat: "defense", bonus: 40, duration: 5 },
+                description: "Impales the enemy line for 320% armor-piercing damage, heals 6% Max HP, and raises Defense by +40 for 5s.",
+                subclassReq: "spearman"
             },
             {
-                id: "meteor_strike",
-                name: "Meteor Calamity",
-                icon: "🌌",
-                cooldown: 12,
-                damageMult: 5.2,
-                healPct: 0.05,
-                buff: { name: "Supernova Grace", stat: "attack", bonus: 60, duration: 5 },
-                description: "Tears open cosmic rifts for 520% Cataclysmic damage and +60 Attack for 5s.",
-                scrollId: "scroll_meteor"
+                id: "rain_of_arrows",
+                name: "Celestial Arrow Storm",
+                icon: "🎯",
+                cooldown: 7,
+                damageMult: 3.6,
+                healPct: 0.0,
+                buff: { name: "Eagle Eye", stat: "dodge", bonus: 0.20, duration: 4 },
+                description: "Rains down a tempest of piercing arrows for 360% damage with +20% Dodge for 4s.",
+                subclassReq: "archer"
+            },
+            {
+                id: "judgement_execution",
+                name: "Supreme Armament Verdict",
+                icon: "⚡",
+                cooldown: 11,
+                damageMult: 4.8,
+                healPct: 0.08,
+                buff: { name: "Warlord's Might", stat: "attack", bonus: 70, duration: 5 },
+                description: "Combines sword, spear, and arrow into an unstoppable assault for 480% damage and +70 Attack for 5s.",
+                scrollId: "scroll_judgement_execution"
             }
         ],
         promotions: [
             {
                 rank: 2,
-                title: "High Magus",
+                title: "Arsenal Vanguard",
+                reqLevel: 10,
+                materials: { ironOre: 10, wood: 6 },
+                goldCost: 500,
+                bonus: { attack: 30, critChance: 0.05, maxHp: 80 },
+                description: "Rank 2 Mastery: +30 Attack, +5% Crit Chance, +80 Max HP."
+            },
+            {
+                rank: 3,
+                title: "Peerless Warmaster",
+                reqLevel: 20,
+                materials: { crystal: 6, dragonScale: 2 },
+                goldCost: 2500,
+                bonus: { attack: 70, critChance: 0.10, dodge: 0.06, maxHp: 220 },
+                description: "Rank 3 Mastery: +70 Attack, +10% Crit Chance, +6% Dodge, +220 Max HP."
+            }
+        ],
+        passives: [
+            { id: "wm_p1", reqLevel: 1, name: "Armament Honing", icon: "⚔️", lore: "Constant whetstone rites turn any weapon into a razor edge.", bonus: { attack: 16, critChance: 0.03 }, description: "+16 Attack, +3% Crit Chance" },
+            { id: "wm_p5", reqLevel: 5, name: "Combat Stride", icon: "💨", lore: "Fluid positioning enables fluid weapon transitions.", bonus: { attack: 28, dodge: 0.04, defense: 10 }, description: "+28 Attack, +4% Dodge, +10 Defense" },
+            { id: "wm_p10", reqLevel: 10, name: "Deadeye Focus", icon: "🎯", lore: "Every strike seeks the enemy's vital weakness.", bonus: { attack: 52, critChance: 0.07, critDmg: 0.20 }, description: "+52 Attack, +7% Crit, +20% Crit Dmg" },
+            { id: "wm_p15", reqLevel: 15, name: "Titan's Battle Armor", icon: "🛡️", lore: "Plated battle armor forged to withstand siege weapons.", bonus: { defense: 40, maxHp: 160, attack: 40 }, description: "+40 Defense, +160 HP, +40 Attack" },
+            { id: "wm_p20", reqLevel: 20, name: "Warlord's Ascendancy", icon: "⚜️", lore: "The tactical mastery of thousands of battles flows through you.", bonus: { attack: 120, critChance: 0.10, dodge: 0.08, maxHp: 200 }, description: "+120 Attack, +10% Crit, +8% Dodge, +200 HP" },
+            { id: "wm_p25", reqLevel: 25, name: "God of Thousand Blades", icon: "⚡", lore: "Celestial gods crown you master of all forged steel and bowstring.", bonus: { attack: 195, critChance: 0.14, lifesteal: 0.06, defense: 60 }, description: "+195 Attack, +14% Crit, +6% Lifesteal, +60 Def" },
+            { id: "wm_p30", reqLevel: 30, name: "Eternal Sovereign Warlord", icon: "🌟", lore: "An undefeated paragon of war whose name echoes across eternity.", bonus: { attack: 300, critChance: 0.18, dodge: 0.12, maxHp: 450 }, description: "+300 Attack, +18% Crit, +12% Dodge, +450 HP" }
+        ]
+    },
+
+    // =========================================================
+    // 3. MAGE (Elemental, Necromantic & Sorcerous Arcana)
+    // =========================================================
+    mage: {
+        id: "mage",
+        name: "Mage",
+        icon: "🔮",
+        description: "Master of primordial elemental spheres, necromantic soulcraft, and divine/dark sorcery.",
+        unlocked: true,
+        baseAttack: 54,
+        baseDefense: 8,
+        baseCritChance: 0.14,
+        baseCritDmg: 1.7,
+        baseDodge: 0.06,
+        baseLifesteal: 0.04,
+        perks: "Supreme spellcasting power; spells bypass 20% monster defense and scale strongly with Intelligence (INT).",
+        subclasses: [
+            {
+                id: "elemental_mage",
+                name: "Elemental Mage",
+                icon: "🌪️",
+                role: "Master of 6 Primal Elements",
+                description: "Harnesses all 6 Primal Elements: 🔥 Fire, ❄️ Ice, ⚡ Lightning, 🌍 Earth, 💨 Wind, and 🌟 Light. Casts catastrophic elemental storms.",
+                bonus: { attack: 32, critChance: 0.08, maxHp: 60 },
+                primaryStat: "INT",
+                specialSkill: {
+                    id: "six_elements_calamity",
+                    name: "Hexa-Elemental Calamity",
+                    icon: "🌈",
+                    cooldown: 8,
+                    damageMult: 4.0,
+                    healPct: 0.05,
+                    buff: { name: "Prismatic Aura", stat: "attack", bonus: 55, duration: 5 },
+                    description: "Unleashes Fire, Ice, Thunder, Earth, Wind & Light in unison for 400% catastrophic damage and +55 Attack for 5s."
+                }
+            },
+            {
+                id: "necromancer",
+                name: "Necromancer",
+                icon: "💀",
+                role: "Soul Siphon & Death Magic",
+                description: "Commands the dead and siphons mortal souls. Specializes in soul-drain lifesteal, dark bone shards, and decaying curses.",
+                bonus: { attack: 26, lifesteal: 0.10, maxHp: 80 },
+                primaryStat: "INT",
+                specialSkill: {
+                    id: "soul_reap_siphon",
+                    name: "Soul Siphon & Bone Storm",
+                    icon: "☠️",
+                    cooldown: 7,
+                    damageMult: 3.2,
+                    healPct: 0.20,
+                    buff: { name: "Soul Harvest", stat: "lifesteal", bonus: 0.10, duration: 6 },
+                    description: "Rips the soul from the target for 320% necrotic damage, drains 20% Max HP to heal, and +10% Lifesteal for 6s."
+                }
+            },
+            {
+                id: "divine_sorcerer",
+                name: "Divine Sorcerer",
+                icon: "✨",
+                role: "Celestial Holy Radiance",
+                description: "Channels radiant heavenly authority. Purifies foes with holy solar smites, divine sanctuary heal, and invulnerable barrier wards.",
+                bonus: { attack: 24, defense: 20, maxHp: 120, lifesteal: 0.03 },
+                primaryStat: "INT",
+                specialSkill: {
+                    id: "heavenly_solar_smite",
+                    name: "Heavens Pillar of Dawn",
+                    icon: "☀️",
+                    cooldown: 8,
+                    damageMult: 3.0,
+                    healPct: 0.25,
+                    buff: { name: "Divine Aegis", stat: "defense", bonus: 40, duration: 5 },
+                    description: "Calls down celestial solar light dealing 300% Holy damage, restores 25% Max HP, and raises Defense by +40 for 5s."
+                }
+            },
+            {
+                id: "dark_sorcerer",
+                name: "Dark Sorcerer",
+                icon: "🌑",
+                role: "Abyssal Void & Chaos Hexes",
+                description: "Dwells within the forbidden abyssal dark. Unleashes reality-collapsing void rifts, chaos hexes, and catastrophic dread.",
+                bonus: { attack: 38, critDmg: 0.50, critChance: 0.08 },
+                primaryStat: "INT",
+                specialSkill: {
+                    id: "abyssal_void_collapse",
+                    name: "Abyssal Singularity",
+                    icon: "🕳️",
+                    cooldown: 9,
+                    damageMult: 4.4,
+                    healPct: 0.0,
+                    buff: { name: "Void Dread", stat: "critChance", bonus: 0.20, duration: 4 },
+                    description: "Creates an event horizon that collapses spacetime for 440% Void damage with +20% Crit for 4s."
+                }
+            },
+            {
+                id: "spirit_mage",
+                name: "Spirit Mage",
+                icon: "👻",
+                role: "Astral Phantoms & Mind Tempest",
+                description: "Attuned to the spirit realm and ancestral ghosts. Wards against damage, phases between planes, and blasts spiritual tempests.",
+                bonus: { attack: 26, dodge: 0.12, defense: 14, maxHp: 70 },
+                primaryStat: "INT",
+                specialSkill: {
+                    id: "ancestral_spirit_tempest",
+                    name: "Ancestral Phantom Tempest",
+                    icon: "🌌",
+                    cooldown: 7,
+                    damageMult: 3.3,
+                    healPct: 0.10,
+                    buff: { name: "Phase Shift", stat: "dodge", bonus: 0.25, duration: 5 },
+                    description: "Summons phantom spirits to assault the foe for 330% damage, recovers 10% Max HP, and gains +25% Dodge for 5s."
+                }
+            }
+        ],
+        skill: {
+            id: "arcane_orb_blast",
+            name: "Arcane Nova Blast",
+            icon: "🔮",
+            cooldown: 7,
+            damageMult: 2.8,
+            healPct: 0.05,
+            buff: { name: "Arcane Focus", stat: "attack", bonus: 25, duration: 4 },
+            description: "Condenses raw arcane leyline energy for 280% damage, recovers 5% Max HP, and +25 Attack for 4s."
+        },
+        skillsPool: [
+            {
+                id: "arcane_orb_blast",
+                name: "Arcane Nova Blast",
+                icon: "🔮",
+                cooldown: 7,
+                damageMult: 2.8,
+                healPct: 0.05,
+                buff: { name: "Arcane Focus", stat: "attack", bonus: 25, duration: 4 },
+                description: "Condenses raw arcane leyline energy for 280% damage, recovers 5% Max HP, and +25 Attack for 4s.",
+                isDefault: true
+            },
+            {
+                id: "six_elements_calamity",
+                name: "Hexa-Elemental Calamity",
+                icon: "🌈",
+                cooldown: 8,
+                damageMult: 4.0,
+                healPct: 0.05,
+                buff: { name: "Prismatic Aura", stat: "attack", bonus: 55, duration: 5 },
+                description: "Unleashes Fire, Ice, Thunder, Earth, Wind & Light in unison for 400% catastrophic damage and +55 Attack for 5s.",
+                subclassReq: "elemental_mage"
+            },
+            {
+                id: "soul_reap_siphon",
+                name: "Soul Siphon & Bone Storm",
+                icon: "☠️",
+                cooldown: 7,
+                damageMult: 3.2,
+                healPct: 0.20,
+                buff: { name: "Soul Harvest", stat: "lifesteal", bonus: 0.10, duration: 6 },
+                description: "Rips the soul from the target for 320% necrotic damage, drains 20% Max HP to heal, and +10% Lifesteal for 6s.",
+                subclassReq: "necromancer"
+            },
+            {
+                id: "heavenly_solar_smite",
+                name: "Heavens Pillar of Dawn",
+                icon: "☀️",
+                cooldown: 8,
+                damageMult: 3.0,
+                healPct: 0.25,
+                buff: { name: "Divine Aegis", stat: "defense", bonus: 40, duration: 5 },
+                description: "Calls down celestial solar light dealing 300% Holy damage, restores 25% Max HP, and raises Defense by +40 for 5s.",
+                subclassReq: "divine_sorcerer"
+            },
+            {
+                id: "abyssal_void_collapse",
+                name: "Abyssal Singularity",
+                icon: "🕳️",
+                cooldown: 9,
+                damageMult: 4.4,
+                healPct: 0.0,
+                buff: { name: "Void Dread", stat: "critChance", bonus: 0.20, duration: 4 },
+                description: "Creates an event horizon that collapses spacetime for 440% Void damage with +20% Crit for 4s.",
+                subclassReq: "dark_sorcerer"
+            },
+            {
+                id: "ancestral_spirit_tempest",
+                name: "Ancestral Phantom Tempest",
+                icon: "🌌",
+                cooldown: 7,
+                damageMult: 3.3,
+                healPct: 0.10,
+                buff: { name: "Phase Shift", stat: "dodge", bonus: 0.25, duration: 5 },
+                description: "Summons phantom spirits to assault the foe for 330% damage, recovers 10% Max HP, and gains +25% Dodge for 5s.",
+                subclassReq: "spirit_mage"
+            },
+            {
+                id: "cosmic_supernova",
+                name: "Cosmic Supernova Calamity",
+                icon: "💥",
+                cooldown: 12,
+                damageMult: 5.4,
+                healPct: 0.12,
+                buff: { name: "Supernova Grace", stat: "attack", bonus: 75, duration: 5 },
+                description: "Tears open cosmic dimensions for 540% Cataclysmic damage, +75 Attack, and 12% Max HP heal.",
+                scrollId: "scroll_supernova"
+            }
+        ],
+        promotions: [
+            {
+                rank: 2,
+                title: "High Archon",
                 reqLevel: 10,
                 materials: { crystal: 6, wood: 6 },
                 goldCost: 500,
-                bonus: { attack: 35, lifesteal: 0.03, maxHp: 40 },
-                description: "Rank 2 Mastery: +35 Attack, +3% Lifesteal, +40 Max HP."
+                bonus: { attack: 36, lifesteal: 0.04, maxHp: 60 },
+                description: "Rank 2 Mastery: +36 Attack, +4% Lifesteal, +60 Max HP."
             },
             {
                 rank: 3,
-                title: "Void Elementalist",
+                title: "Primordial Spellweaver",
                 reqLevel: 20,
                 materials: { crystal: 8, shadowEssence: 3 },
                 goldCost: 2500,
-                bonus: { attack: 75, lifesteal: 0.05, critChance: 0.06, maxHp: 100 },
-                description: "Rank 3 Mastery: +75 Attack, +5% Lifesteal, +6% Crit, +100 Max HP."
+                bonus: { attack: 80, lifesteal: 0.06, critChance: 0.08, maxHp: 180 },
+                description: "Rank 3 Mastery: +80 Attack, +6% Lifesteal, +8% Crit, +180 Max HP."
             }
         ],
         passives: [
-            { id: "m_p1", reqLevel: 1, name: "Gift of the Astral Muse", icon: "🔮", lore: "You have been blessed by the gods: The Celestial Muse channels starlight directly into your mind.", bonus: { attack: 18, lifesteal: 0.03 }, description: "+18 Attack, +3% Lifesteal" },
-            { id: "m_p5", reqLevel: 5, name: "Flame of Primordial Forge", icon: "🔥", lore: "You have been blessed by the gods: The Fire God ignites sacred arcane combustion in your soul.", bonus: { attack: 32, critChance: 0.05, maxHp: 35 }, description: "+32 Attack, +5% Crit Chance, +35 HP" },
-            { id: "m_p10", reqLevel: 10, name: "Eye of Chronomancer God", icon: "⏳", lore: "You have been blessed by the gods: The Time Keeper decelerates reality around your incantations.", bonus: { attack: 58, critChance: 0.07, lifesteal: 0.04, maxHp: 70 }, description: "+58 Attack, +7% Crit, +4% Lifesteal, +70 HP" },
-            { id: "m_p15", reqLevel: 15, name: "Pillar of Celestial Eternity", icon: "☄️", lore: "You have been blessed by the gods: Ancient gods grant infinite conduit to astral magic.", bonus: { attack: 95, critChance: 0.09, lifesteal: 0.05, maxHp: 100 }, description: "+95 Attack, +9% Crit, +5% Lifesteal, +100 HP" },
-            { id: "m_p20", reqLevel: 20, name: "Astral Titan Conduit", icon: "🌟", lore: "You have been blessed by the gods: Starforged titans infuse your incantations with cataclysmic power.", bonus: { attack: 150, critChance: 0.12, lifesteal: 0.06, maxHp: 150 }, description: "+150 Attack, +12% Crit, +6% Lifesteal, +150 HP" },
-            { id: "m_p25", reqLevel: 25, name: "Lord of Cosmic Nexus", icon: "🔮", lore: "You have been blessed by the gods: Primordial deities grant absolute mastery over reality.", bonus: { attack: 220, critChance: 0.15, lifesteal: 0.08, maxHp: 210 }, description: "+220 Attack, +15% Crit, +8% Lifesteal, +210 HP" },
-            { id: "m_p30", reqLevel: 30, name: "Avatar of Starry Expanse", icon: "✨", lore: "You have been blessed by the gods: The cosmos itself bows to your divine will.", bonus: { attack: 310, critChance: 0.20, lifesteal: 0.10, maxHp: 320 }, description: "+310 Attack, +20% Crit, +10% Lifesteal, +320 HP" }
-        ]
-    },
-    paladin: {
-        id: "paladin",
-        name: "Holy Paladin",
-        icon: "⚜️",
-        description: "Holy warrior combining resilient plate armor with radiant healing strikes.",
-        unlocked: true,
-        baseAttack: 42,
-        baseDefense: 18,
-        baseCritChance: 0.12,
-        baseCritDmg: 1.5,
-        baseDodge: 0.05,
-        baseLifesteal: 0.03,
-        perks: "Balanced high defense and natural sustain through holy radiance.",
-        skill: {
-            id: "holy_radiance",
-            name: "Holy Radiance",
-            icon: "✨",
-            cooldown: 9,
-            damageMult: 2.0,
-            healPct: 0.25,
-            buff: { name: "Blessed Ward", stat: "defense", bonus: 15, duration: 5 },
-            description: "Deals 200% Holy damage and immediately restores 25% of maximum HP."
-        },
-        skillsPool: [
-            {
-                id: "holy_radiance",
-                name: "Holy Radiance",
-                icon: "✨",
-                cooldown: 9,
-                damageMult: 2.0,
-                healPct: 0.25,
-                buff: { name: "Blessed Ward", stat: "defense", bonus: 15, duration: 5 },
-                description: "Deals 200% Holy damage and immediately restores 25% of maximum HP.",
-                isDefault: true
-            },
-            {
-                id: "divine_retribution",
-                name: "Divine Retribution",
-                icon: "🔨",
-                cooldown: 8,
-                damageMult: 3.1,
-                healPct: 0.10,
-                buff: { name: "Holy Aegis", stat: "defense", bonus: 30, duration: 5 },
-                description: "Smites for 310% Holy damage, restores 10% Max HP, and +30 Defense for 5s.",
-                scrollId: "scroll_divine_retribution"
-            },
-            {
-                id: "consecration",
-                name: "Sacred Ground",
-                icon: "🌟",
-                cooldown: 9,
-                damageMult: 2.6,
-                healPct: 0.18,
-                buff: { name: "Consecrated Armor", stat: "defense", bonus: 25, duration: 6 },
-                description: "Consecrates the earth for 260% damage, recovers 18% Max HP, and +25 Def for 6s.",
-                scrollId: "scroll_consecration"
-            },
-            {
-                id: "wrath_of_heavens",
-                name: "Avatar of Light",
-                icon: "⚜️",
-                cooldown: 11,
-                damageMult: 4.2,
-                healPct: 0.22,
-                buff: { name: "Heavenly Might", stat: "attack", bonus: 40, duration: 5 },
-                description: "Channels heavenly power for 420% damage, +40 Attack, +30 Def, and 22% Max HP heal.",
-                scrollId: "scroll_wrath_of_heavens"
-            }
-        ],
-        promotions: [
-            {
-                rank: 2,
-                title: "Crusader Warden",
-                reqLevel: 10,
-                materials: { ironOre: 10, crystal: 3 },
-                goldCost: 500,
-                bonus: { attack: 22, defense: 18, maxHp: 90 },
-                description: "Rank 2 Mastery: +22 Attack, +18 Defense, +90 Max HP."
-            },
-            {
-                rank: 3,
-                title: "Divine Justiciar",
-                reqLevel: 20,
-                materials: { dragonScale: 3, crystal: 5 },
-                goldCost: 2500,
-                bonus: { attack: 50, defense: 35, maxHp: 220, lifesteal: 0.04 },
-                description: "Rank 3 Mastery: +50 Attack, +35 Defense, +220 Max HP, +4% Lifesteal."
-            }
-        ],
-        passives: [
-            { id: "p_p1", reqLevel: 1, name: "Benediction of Seraphim", icon: "✨", lore: "You have been blessed by the gods: Radiant seraph wings deflect malicious strikes.", bonus: { maxHp: 35, defense: 8, lifesteal: 0.02 }, description: "+35 Max HP, +8 Defense, +2% Lifesteal" },
-            { id: "p_p5", reqLevel: 5, name: "Righteous Hammer of Justice", icon: "🔨", lore: "You have been blessed by the gods: The God of Righteousness weights your strikes with divine verdict.", bonus: { attack: 22, defense: 15, maxHp: 70 }, description: "+22 Attack, +15 Defense, +70 HP" },
-            { id: "p_p10", reqLevel: 10, name: "Crusader Paragon's Halo", icon: "✨", lore: "You have been blessed by the gods: The divine pantheon crowns you a living avatar of the light.", bonus: { attack: 40, defense: 25, maxHp: 120, lifesteal: 0.04 }, description: "+40 Attack, +25 Defense, +120 HP, +4% Lifesteal" },
-            { id: "p_p15", reqLevel: 15, name: "Radiant Bastion of Dawn", icon: "☀️", lore: "You have been blessed by the gods: Solar deities bless you with everlasting endurance.", bonus: { attack: 65, defense: 38, maxHp: 180, lifesteal: 0.05 }, description: "+65 Attack, +38 Defense, +180 HP, +5% Lifesteal" },
-            { id: "p_p20", reqLevel: 20, name: "Divine Justiciar Avatar", icon: "⚜️", lore: "You have been blessed by the gods: Archangels manifest in your presence, crushing all darkness.", bonus: { attack: 100, defense: 58, maxHp: 260, lifesteal: 0.06 }, description: "+100 Attack, +58 Defense, +260 HP, +6% Lifesteal" },
-            { id: "p_p25", reqLevel: 25, name: "Sovereign of Holy Sanctum", icon: "🏰", lore: "You have been blessed by the gods: The highest heavens bestow invulnerable majesty.", bonus: { attack: 155, defense: 85, maxHp: 380, lifesteal: 0.08 }, description: "+155 Attack, +85 Defense, +380 HP, +8% Lifesteal" },
-            { id: "p_p30", reqLevel: 30, name: "Seraphic High Paragon", icon: "🌟", lore: "You have been blessed by the gods: True immortality through holy transcendence.", bonus: { attack: 230, defense: 120, maxHp: 540, lifesteal: 0.10 }, description: "+230 Attack, +120 Defense, +540 HP, +10% Lifesteal" }
+            { id: "mg_p1", reqLevel: 1, name: "Leyline Attunement", icon: "🔮", lore: "Your mind resonates directly with the planet's arcane leylines.", bonus: { attack: 18, lifesteal: 0.02 }, description: "+18 Attack, +2% Lifesteal" },
+            { id: "mg_p5", reqLevel: 5, name: "Prismatic Font", icon: "✨", lore: "Elemental power flows boundlessly through your fingertips.", bonus: { attack: 34, critChance: 0.05, maxHp: 40 }, description: "+34 Attack, +5% Crit, +40 HP" },
+            { id: "mg_p10", reqLevel: 10, name: "Chronomancer Insight", icon: "⏳", lore: "Time slows down as your incantations weave through reality.", bonus: { attack: 62, critChance: 0.07, lifesteal: 0.04, maxHp: 80 }, description: "+62 Attack, +7% Crit, +4% Lifesteal, +80 HP" },
+            { id: "mg_p15", reqLevel: 15, name: "Astral Siphon", icon: "🌌", lore: "Draws celestial ether from distant constellations into every spell.", bonus: { attack: 100, critChance: 0.09, lifesteal: 0.05, maxHp: 120 }, description: "+100 Attack, +9% Crit, +5% Lifesteal, +120 HP" },
+            { id: "mg_p20", reqLevel: 20, name: "Cosmic Nexus Avatar", icon: "🌟", lore: "Starforged titan energy converts your spells into cataclysms.", bonus: { attack: 160, critChance: 0.12, lifesteal: 0.06, maxHp: 180 }, description: "+160 Attack, +12% Crit, +6% Lifesteal, +180 HP" },
+            { id: "mg_p25", reqLevel: 25, name: "Lord of Primal Arcana", icon: "🔮", lore: "Ancient deities bestow supreme authority over reality and ether.", bonus: { attack: 235, critChance: 0.15, lifesteal: 0.08, maxHp: 250 }, description: "+235 Attack, +15% Crit, +8% Lifesteal, +250 HP" },
+            { id: "mg_p30", reqLevel: 30, name: "Transcendent Starweaver", icon: "✨", lore: "The fabric of creation and magic answers your sovereign command.", bonus: { attack: 330, critChance: 0.20, lifesteal: 0.10, maxHp: 380 }, description: "+330 Attack, +20% Crit, +10% Lifesteal, +380 HP" }
         ]
     }
 };
@@ -406,7 +593,6 @@ window.AllSkillsData = {};
 window.DefaultHeroPromotions = {};
 
 Object.values(window.HeroesData).forEach(hero => {
-    // Ensure promotions have both bonus and bonusStats for cross-compatibility
     if (hero.promotions) {
         hero.promotions.forEach(p => {
             if (!p.bonusStats && p.bonus) p.bonusStats = { ...p.bonus };

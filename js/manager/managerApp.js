@@ -1795,8 +1795,8 @@ window.ManagerApp = {
         // Hero Info
         const heroEl = document.getElementById("dashHero");
         if (heroEl && state.player) {
-            const heroClass = state.player.heroClass || "knight";
-            const heroDef = (window.HeroesData && window.HeroesData[heroClass]) || { name: "Knight" };
+            const heroClass = state.player.heroClass || "martial_artist";
+            const heroDef = (window.HeroesData && window.HeroesData[heroClass]) || { name: "Martial Artist" };
             const gold = (state.player.gold || 0).toLocaleString();
             const heroName = state.player.name || "Hero";
             heroEl.textContent = `Lvl ${state.player.level || 1} · ${gold}g (${heroName} - ${heroDef.name})`;

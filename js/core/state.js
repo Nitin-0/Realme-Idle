@@ -10,19 +10,28 @@ window.gameState = {
         name: "Hero",
         gender: "male",
         hasCompletedOnboarding: false,
-        heroClass: "knight",
+        heroClass: "martial_artist",
+        subclass: "warrior",
         level: 1,
         xp: 0,
         xpToNext: 100,
         gold: 1240,
-        power: 42,
-        defense: 10,
-        critChance: 0.10,
-        critDmg: 1.5,
-        dodge: 0.05,
-        lifesteal: 0.0,
+        power: 46,
+        defense: 14,
+        critChance: 0.12,
+        critDmg: 1.6,
+        dodge: 0.10,
+        lifesteal: 0.02,
         hp: 100,
         maxHp: 100,
+        unspentStatPoints: 0,
+        allocatedStats: {
+            str: 0,
+            int: 0,
+            vit: 0,
+            def: 0,
+            rng: 0
+        },
         equipment: {
             weapon: null,
             armor: null,
@@ -73,11 +82,21 @@ window.gameState = {
             unlocked: []
         },
         activeBuffs: [],
-        classRanks: { knight: 1, rogue: 1, mage: 1, paladin: 1 },
+        classRanks: { martial_artist: 1, weapon_master: 1, mage: 1 },
         moonlitVale3Cleared: false,
         unlockedRecipes: [],
         unlockedBlueprints: [],
-        lastPassiveGoldAt: null
+        lastPassiveGoldAt: null,
+        food: {
+            food_bread: 5,
+            food_pie: 0,
+            food_meat: 0,
+            food_stew: 0,
+            food_feast: 0
+        },
+        equippedFood: "food_bread",
+        autoEatFood: true,
+        lastFarmHarvestAt: Date.now()
     },
 
     world: {
@@ -106,6 +125,7 @@ window.gameState = {
     kingdom: {
         castle: 1,
         treasury: 1,
+        farms: 1,
         blacksmith: 1,
         mageTower: 1,
         barracks: 1
@@ -140,6 +160,7 @@ window.gameState = {
 
     lastTempleDonation: 0,
     logs: [],
+    itemLootLog: [],
 
     listeners: [],
 
@@ -237,6 +258,111 @@ window.gameState = {
         return total;
     },
 
+    /* =========================
+       SUBCLASS & SPECIALIZATION SYSTEM
+    ========================= */
+    getSubclass() {
+        const curClass = this.player.heroClass;
+        const heroDef = window.HeroesData ? window.HeroesData[curClass] : null;
+        if (!heroDef || !heroDef.subclasses || heroDef.subclasses.length === 0) return null;
+        if (this.player.subclass) {
+            const match = heroDef.subclasses.find(s => s.id === this.player.subclass);
+            if (match) return match;
+        }
+        return heroDef.subclasses[0];
+    },
+
+    setSubclass(subId) {
+        const curClass = this.player.heroClass;
+        const heroDef = window.HeroesData ? window.HeroesData[curClass] : null;
+        if (!heroDef || !heroDef.subclasses) return false;
+        const sub = heroDef.subclasses.find(s => s.id === subId);
+        if (!sub) return false;
+
+        this.player.subclass = subId;
+
+        // Auto unlock & equip the specialized subclass skill if present
+        if (sub.specialSkill) {
+            if (!this.player.skills.unlocked) this.player.skills.unlocked = [];
+            if (!this.player.skills.unlocked.includes(sub.specialSkill.id)) {
+                this.player.skills.unlocked.push(sub.specialSkill.id);
+            }
+            this.equipSkill(sub.specialSkill.id);
+        }
+
+        if (this.addLog) {
+            this.addLog(`✨ Specialize Path: [${sub.name}] (${sub.role})!`, "class", sub.icon || "⭐");
+        }
+        this.save();
+        this.notify();
+        return true;
+    },
+
+    getSubclassBonus(statKey) {
+        const sub = this.getSubclass();
+        if (!sub || !sub.bonus) return 0;
+        const b = sub.bonus;
+        if (b[statKey] !== undefined) return b[statKey];
+        if (statKey === "attack" && b.atk !== undefined) return b.atk;
+        if (statKey === "defense" && b.def !== undefined) return b.def;
+        if (statKey === "maxHp" && b.hp !== undefined) return b.hp;
+        if (statKey === "critChance" && b.crit !== undefined) return (b.crit > 1 ? b.crit / 100 : b.crit);
+        if (statKey === "dodge" && b.eva !== undefined) return b.eva;
+        if (statKey === "lifesteal" && b.vamp !== undefined) return b.vamp;
+        return 0;
+    },
+
+    /* =========================
+       STAT ATTRIBUTE ALLOCATION SYSTEM (STR, INT, VIT, DEF, RNG)
+    ========================= */
+    allocateStat(statKey, count = 1) {
+        const valid = ["str", "int", "vit", "def", "rng"];
+        if (!valid.includes(statKey)) return false;
+        if (!this.player.allocatedStats) {
+            this.player.allocatedStats = { str: 0, int: 0, vit: 0, def: 0, rng: 0 };
+        }
+        count = Math.max(1, count);
+        const unspent = this.player.unspentStatPoints || 0;
+        if (unspent < count) return false;
+
+        this.player.unspentStatPoints = unspent - count;
+        this.player.allocatedStats[statKey] = (this.player.allocatedStats[statKey] || 0) + count;
+
+        const statNames = { str: "Strength (STR)", int: "Intelligence (INT)", vit: "Vitality (VIT)", def: "Defense (DEF)", rng: "Agility/Range (RNG)" };
+        if (this.addLog) {
+            this.addLog(`⭐ Allocated +${count} to ${statNames[statKey]} (Total: ${this.player.allocatedStats[statKey]}).`, "level", "⭐");
+        }
+
+        const effMax = this.getEffectiveMaxHp();
+        if (this.player.hp > effMax) this.player.hp = effMax;
+
+        this.save();
+        this.notify();
+        return true;
+    },
+
+    resetStats() {
+        if (!this.player.allocatedStats) {
+            this.player.allocatedStats = { str: 0, int: 0, vit: 0, def: 0, rng: 0 };
+        }
+        let refund = 0;
+        ["str", "int", "vit", "def", "rng"].forEach(k => {
+            refund += (this.player.allocatedStats[k] || 0);
+            this.player.allocatedStats[k] = 0;
+        });
+
+        this.player.unspentStatPoints = (this.player.unspentStatPoints || 0) + refund;
+        if (this.addLog) {
+            this.addLog(`🔄 Reset all allocated attribute stats. Refunded ${refund} attribute points.`, "system", "🔄");
+        }
+        const effMax = this.getEffectiveMaxHp();
+        if (this.player.hp > effMax) this.player.hp = effMax;
+
+        this.save();
+        this.notify();
+        return true;
+    },
+
     isKingdomDomainUnlocked() {
         const lvlMet = (this.player.level || 1) >= 5;
         const bossMet = !!this.player.moonlitVale3Cleared ||
@@ -251,8 +377,12 @@ window.gameState = {
         let passives = 0;
         let promotions = 0;
         let upgrades = 0;
+        let statPointsBonus = 0;
+        let subclassBonus = 0;
         let total = 0;
         let isPct = false;
+
+        const stats = this.player.allocatedStats || { str: 0, int: 0, vit: 0, def: 0, rng: 0 };
 
         if (statKey === "attack") {
             base = this.player.power;
@@ -261,6 +391,16 @@ window.gameState = {
             }
             promotions = this.getClassPromotionsBonus("attack");
             passives = this.getClassPassivesBonus("attack");
+            subclassBonus = this.getSubclassBonus("attack");
+
+            // Stat points contribution to Attack
+            const strAtk = (stats.str || 0) * 3.5;
+            const isMagic = this.player.heroClass === "mage" || this.player.subclass === "qi_warrior";
+            const intAtk = (stats.int || 0) * (isMagic ? 3.5 : 1.0);
+            const isRanged = ["archer", "spearman"].includes(this.player.subclass);
+            const rngAtk = (stats.rng || 0) * (isRanged ? 3.0 : 1.5);
+            statPointsBonus = Math.floor(strAtk + intAtk + rngAtk);
+
             Object.entries(this.player.equipment).forEach(([slot, item]) => {
                 if (item) {
                     const eff = this.getItemEffectiveStats(item);
@@ -282,6 +422,9 @@ window.gameState = {
             }
             promotions = this.getClassPromotionsBonus("defense");
             passives = this.getClassPassivesBonus("defense");
+            subclassBonus = this.getSubclassBonus("defense");
+            statPointsBonus = Math.floor((stats.def || 0) * 2.5);
+
             Object.entries(this.player.equipment).forEach(([slot, item]) => {
                 if (item) {
                     const eff = this.getItemEffectiveStats(item);
@@ -303,6 +446,9 @@ window.gameState = {
             }
             promotions = this.getClassPromotionsBonus("maxHp");
             passives = this.getClassPassivesBonus("maxHp");
+            subclassBonus = this.getSubclassBonus("maxHp");
+            statPointsBonus = Math.floor((stats.vit || 0) * 25);
+
             Object.entries(this.player.equipment).forEach(([slot, item]) => {
                 if (item) {
                     const eff = this.getItemEffectiveStats(item);
@@ -325,6 +471,9 @@ window.gameState = {
             }
             promotions = Math.round(this.getClassPromotionsBonus("critChance") * 100);
             passives = Math.round(this.getClassPassivesBonus("critChance") * 100);
+            subclassBonus = Math.round(this.getSubclassBonus("critChance") * 100);
+            statPointsBonus = Math.round((stats.rng || 0) * 0.3);
+
             Object.entries(this.player.equipment).forEach(([slot, item]) => {
                 if (item) {
                     const eff = this.getItemEffectiveStats(item);
@@ -347,6 +496,9 @@ window.gameState = {
             }
             promotions = Math.round(this.getClassPromotionsBonus("dodge") * 100);
             passives = Math.round(this.getClassPassivesBonus("dodge") * 100);
+            subclassBonus = Math.round(this.getSubclassBonus("dodge") * 100);
+            statPointsBonus = Math.round((stats.rng || 0) * 0.25);
+
             Object.entries(this.player.equipment).forEach(([slot, item]) => {
                 if (item) {
                     const eff = this.getItemEffectiveStats(item);
@@ -369,6 +521,8 @@ window.gameState = {
             }
             promotions = Math.round(this.getClassPromotionsBonus("lifesteal") * 100);
             passives = Math.round(this.getClassPassivesBonus("lifesteal") * 100);
+            subclassBonus = Math.round(this.getSubclassBonus("lifesteal") * 100);
+
             Object.entries(this.player.equipment).forEach(([slot, item]) => {
                 if (item) {
                     const eff = this.getItemEffectiveStats(item);
@@ -387,6 +541,8 @@ window.gameState = {
 
         // Build detailed tooltip detailing where every point comes from
         const parts = [`Base Class: ${base}${isPct ? '%' : ''}`];
+        if (statPointsBonus > 0) parts.push(`Attribute Stats: +${statPointsBonus}${isPct ? '%' : ''}`);
+        if (subclassBonus > 0) parts.push(`Subclass Spec: +${subclassBonus}${isPct ? '%' : ''}`);
         gearItems.forEach(g => {
             parts.push(`${g.name} [${g.slot}]: +${g.value}${isPct ? '%' : ''}`);
         });
@@ -397,10 +553,12 @@ window.gameState = {
 
         const tooltip = parts.join("  |  ");
 
-        // Format separated display string: e.g. 258+12+12
+        // Format separated display string
         let displayStr = `${base}${isPct ? '%' : ''}`;
-        if (gearItems.length > 0 || passives > 0 || promotions > 0 || upgrades > 0) {
+        if (gearItems.length > 0 || passives > 0 || promotions > 0 || upgrades > 0 || statPointsBonus > 0 || subclassBonus > 0) {
             const extraAdditions = [];
+            if (statPointsBonus > 0) extraAdditions.push(`${statPointsBonus}${isPct ? '%' : ''}`);
+            if (subclassBonus > 0) extraAdditions.push(`${subclassBonus}${isPct ? '%' : ''}`);
             gearItems.forEach(g => extraAdditions.push(`${g.value}${isPct ? '%' : ''}`));
             const otherBonus = passives + promotions + upgrades;
             if (otherBonus > 0) {
@@ -415,6 +573,8 @@ window.gameState = {
             passives,
             promotions,
             upgrades,
+            statPointsBonus,
+            subclassBonus,
             total,
             isPct,
             tooltip,
@@ -424,6 +584,18 @@ window.gameState = {
 
     getEffectiveAttack() {
         let att = this.player.power;
+
+        // Allocated Attribute Stats
+        const stats = this.player.allocatedStats || {};
+        const strAtk = (stats.str || 0) * 3.5;
+        const isMagic = this.player.heroClass === "mage" || this.player.subclass === "qi_warrior";
+        const intAtk = (stats.int || 0) * (isMagic ? 3.5 : 1.0);
+        const isRanged = ["archer", "spearman"].includes(this.player.subclass);
+        const rngAtk = (stats.rng || 0) * (isRanged ? 3.0 : 1.5);
+        att += (strAtk + intAtk + rngAtk);
+
+        // Subclass Specialization Bonus
+        att += this.getSubclassBonus("attack");
 
         // Permanent Upgrades (Whetstone Rites: +8 Atk per lv)
         if (this.player.upgrades && this.player.upgrades.attack) {
@@ -464,10 +636,8 @@ window.gameState = {
         if (isDemon) {
             const effMax = (this.player.maxHp || 100);
             const missingRatio = Math.max(0, 1 - (this.player.hp / effMax));
-            // Low HP = More Power (up to +150% bonus damage)
             att *= (1 + missingRatio * 1.5);
 
-            // Demon's Last Stand: insane ATK surge when HP <= 25%
             if ((this.player.hp / effMax) <= 0.25) {
                 att *= 1.5;
             }
@@ -480,6 +650,13 @@ window.gameState = {
 
     getEffectiveDefense() {
         let def = this.player.defense;
+
+        // Allocated Attribute Stats (DEF gives +2.5 Armor per point)
+        const stats = this.player.allocatedStats || {};
+        def += (stats.def || 0) * 2.5;
+
+        // Subclass Specialization Bonus
+        def += this.getSubclassBonus("defense");
 
         // Permanent Upgrades (Armor Plating: +4 Def per lv)
         if (this.player.upgrades && this.player.upgrades.defense) {
@@ -509,6 +686,13 @@ window.gameState = {
 
     getEffectiveCritChance() {
         let crit = this.player.critChance;
+
+        // Allocated Attribute Stats (RNG gives +0.3% Crit per point)
+        const stats = this.player.allocatedStats || {};
+        crit += (stats.rng || 0) * 0.003;
+
+        // Subclass Specialization Bonus
+        crit += this.getSubclassBonus("critChance");
 
         // Permanent Upgrades (Precision Drills: +1% Crit per lv)
         if (this.player.upgrades && this.player.upgrades.crit) {
@@ -550,6 +734,7 @@ window.gameState = {
 
     getEffectiveCritDmg() {
         let mult = this.player.critDmg || 1.5;
+        mult += this.getSubclassBonus("critDmg");
         Object.values(this.player.equipment).forEach(item => {
             if (item) {
                 const eff = this.getItemEffectiveStats(item);
@@ -557,13 +742,20 @@ window.gameState = {
             }
         });
         if (this.combat && this.combat.isDestabilized && Math.random() < 0.35) {
-            mult *= (3.0 + Math.random() * 3.0); // Reality-shattering Paradox Crits!
+            mult *= (3.0 + Math.random() * 3.0);
         }
         return mult;
     },
 
     getEffectiveDodge() {
         let dodge = this.player.dodge;
+
+        // Allocated Attribute Stats (RNG gives +0.25% Dodge per point)
+        const stats = this.player.allocatedStats || {};
+        dodge += (stats.rng || 0) * 0.0025;
+
+        // Subclass Specialization Bonus
+        dodge += this.getSubclassBonus("dodge");
 
         // Permanent Upgrades (Armor Plating: +0.2% Dodge per lv)
         if (this.player.upgrades && this.player.upgrades.defense) {
@@ -593,6 +785,9 @@ window.gameState = {
     getEffectiveLifesteal() {
         let ls = this.player.lifesteal;
 
+        // Subclass Specialization Bonus
+        ls += this.getSubclassBonus("lifesteal");
+
         // Permanent Upgrades (Vampiric Rune: +1% Lifesteal per lv)
         if (this.player.upgrades && this.player.upgrades.life) {
             ls += this.player.upgrades.life * 0.01;
@@ -616,6 +811,13 @@ window.gameState = {
     getEffectiveMaxHp() {
         let hp = this.player.maxHp;
 
+        // Allocated Attribute Stats (VIT gives +25 Max HP per point)
+        const stats = this.player.allocatedStats || {};
+        hp += (stats.vit || 0) * 25;
+
+        // Subclass Specialization Bonus
+        hp += this.getSubclassBonus("maxHp");
+
         // Permanent Upgrades (Vitality Training: +30 Max HP per lv)
         if (this.player.upgrades && this.player.upgrades.hp) {
             hp += this.player.upgrades.hp * 30;
@@ -633,6 +835,10 @@ window.gameState = {
                 if (eff.hp) hp += eff.hp;
             }
         });
+
+        // Royal Farms Nutrition Bonus (+15 Max HP per Farm level)
+        const farmLevel = this.getFarmLevel ? this.getFarmLevel() : ((this.kingdom && (this.kingdom.farms || this.kingdom.blacksmith)) || 1);
+        hp += (farmLevel - 1) * 15;
 
         return Math.floor(hp);
     },
@@ -813,6 +1019,148 @@ window.gameState = {
         return amount;
     },
 
+    /* =========================================================
+       ROYAL FARMS & GRANARY FOOD PRODUCTION ENGINE
+    ========================================================= */
+    getFarmLevel() {
+        return (this.kingdom && (this.kingdom.farms || this.kingdom.blacksmith)) || 1;
+    },
+
+    getFarmHarvestIntervalSec() {
+        const lvl = this.getFarmLevel();
+        const speed = (window.devMode && window.devMode.enabled) ? (window.devMode.gameSpeed || 1) : 1;
+        const base = Math.max(20, 50 - (lvl * 3));
+        return Math.max(5, Math.floor(base / (speed > 0 ? speed : 1)));
+    },
+
+    equipFood(foodId) {
+        if (!this.player.food) {
+            this.player.food = { food_bread: 5, food_pie: 0, food_meat: 0, food_stew: 0, food_feast: 0 };
+        }
+        this.player.equippedFood = foodId;
+        this.save();
+        this.notify();
+    },
+
+    eatFood(foodId = null) {
+        const target = foodId || this.player.equippedFood || "food_bread";
+        if (!this.player.food) {
+            this.player.food = { food_bread: 5, food_pie: 0, food_meat: 0, food_stew: 0, food_feast: 0 };
+        }
+        if ((this.player.food[target] || 0) <= 0) {
+            return false;
+        }
+
+        const foodDef = (window.FoodData && window.FoodData[target]) || (window.ItemsData && window.ItemsData[target]);
+        if (!foodDef) return false;
+
+        this.player.food[target]--;
+        const effMaxHp = this.getEffectiveMaxHp();
+        const healAmt = Math.max(foodDef.healHp || 50, Math.floor(effMaxHp * (foodDef.healPct || 0.20)));
+        const prevHp = this.player.hp;
+        this.player.hp = Math.min(effMaxHp, this.player.hp + healAmt);
+        const actualHealed = this.player.hp - prevHp;
+
+        // Apply temporary buff if any
+        if (foodDef.effect && foodDef.effect.buff) {
+            const b = foodDef.effect.buff;
+            if (!this.player.activeBuffs) this.player.activeBuffs = [];
+            this.player.activeBuffs = this.player.activeBuffs.filter(existing => existing.name !== b.name);
+            this.player.activeBuffs.push({
+                name: b.name,
+                stat: b.stat,
+                bonus: b.bonus,
+                expiresAt: Date.now() + (b.durationSec * 1000)
+            });
+        }
+
+        // Cleanse fatigue if feast
+        if (target === "food_feast") {
+            if (this.reduceFatigue) this.reduceFatigue(100);
+            if (this.player.fatigue !== undefined) this.player.fatigue = 0;
+        }
+
+        // Show floating damage popup
+        if (window.CombatManager) {
+            window.CombatManager.showDamagePopup(`${foodDef.icon || '🍞'} +${actualHealed} HP!`, false, false, "potion");
+        }
+
+        // Log consumed item in Item Loot Log!
+        if (this.recordItemLoot) {
+            this.recordItemLoot({
+                key: "used_" + target,
+                name: `Ate: ${foodDef.name}`,
+                icon: foodDef.icon || "🍞",
+                rarity: "use",
+                category: "use",
+                count: 1,
+                details: `Healed +${actualHealed} HP · Remaining: ${this.player.food[target]}`
+            });
+        }
+
+        this.save();
+        this.notify();
+        return true;
+    },
+
+    harvestFarms(isManual = false) {
+        if (!this.player.food) {
+            this.player.food = { food_bread: 5, food_pie: 0, food_meat: 0, food_stew: 0, food_feast: 0 };
+        }
+        const farmLevel = this.getFarmLevel();
+
+        // Produce food according to farm level
+        const harvestYield = {};
+        if (farmLevel >= 1) harvestYield.food_bread = 1;
+        if (farmLevel >= 2) harvestYield.food_pie = 1;
+        if (farmLevel >= 3) harvestYield.food_meat = 1;
+        if (farmLevel >= 4) harvestYield.food_stew = 1;
+        if (farmLevel >= 5) harvestYield.food_feast = 1;
+
+        for (const [fKey, qty] of Object.entries(harvestYield)) {
+            this.player.food[fKey] = (this.player.food[fKey] || 0) + qty;
+            const fDef = (window.FoodData && window.FoodData[fKey]) || (window.ItemsData && window.ItemsData[fKey]);
+            if (fDef && this.recordItemLoot) {
+                this.recordItemLoot({
+                    key: fKey,
+                    name: fDef.name,
+                    icon: fDef.icon,
+                    rarity: fDef.rarity || "common",
+                    category: "food",
+                    count: qty,
+                    details: `Produced by Royal Farms (Lv. ${farmLevel})`
+                });
+            }
+        }
+
+        this.player.lastFarmHarvestAt = Date.now();
+        if (isManual && this.addLog) {
+            this.addLog(`🌾 Harvested fresh crops from Royal Farms (Lv. ${farmLevel})!`, "system", "🌾");
+        }
+        this.save();
+        this.notify();
+        return harvestYield;
+    },
+
+    tickFarmProduction() {
+        if (!this.kingdom) return;
+        const farmLevel = this.getFarmLevel();
+        if (farmLevel <= 0) return;
+
+        const now = Date.now();
+        if (!this.player.lastFarmHarvestAt) {
+            this.player.lastFarmHarvestAt = now;
+            return;
+        }
+
+        const intervalSec = this.getFarmHarvestIntervalSec();
+        const elapsedSec = Math.floor((now - this.player.lastFarmHarvestAt) / 1000);
+
+        if (elapsedSec >= intervalSec) {
+            this.harvestFarms(false);
+        }
+    },
+
     /* =========================
        SKILL UPGRADE & LOADOUT ENGINE
     ========================= */
@@ -961,6 +1309,7 @@ window.gameState = {
         if (heroDef && heroDef.skillsPool) {
             const match = heroDef.skillsPool.find(s => s.id === skillId);
             if (match && match.isDefault) return true;
+            if (match && match.subclassReq && this.player.subclass === match.subclassReq) return true;
         }
         return (this.player.skills && Array.isArray(this.player.skills.unlocked) && this.player.skills.unlocked.includes(skillId));
     },
@@ -1079,8 +1428,22 @@ window.gameState = {
         // Kingdom Treasury Bonus (+10% per level)
         const treasuryMult = 1 + (this.kingdom.treasury - 1) * 0.10;
 
-        const totalGold = amount * devMult * weatherMult * eventMult * treasuryMult * gearGoldMult;
+        const totalGold = Math.max(1, Math.round(amount * devMult * weatherMult * eventMult * treasuryMult * gearGoldMult));
         this.player.gold += totalGold;
+
+        // Record Gold Loot in Loot Log
+        if (this.recordItemLoot && totalGold > 0) {
+            this.recordItemLoot({
+                key: "gold",
+                name: "Gold",
+                icon: "💰",
+                rarity: "gold",
+                category: "gold",
+                count: totalGold,
+                details: `+${totalGold.toLocaleString()} gold coins`
+            });
+        }
+
         this.notify();
     },
 
@@ -1115,13 +1478,27 @@ window.gameState = {
             this.player.level++;
             this.player.power += 6;
             this.player.maxHp += 25;
+            this.player.unspentStatPoints = (this.player.unspentStatPoints || 0) + 5;
             this.player.hp = this.getEffectiveMaxHp();
             this.player.xpToNext = Math.floor(this.player.xpToNext * 1.4);
 
             if (window.devMode && typeof window.devMode.logToConsole === "function") {
-                window.devMode.logToConsole(`🌟 LEVEL UP! You reached Level ${this.player.level}! (+6 Power, +25 Max HP)`, "success");
+                window.devMode.logToConsole(`🌟 LEVEL UP! You reached Level ${this.player.level}! (+6 Power, +25 Max HP, +5 Stat Points)`, "success");
             }
-            this.addLog(`⭐ LEVEL UP! Your hero reached Level ${this.player.level}! (+6 Power, +25 Max HP)`, "level", "⭐");
+            this.addLog(`⭐ LEVEL UP! Your hero reached Level ${this.player.level}! (+6 Power, +25 Max HP, +5 Stat Points)`, "level", "⭐");
+
+            // Record Level Up in Item Loot Feed
+            if (this.recordItemLoot) {
+                this.recordItemLoot({
+                    key: `levelup_${this.player.level}`,
+                    name: `Level Up (Lv. ${this.player.level})`,
+                    icon: "⭐",
+                    rarity: "levelup",
+                    category: "levelup",
+                    count: 1,
+                    details: "+5 Stat Points · +6 Power · +25 Max HP"
+                });
+            }
 
             // Check divine passives unlocked at this new level
             const heroDef = window.HeroesData ? window.HeroesData[this.player.heroClass] : null;
@@ -1150,6 +1527,15 @@ window.gameState = {
         this.player.dodge = heroDef.baseDodge;
         this.player.lifesteal = heroDef.baseLifesteal;
         this.player.skills.activeCooldown = 0;
+
+        // Auto-select first subclass of this class if current subclass is not valid for new class
+        if (heroDef.subclasses && heroDef.subclasses.length > 0) {
+            const hasMatch = heroDef.subclasses.some(s => s.id === this.player.subclass);
+            if (!hasMatch) {
+                this.setSubclass(heroDef.subclasses[0].id);
+            }
+        }
+
         this.addLog(`🛡️ Switched class to ${heroDef.name}!`, "class", "🛡️");
         this.notify();
     },
@@ -1161,7 +1547,9 @@ window.gameState = {
         this.player.level = 1;
         this.player.xp = 0;
         this.player.xpToNext = 100;
-        this.setHeroClass(heroClass || "knight");
+        this.player.unspentStatPoints = 0;
+        this.player.allocatedStats = { str: 0, int: 0, vit: 0, def: 0, rng: 0 };
+        this.setHeroClass(heroClass || "martial_artist");
 
         // Starter supplies
         this.player.gold = 100;
@@ -1169,20 +1557,24 @@ window.gameState = {
             potion_minor: 5,
             potion_major: 0,
             potion_full: 0,
+            potion_stamina: 2,
+            potion_elixir_rest: 0,
             elixir_fury: 0,
             elixir_iron: 0
         };
 
         // Class starter equipment
-        this.player.equipment = { weapon: null, armor: null, ring: null };
+        this.player.equipment = { weapon: null, armor: null, ring: null, crown: null };
         this.player.inventory = [];
         const starterGear = {
-            knight: { weapon: "iron_sword", armor: "iron_plate" },
-            rogue: { weapon: "steel_rapier", armor: "hardened_leather" },
-            mage: { weapon: "apprentice_staff", armor: "silk_robes" },
-            paladin: { weapon: "blessed_mace", armor: "crusader_plate" }
+            martial_artist: { weapon: "iron_knuckles", armor: "monk_silk_gi", subclass: "warrior" },
+            weapon_master: { weapon: "steel_broadsword", armor: "iron_plate", subclass: "swordsman" },
+            mage: { weapon: "apprentice_elemental_wand", armor: "monk_silk_gi", subclass: "elemental_mage" }
         };
-        const gear = starterGear[heroClass] || starterGear.knight;
+        const gear = starterGear[heroClass] || starterGear.martial_artist;
+        if (gear.subclass) {
+            this.setSubclass(gear.subclass);
+        }
         if (window.InventoryManager) {
             if (gear.weapon) {
                 window.InventoryManager.addItem(gear.weapon);
@@ -1245,13 +1637,50 @@ window.gameState = {
         this.player.level = 1;
         this.player.xp = 0;
         this.player.xpToNext = 100;
+        this.player.unspentStatPoints = 0;
+        this.player.allocatedStats = { str: 0, int: 0, vit: 0, def: 0, rng: 0 };
+        this.player.gold = 100;
+        this.player.power = 10;
+        this.player.materials = { iron_ore: 0, shadow_cloth: 0, magic_shard: 0, dragon_scale: 0 };
+        this.player.equipment = { weapon: null, armor: null, ring: null, crown: null };
+        this.player.inventory = [];
+        this.player.classRanks = {};
+        this.player.upgrades = { attack: 0, defense: 0, hp: 0, crit: 0, life: 0 };
+        this.player.unlockedSkills = {};
+        this.player.moonlitVale3Cleared = false;
+        this.player.potions = {
+            potion_minor: 5,
+            potion_major: 0,
+            potion_full: 0,
+            potion_stamina: 2,
+            potion_elixir_rest: 0,
+            elixir_fury: 0,
+            elixir_iron: 0
+        };
+        this.player.food = {
+            food_bread: 5,
+            food_pie: 0,
+            food_meat: 0,
+            food_stew: 0,
+            food_feast: 0
+        };
+        this.player.equippedFood = "food_bread";
+        this.player.autoEatFood = true;
+        this.player.lastFarmHarvestAt = Date.now();
+        if (this.kingdom) {
+            this.kingdom.farms = 1;
+            this.kingdom.blacksmith = 1;
+        }
         this.combat.stage = 1;
         this.combat.autoFight = false;
         this.combat.inTemple = false;
         this.combat.currentMob = null;
         this.world.currentMapId = "moonlit_vale";
         this.world.unlockedMaps = ["moonlit_vale"];
+        if (this.world.mapDepths) this.world.mapDepths = { moonlit_vale: 1 };
         this.player.lastPassiveGoldAt = Date.now();
+        this.itemLootLog = [];
+        this.addLog("👑 Embarked upon a brand new journey! May the gods favor your blade.", "system", "👑");
         this.save();
         this.notify();
     },
@@ -1300,6 +1729,83 @@ window.gameState = {
                 ch.close();
             } catch (e) {}
         }
+    },
+
+    recordItemLoot(lootData) {
+        if (!this.itemLootLog) this.itemLootLog = [];
+
+        const incomingKey = lootData.key || (lootData.name ? lootData.name.toLowerCase().trim() : "unknown");
+        const incomingCount = (lootData.count !== undefined && lootData.count !== null) ? Number(lootData.count) : 1;
+        const incomingCategory = lootData.category || "item";
+        const incomingRarity = lootData.rarity || (incomingCategory === "gold" ? "gold" : incomingCategory === "levelup" ? "levelup" : "common");
+
+        // Stacking check:
+        // Do not stack level up events (each level is a unique milestone).
+        // For other items (gold, materials, consumables, equipment):
+        // Search the top recent entries (up to 8 entries or within 3 minutes).
+        let stackTarget = null;
+        let stackIndex = -1;
+
+        if (incomingCategory !== "levelup") {
+            const now = Date.now();
+            const searchLimit = Math.min(8, this.itemLootLog.length);
+            for (let i = 0; i < searchLimit; i++) {
+                const item = this.itemLootLog[i];
+                if (item && item.key === incomingKey && (now - (item.timestamp || 0) < 180000)) {
+                    stackTarget = item;
+                    stackIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (stackTarget) {
+            // Stack onto existing entry
+            stackTarget.count = (Number(stackTarget.count) || 1) + incomingCount;
+            stackTarget.timestamp = Date.now();
+            stackTarget.timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            if (lootData.details) {
+                stackTarget.details = lootData.details;
+            } else if (incomingCategory === "gold") {
+                stackTarget.details = `+${stackTarget.count.toLocaleString()} gold total`;
+            }
+            if (lootData.icon) stackTarget.icon = lootData.icon;
+
+            // Move this updated entry to top if it wasn't already at index 0
+            if (stackIndex > 0) {
+                this.itemLootLog.splice(stackIndex, 1);
+                this.itemLootLog.unshift(stackTarget);
+            }
+        } else {
+            // New entry
+            const newEntry = {
+                id: "loot_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+                key: incomingKey,
+                timestamp: Date.now(),
+                timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                name: lootData.name || "Unknown Item",
+                icon: lootData.icon || "🎁",
+                rarity: incomingRarity,
+                category: incomingCategory,
+                details: lootData.details || (incomingCategory === "gold" ? `+${incomingCount.toLocaleString()} gold coins` : ""),
+                count: incomingCount
+            };
+            this.itemLootLog.unshift(newEntry);
+        }
+
+        // Keep up to 300 entries as requested by user
+        if (this.itemLootLog.length > 300) {
+            this.itemLootLog.length = 300;
+        }
+
+        this.save();
+        this.notify();
+    },
+
+    clearItemLootLog() {
+        this.itemLootLog = [];
+        this.save();
+        this.notify();
     },
 
     /* =========================
@@ -1421,7 +1927,8 @@ window.gameState = {
             costs: this.costs,
             templeDonation: this.templeDonation,
             guildIncome: this.guildIncome,
-            logs: this.logs || []
+            logs: this.logs || [],
+            itemLootLog: this.itemLootLog || []
         }));
     },
 
@@ -1459,7 +1966,45 @@ window.gameState = {
                         this.player.activeBuffs = [];
                     }
                     if (!this.player.classRanks) {
-                        this.player.classRanks = { knight: 1, rogue: 1, mage: 1, paladin: 1 };
+                        this.player.classRanks = { martial_artist: 1, weapon_master: 1, mage: 1 };
+                    } else {
+                        if (this.player.classRanks.martial_artist === undefined) this.player.classRanks.martial_artist = this.player.classRanks.knight || 1;
+                        if (this.player.classRanks.weapon_master === undefined) this.player.classRanks.weapon_master = this.player.classRanks.rogue || 1;
+                        if (this.player.classRanks.mage === undefined) this.player.classRanks.mage = 1;
+                    }
+
+                    // Migration for old classes to new class & subclass structure
+                    const oldToNew = {
+                        knight: "martial_artist",
+                        rogue: "weapon_master",
+                        paladin: "martial_artist",
+                        mage: "mage"
+                    };
+                    if (this.player.heroClass && oldToNew[this.player.heroClass]) {
+                        if (!this.player.subclass) {
+                            if (this.player.heroClass === "paladin") this.player.subclass = "qi_warrior";
+                            else if (this.player.heroClass === "knight") this.player.subclass = "warrior";
+                            else if (this.player.heroClass === "rogue") this.player.subclass = "swordsman";
+                            else if (this.player.heroClass === "mage") this.player.subclass = "elemental_mage";
+                        }
+                        this.player.heroClass = oldToNew[this.player.heroClass];
+                    }
+                    if (!this.player.subclass) {
+                        const curHero = window.HeroesData ? window.HeroesData[this.player.heroClass] : null;
+                        this.player.subclass = (curHero && curHero.subclasses && curHero.subclasses[0]) ? curHero.subclasses[0].id : "warrior";
+                    }
+
+                    // Stat point system initialization & retroactive calculation
+                    if (!this.player.allocatedStats) {
+                        this.player.allocatedStats = { str: 0, int: 0, vit: 0, def: 0, rng: 0 };
+                    }
+                    ["str", "int", "vit", "def", "rng"].forEach(k => {
+                        if (this.player.allocatedStats[k] === undefined) this.player.allocatedStats[k] = 0;
+                    });
+                    if (this.player.unspentStatPoints === undefined) {
+                        const totalEarned = Math.max(0, (this.player.level || 1) - 1) * 5;
+                        const spent = Object.values(this.player.allocatedStats).reduce((a, b) => a + b, 0);
+                        this.player.unspentStatPoints = Math.max(0, totalEarned - spent);
                     }
                     if (!this.player.equipment) {
                         this.player.equipment = { weapon: null, armor: null, trinket: null, ring: null, crown: null };
@@ -1474,6 +2019,18 @@ window.gameState = {
                     if (this.player.equilibriumForged === undefined) this.player.equilibriumForged = false;
                     if (!this.player.lastPassiveGoldAt) {
                         this.player.lastPassiveGoldAt = Date.now();
+                    }
+                    if (!this.player.food) {
+                        this.player.food = { food_bread: 5, food_pie: 0, food_meat: 0, food_stew: 0, food_feast: 0 };
+                    }
+                    if (!this.player.equippedFood) {
+                        this.player.equippedFood = "food_bread";
+                    }
+                    if (this.player.autoEatFood === undefined) {
+                        this.player.autoEatFood = true;
+                    }
+                    if (!this.player.lastFarmHarvestAt) {
+                        this.player.lastFarmHarvestAt = Date.now();
                     }
                     if (this.player.inventory && Array.isArray(this.player.inventory)) {
                         this.player.inventory.forEach(i => {
@@ -1499,12 +2056,20 @@ window.gameState = {
                     if (data.combat.autoFight !== undefined) this.combat.autoFight = data.combat.autoFight;
                     if (data.combat.isDestabilized !== undefined) this.combat.isDestabilized = data.combat.isDestabilized;
                 }
-                if (data.kingdom) Object.assign(this.kingdom, data.kingdom);
+                if (data.kingdom) {
+                    Object.assign(this.kingdom, data.kingdom);
+                    if (this.kingdom.farms === undefined) {
+                        this.kingdom.farms = this.kingdom.blacksmith || 1;
+                    }
+                }
                 if (data.quests) Object.assign(this.quests, data.quests);
                 if (data.journal) Object.assign(this.journal, data.journal);
                 if (data.costs) Object.assign(this.costs, data.costs);
                 if (data.templeDonation) Object.assign(this.templeDonation, data.templeDonation);
                 if (data.guildIncome) Object.assign(this.guildIncome, data.guildIncome);
+                if (data.itemLootLog && Array.isArray(data.itemLootLog)) {
+                    this.itemLootLog = data.itemLootLog;
+                }
                 if (data.logs && Array.isArray(data.logs) && data.logs.length > 0) {
                     this.logs = data.logs;
                 } else if (!this.logs || this.logs.length === 0) {

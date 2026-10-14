@@ -89,6 +89,11 @@ window.CombatManager = {
             this.checkAutoPotion();
         }
 
+        // 3b. Emergency Auto-Food Check (when HP <= 60%)
+        if (state.player.autoEatFood !== false && (state.player.hp / effMaxHp) <= 0.60 && state.player.hp < effMaxHp) {
+            this.checkAutoFood();
+        }
+
         // If autoFight is disabled, do not execute automated attack
         if (!state.combat.autoFight) {
             return;
@@ -300,7 +305,7 @@ window.CombatManager = {
 
     triggerSkill() {
         const state = window.gameState;
-        const skill = state.getActiveSkill ? state.getActiveSkill() : ((window.HeroesData[state.player.heroClass] || window.HeroesData.knight).skill);
+        const skill = state.getActiveSkill ? state.getActiveSkill() : ((window.HeroesData[state.player.heroClass] || window.HeroesData.martial_artist).skill);
         if (!skill) return false;
 
         if (state.player.skills.activeCooldown > 0 && !(window.devMode && window.devMode.noCooldowns)) {
@@ -398,6 +403,30 @@ window.CombatManager = {
             window.InventoryManager.usePotion("potion_full");
         } else if (pots.potion_minor > 0) {
             window.InventoryManager.usePotion("potion_minor");
+        }
+    },
+
+    checkAutoFood() {
+        const state = window.gameState;
+        if (!state.player.food) return;
+
+        const effMaxHp = state.getEffectiveMaxHp ? state.getEffectiveMaxHp() : (state.player.maxHp || 100);
+        if (state.player.hp >= effMaxHp) return;
+
+        // Try equipped food first
+        const eq = state.player.equippedFood;
+        if (eq && (state.player.food[eq] || 0) > 0) {
+            state.eatFood(eq);
+            return;
+        }
+
+        // Otherwise pick lowest available food tier to conserve top feasts
+        const tiers = ["food_bread", "food_pie", "food_meat", "food_stew", "food_feast"];
+        for (const fId of tiers) {
+            if ((state.player.food[fId] || 0) > 0) {
+                state.eatFood(fId);
+                return;
+            }
         }
     },
 

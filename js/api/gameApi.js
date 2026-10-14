@@ -109,17 +109,55 @@ window.GameAPI = {
             }
             return false;
         },
+        openNewGameModal() {
+            if (window.MainEngine && typeof window.MainEngine.showNewGameModal === "function") {
+                window.MainEngine.showNewGameModal();
+            }
+        },
         resetToNewGame() {
             window.gameState.resetToNewGame();
         },
         wipeAllDataAndRestart() {
             localStorage.removeItem("realmIdleRootSave");
+            localStorage.removeItem("realmIdleCustomData");
+            localStorage.removeItem("realmIdle_cfg_guildIncome");
+            localStorage.removeItem("realmIdle_cfg_templeDonation");
             window.location.reload();
         },
         clearLogs() {
             if (window.gameState && typeof window.gameState.clearLogs === "function") {
                 window.gameState.clearLogs();
             }
+        },
+        setHeroClass(classId) {
+            if (window.gameState && window.gameState.setHeroClass) {
+                window.gameState.setHeroClass(classId);
+                if (window.MainEngine && typeof window.MainEngine.renderCharacterView === "function") {
+                    window.MainEngine.renderCharacterView();
+                    window.MainEngine.updateUI();
+                }
+            }
+        },
+        setSubclass(subId) {
+            if (window.gameState && window.gameState.setSubclass) {
+                window.gameState.setSubclass(subId);
+                if (window.MainEngine && typeof window.MainEngine.renderCharacterView === "function") {
+                    window.MainEngine.renderCharacterView();
+                    window.MainEngine.updateUI();
+                }
+            }
+        },
+        allocateStat(stat, count = 1) {
+            if (window.gameState && window.gameState.allocateStat) {
+                return window.gameState.allocateStat(stat, count);
+            }
+            return false;
+        },
+        resetStats() {
+            if (window.gameState && window.gameState.resetStats) {
+                return window.gameState.resetStats();
+            }
+            return false;
         },
         setKingdomUnlocked(unlocked) {
             const state = window.gameState;

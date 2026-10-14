@@ -47,6 +47,153 @@ window.RarityData = {
 
 window.ItemsData = {
     // Weapons
+    // =========================================================
+    // WEAPONS: MARTIAL ARTIST (Cestus, Knuckles, Qi Wraps & Claws)
+    // =========================================================
+    iron_knuckles: {
+        id: "iron_knuckles",
+        name: "Iron Studded Knuckles",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "common",
+        baseValue: 80,
+        icon: "🥊",
+        stats: { attack: 16 }
+    },
+    cloth_qi_wraps: {
+        id: "cloth_qi_wraps",
+        name: "Tempered Qi Bandages",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "common",
+        baseValue: 85,
+        icon: "🥋",
+        stats: { attack: 14, dodge: 0.04 }
+    },
+    qi_gloves: {
+        id: "qi_gloves",
+        name: "Monk's Qi Infused Gloves",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "uncommon",
+        baseValue: 190,
+        icon: "🧤",
+        stats: { attack: 30, critChance: 0.05 }
+    },
+    spiked_war_cestus: {
+        id: "spiked_war_cestus",
+        name: "Spiked Steel Cestus",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "uncommon",
+        baseValue: 200,
+        icon: "🥊",
+        stats: { attack: 32, critDmg: 0.20 }
+    },
+    blood_rend_claws: {
+        id: "blood_rend_claws",
+        name: "Blood-Rend Claws",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "uncommon",
+        baseValue: 220,
+        icon: "🩸",
+        stats: { attack: 34, lifesteal: 0.04 }
+    },
+    adamantine_knuckles: {
+        id: "adamantine_knuckles",
+        name: "Adamantine Heavy Knuckles",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "rare",
+        baseValue: 460,
+        icon: "🥊",
+        stats: { attack: 60, defense: 20 }
+    },
+    celestial_qi_gloves: {
+        id: "celestial_qi_gloves",
+        name: "Celestial Meridians Handwraps",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "rare",
+        baseValue: 480,
+        icon: "✨",
+        stats: { attack: 64, critChance: 0.08, lifesteal: 0.04 }
+    },
+    colossus_war_gauntlets: {
+        id: "colossus_war_gauntlets",
+        name: "Colossus Earth Gauntlets",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 1350,
+        icon: "💥",
+        stats: { attack: 125, defense: 50, hp: 200 }
+    },
+    dragon_qi_talons: {
+        id: "dragon_qi_talons",
+        name: "Dragon Qi Talons",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 1400,
+        icon: "🐉",
+        stats: { attack: 135, critChance: 0.12, dodge: 0.06 }
+    },
+    berserker_frenzy_talons: {
+        id: "berserker_frenzy_talons",
+        name: "Frenzied Blood-Rage Claws",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 1450,
+        icon: "🪓",
+        stats: { attack: 145, critChance: 0.14, lifesteal: 0.06 }
+    },
+    asura_world_crushers: {
+        id: "asura_world_crushers",
+        name: "Asura World-Crusher Knuckles",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 3800,
+        icon: "⚡",
+        stats: { attack: 260, defense: 70, critChance: 0.18 }
+    },
+    phoenix_transcendence_fists: {
+        id: "phoenix_transcendence_fists",
+        name: "Phoenix Transcendence Cestus",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 4200,
+        icon: "🔥",
+        stats: { attack: 285, hp: 350, lifesteal: 0.10 }
+    },
+    behemoth_bloodlust_claws: {
+        id: "behemoth_bloodlust_claws",
+        name: "Behemoth Bloodlust Rampage Claws",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 4500,
+        icon: "🩸",
+        stats: { attack: 310, critChance: 0.22, critDmg: 0.50 }
+    },
+
+    // =========================================================
+    // WEAPONS: WEAPON MASTER (Swords, Spears, Bows)
+    // =========================================================
+    steel_broadsword: {
+        id: "steel_broadsword",
+        name: "Forged Steel Broadsword",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "common",
+        baseValue: 80,
+        icon: "🗡️",
+        stats: { attack: 18 }
+    },
     iron_sword: {
         id: "iron_sword",
         name: "Iron Broadsword",
@@ -97,8 +244,292 @@ window.ItemsData = {
         icon: "🐉",
         stats: { attack: 240, critChance: 0.16, lifesteal: 0.08 }
     },
+    iron_spear: {
+        id: "iron_spear",
+        name: "Iron Vanguard Spear",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "common",
+        baseValue: 80,
+        icon: "🔱",
+        stats: { attack: 16, defense: 6 }
+    },
+    hunting_shortbow: {
+        id: "hunting_shortbow",
+        name: "Composite Hunting Bow",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "common",
+        baseValue: 85,
+        icon: "🏹",
+        stats: { attack: 17, critChance: 0.04 }
+    },
+    cavalry_pike: {
+        id: "cavalry_pike",
+        name: "Heavy Cavalry Pike",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "uncommon",
+        baseValue: 190,
+        icon: "🔱",
+        stats: { attack: 30, defense: 14 }
+    },
+    yew_longbow: {
+        id: "yew_longbow",
+        name: "Master Yew Longbow",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "uncommon",
+        baseValue: 195,
+        icon: "🏹",
+        stats: { attack: 32, critChance: 0.06, dodge: 0.03 }
+    },
+    twin_azure_blades: {
+        id: "twin_azure_blades",
+        name: "Twin Azure Shortswords",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "uncommon",
+        baseValue: 210,
+        icon: "⚔️",
+        stats: { attack: 34, critChance: 0.06 }
+    },
+    muramasa_katana: {
+        id: "muramasa_katana",
+        name: "Muramasa Blood Katana",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "rare",
+        baseValue: 460,
+        icon: "🗡️",
+        stats: { attack: 65, critChance: 0.10, critDmg: 0.25 }
+    },
+    crimson_dragonlance: {
+        id: "crimson_dragonlance",
+        name: "Crimson Dragonlance",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "rare",
+        baseValue: 470,
+        icon: "🔱",
+        stats: { attack: 62, defense: 25, hp: 120 }
+    },
+    shadow_composite_bow: {
+        id: "shadow_composite_bow",
+        name: "Shadowstalker Recurve Bow",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "rare",
+        baseValue: 465,
+        icon: "🏹",
+        stats: { attack: 64, critChance: 0.09, dodge: 0.06 }
+    },
+    fury_carnage_blades: {
+        id: "fury_carnage_blades",
+        name: "Fury Dual Carnage Blades",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 1350,
+        icon: "⚔️",
+        stats: { attack: 130, critChance: 0.14, lifesteal: 0.05 }
+    },
+    valkyrie_war_halberd: {
+        id: "valkyrie_war_halberd",
+        name: "Valkyrie Sovereign Halberd",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 1380,
+        icon: "🔱",
+        stats: { attack: 125, defense: 45, hp: 250 }
+    },
+    storm_windrunner_bow: {
+        id: "storm_windrunner_bow",
+        name: "Storm Windrunner Greatbow",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 1400,
+        icon: "🏹",
+        stats: { attack: 135, critChance: 0.12, dodge: 0.12 }
+    },
+    vorpal_dragon_blade: {
+        id: "vorpal_dragon_blade",
+        name: "Vorpal Wyrmfang Greatsword",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 1450,
+        icon: "🗡️",
+        stats: { attack: 140, critChance: 0.15, critDmg: 0.35 }
+    },
+    excalibur_lightbringer: {
+        id: "excalibur_lightbringer",
+        name: "Excalibur the Holy Lightbringer",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 4100,
+        icon: "⚔️",
+        stats: { attack: 275, defense: 60, critChance: 0.16 }
+    },
+    gungnir_god_spear: {
+        id: "gungnir_god_spear",
+        name: "Gungnir Spear of the All-Father",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 4200,
+        icon: "🔱",
+        stats: { attack: 280, defense: 80, hp: 400 }
+    },
+    starfall_celestial_greatbow: {
+        id: "starfall_celestial_greatbow",
+        name: "Starfall Celestial Greatbow",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 4400,
+        icon: "🏹",
+        stats: { attack: 295, critChance: 0.20, dodge: 0.14 }
+    },
+
+    // =========================================================
+    // WEAPONS: MAGE (Elemental, Necrotic, Divine, Dark, Spirit)
+    // =========================================================
+    apprentice_elemental_wand: {
+        id: "apprentice_elemental_wand",
+        name: "Apprentice Prismatic Wand",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "common",
+        baseValue: 80,
+        icon: "🪄",
+        stats: { attack: 18 }
+    },
+    bone_wand: {
+        id: "bone_wand",
+        name: "Crypt Bone Wand",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "common",
+        baseValue: 85,
+        icon: "💀",
+        stats: { attack: 16, lifesteal: 0.03 }
+    },
+    fire_frost_staff: {
+        id: "fire_frost_staff",
+        name: "Twin Elemental Dual Staff",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "uncommon",
+        baseValue: 190,
+        icon: "🔮",
+        stats: { attack: 32, critChance: 0.05 }
+    },
+    tome_of_the_crypt: {
+        id: "tome_of_the_crypt",
+        name: "Forbidden Crypt Grimoire",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "uncommon",
+        baseValue: 200,
+        icon: "📖",
+        stats: { attack: 30, lifesteal: 0.05 }
+    },
+    void_crystal_wand: {
+        id: "void_crystal_wand",
+        name: "Void Crystal Siphon Wand",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "rare",
+        baseValue: 460,
+        icon: "🔮",
+        stats: { attack: 66, critChance: 0.08 }
+    },
+    soul_reaper_scythe: {
+        id: "soul_reaper_scythe",
+        name: "Soul Reaper's Nether Scythe",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "rare",
+        baseValue: 470,
+        icon: "☠️",
+        stats: { attack: 64, lifesteal: 0.07, critChance: 0.06 }
+    },
+    hexa_prismatic_archstaff: {
+        id: "hexa_prismatic_archstaff",
+        name: "Hexa-Elemental Prismatic Arch-Staff",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 1400,
+        icon: "🌈",
+        stats: { attack: 140, critChance: 0.12, defense: 30 }
+    },
+    lich_bone_staff: {
+        id: "lich_bone_staff",
+        name: "Lich Lord's Phylactery Staff",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 1380,
+        icon: "💀",
+        stats: { attack: 135, lifesteal: 0.08, hp: 180 }
+    },
+    chaos_nightmare_staff: {
+        id: "chaos_nightmare_staff",
+        name: "Chaos Void Singularity Staff",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 1420,
+        icon: "🕳️",
+        stats: { attack: 145, critChance: 0.15, critDmg: 0.30 }
+    },
+    celestial_elemental_orb: {
+        id: "celestial_elemental_orb",
+        name: "Hexa-Elemental Cosmos Core",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 4200,
+        icon: "🌌",
+        stats: { attack: 280, defense: 60, critChance: 0.18 }
+    },
+    sol_invictus_pillar: {
+        id: "sol_invictus_pillar",
+        name: "Sol Invictus Heavenly Scepter",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 4300,
+        icon: "☀️",
+        stats: { attack: 270, defense: 90, hp: 450, lifesteal: 0.05 }
+    },
+    death_god_reliquary: {
+        id: "death_god_reliquary",
+        name: "Death Sovereign's Dark Reliquary",
+        slot: "weapon",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 4400,
+        icon: "⚰️",
+        stats: { attack: 290, lifesteal: 0.14, critChance: 0.16 }
+    },
 
     // Armor
+    monk_silk_gi: {
+        id: "monk_silk_gi",
+        name: "Monk's Silk Robe & Gi",
+        slot: "armor",
+        type: "equipment",
+        rarity: "common",
+        baseValue: 80,
+        icon: "🥋",
+        stats: { defense: 15, dodge: 0.04, hp: 40 }
+    },
     iron_plate: {
         id: "iron_plate",
         name: "Iron Plate Armor",
@@ -108,6 +539,16 @@ window.ItemsData = {
         baseValue: 80,
         icon: "🛡️",
         stats: { defense: 20, hp: 50 }
+    },
+    reinforced_battle_tunic: {
+        id: "reinforced_battle_tunic",
+        name: "Reinforced Vanguard Battle Tunic",
+        slot: "armor",
+        type: "equipment",
+        rarity: "uncommon",
+        baseValue: 180,
+        icon: "🥋",
+        stats: { defense: 30, hp: 100, dodge: 0.05 }
     },
     hardened_leather: {
         id: "hardened_leather",
@@ -119,6 +560,16 @@ window.ItemsData = {
         icon: "🥋",
         stats: { defense: 32, dodge: 0.04, hp: 90 }
     },
+    ironclad_plate_cuirass: {
+        id: "ironclad_plate_cuirass",
+        name: "Ironclad Heavy Plate Cuirass",
+        slot: "armor",
+        type: "equipment",
+        rarity: "rare",
+        baseValue: 460,
+        icon: "🛡️",
+        stats: { defense: 60, hp: 200 }
+    },
     shadow_cowl: {
         id: "shadow_cowl",
         name: "Shadowstalker Cowl",
@@ -129,6 +580,16 @@ window.ItemsData = {
         icon: "🥋",
         stats: { defense: 55, dodge: 0.10, hp: 150 }
     },
+    astral_spellweave_robe: {
+        id: "astral_spellweave_robe",
+        name: "Astral Spellweave Vestments",
+        slot: "armor",
+        type: "equipment",
+        rarity: "epic",
+        baseValue: 1350,
+        icon: "✨",
+        stats: { defense: 100, hp: 300, dodge: 0.08 }
+    },
     celestial_mail: {
         id: "celestial_mail",
         name: "Celestial Mail of Aegis",
@@ -138,6 +599,16 @@ window.ItemsData = {
         baseValue: 1300,
         icon: "🛡️",
         stats: { defense: 110, hp: 320, dodge: 0.06 }
+    },
+    celestial_dragon_armor: {
+        id: "celestial_dragon_armor",
+        name: "Celestial Star-Dragon Armor",
+        slot: "armor",
+        type: "equipment",
+        rarity: "legendary",
+        baseValue: 4200,
+        icon: "🐲",
+        stats: { defense: 220, hp: 650, dodge: 0.10 }
     },
     dragon_scale_mail: {
         id: "dragon_scale_mail",
@@ -354,6 +825,80 @@ window.ItemsData = {
         effect: { type: "buff", stat: "defense", value: 120, duration: 240 }
     },
 
+    // =========================================================
+    // ROYAL FARMS & GRANARY FOODS (HEALING & COMBAT BUFFS)
+    // =========================================================
+    food_bread: {
+        id: "food_bread",
+        name: "Warm Crust Bread",
+        slot: "food",
+        type: "food",
+        rarity: "common",
+        baseValue: 15,
+        farmLevelReq: 1,
+        healHp: 60,
+        healPct: 0.20,
+        icon: "🍞",
+        description: "Freshly baked artisan bread from the Royal Farms. Heals 60 HP (or 20% Max HP).",
+        effect: { type: "heal_food", amount: 60, minPct: 0.20 }
+    },
+    food_pie: {
+        id: "food_pie",
+        name: "Hearty Meat Pie",
+        slot: "food",
+        type: "food",
+        rarity: "uncommon",
+        baseValue: 45,
+        farmLevelReq: 2,
+        healHp: 150,
+        healPct: 0.35,
+        icon: "🥧",
+        description: "Savory wild game pie with herb crust. Heals 150 HP (35% Max HP) and grants +8 Defense for 30s.",
+        effect: { type: "heal_food", amount: 150, minPct: 0.35, buff: { stat: "defense", bonus: 8, durationSec: 30, name: "Stout Constitution" } }
+    },
+    food_meat: {
+        id: "food_meat",
+        name: "Roasted Boar Shank",
+        slot: "food",
+        type: "food",
+        rarity: "rare",
+        baseValue: 120,
+        farmLevelReq: 3,
+        healHp: 350,
+        healPct: 0.50,
+        icon: "🍗",
+        description: "Juicy fire-roasted wild boar shank. Heals 350 HP (50% Max HP) and grants +18 Attack for 35s.",
+        effect: { type: "heal_food", amount: 350, minPct: 0.50, buff: { stat: "attack", bonus: 18, durationSec: 35, name: "Carnivore Vigour" } }
+    },
+    food_stew: {
+        id: "food_stew",
+        name: "Dragon-Fire Stew",
+        slot: "food",
+        type: "food",
+        rarity: "epic",
+        baseValue: 300,
+        farmLevelReq: 4,
+        healHp: 800,
+        healPct: 0.70,
+        icon: "🍲",
+        description: "Simmering spicy cauldron spiced with dragon peppers. Heals 800 HP (70% Max HP) and grants +8% Crit Chance for 45s.",
+        effect: { type: "heal_food", amount: 800, minPct: 0.70, buff: { stat: "critChance", bonus: 0.08, durationSec: 45, name: "Fiery Blood" } }
+    },
+    food_feast: {
+        id: "food_feast",
+        name: "Royal Ambrosia Feast",
+        slot: "food",
+        type: "food",
+        rarity: "legendary",
+        baseValue: 800,
+        farmLevelReq: 5,
+        healHp: 2000,
+        healPct: 1.0,
+        icon: "🍇",
+        description: "The celestial harvest of royalty. Restores 100% Full HP, cleanses all fatigue, and grants +15% Attack for 60s.",
+        effect: { type: "heal_food", amount: 2000, minPct: 1.0, buff: { stat: "attackMult", bonus: 0.15, durationSec: 60, name: "Divine Feast" } }
+    },
+
     // Fatigue Potions & Advanced Elixirs
     potion_stamina: {
         id: "potion_stamina",
@@ -459,6 +1004,42 @@ window.ItemsData = {
     },
 
     // Skill Scrolls
+    scroll_dragon_kick: {
+        id: "scroll_dragon_kick",
+        name: "Skill Scroll: Dragon Ascension Kick",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "dragon_breath_kick",
+        heroClass: "martial_artist",
+        rarity: "epic",
+        baseValue: 1800,
+        icon: "📜",
+        description: "Study ancient dragon martial arts to unlock Dragon Ascension Kick for Martial Artists (450% Devastation + Attack buff)."
+    },
+    scroll_judgement_execution: {
+        id: "scroll_judgement_execution",
+        name: "Skill Scroll: Supreme Armament Verdict",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "judgement_execution",
+        heroClass: "weapon_master",
+        rarity: "epic",
+        baseValue: 1800,
+        icon: "📜",
+        description: "Master supreme weapon combinations to unlock Supreme Armament Verdict for Weapon Masters (480% damage + Warlord's Might)."
+    },
+    scroll_supernova: {
+        id: "scroll_supernova",
+        name: "Skill Scroll: Cosmic Supernova Calamity",
+        type: "learnable",
+        learnType: "skill",
+        targetId: "cosmic_supernova",
+        heroClass: "mage",
+        rarity: "epic",
+        baseValue: 1800,
+        icon: "📜",
+        description: "Unravel ancient celestial sorcery to unlock Cosmic Supernova Calamity for Mages (540% damage + 12% heal)."
+    },
     scroll_whirlwind: {
         id: "scroll_whirlwind",
         name: "Skill Scroll: Whirlwind Slash",
@@ -772,9 +1353,16 @@ window.ShopData = [
     { id: "shop_mat_wood", matKey: "wood", matQty: 10, name: "Hardwood Bundle x10", icon: "🪵", category: "material", costGold: 80, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Timber gathered from the Moonlit Vale fringes." },
     { id: "shop_mat_iron", matKey: "ironOre", matQty: 10, name: "Iron Ore Bundle x10", icon: "⛏️", category: "material", costGold: 100, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Common iron ore veins mined near the surface." },
     { id: "shop_pot_minor", itemId: "potion_minor", name: "Minor Health Potion", icon: "🧪", category: "consumable", costGold: 50, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Instantly restores 150 HP (or 25% of Max HP)." },
-    { id: "shop_sword_iron", itemId: "iron_sword", name: "Iron Broadsword", icon: "🗡️", category: "equipment", costGold: 180, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "A balanced starter blade forged from iron (+15 Attack)." },
-    { id: "shop_armor_iron", itemId: "iron_plate", name: "Iron Breastplate", icon: "🛡️", category: "equipment", costGold: 200, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Sturdy standard iron breastplate (+12 Def, +30 HP)." },
-    { id: "shop_ring_copper", itemId: "copper_band", name: "Copper Band", icon: "💍", category: "equipment", costGold: 140, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "A simple polished band granting wealth (+3g/10m, +3% Crit)." },
+    { id: "shop_knuckles_iron", itemId: "iron_knuckles", name: "Iron Studded Knuckles", icon: "🥊", category: "equipment", costGold: 180, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Brawler weapon for Martial Artists (+16 Attack)." },
+    { id: "shop_qi_wraps", itemId: "cloth_qi_wraps", name: "Tempered Qi Bandages", icon: "🥋", category: "equipment", costGold: 180, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Qi wraps for Martial Artists (+14 Attack, +4% Dodge)." },
+    { id: "shop_sword_steel_init", itemId: "steel_broadsword", name: "Forged Steel Broadsword", icon: "🗡️", category: "equipment", costGold: 180, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Sharp blade for Weapon Masters (+18 Attack)." },
+    { id: "shop_spear_iron", itemId: "iron_spear", name: "Iron Vanguard Spear", icon: "🔱", category: "equipment", costGold: 180, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Reach spear for Weapon Masters (+16 Attack, +6 Def)." },
+    { id: "shop_bow_hunting", itemId: "hunting_shortbow", name: "Composite Hunting Bow", icon: "🏹", category: "equipment", costGold: 180, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Ranged bow for Weapon Masters (+17 Attack, +4% Crit)." },
+    { id: "shop_wand_elemental", itemId: "apprentice_elemental_wand", name: "Apprentice Prismatic Wand", icon: "🪄", category: "equipment", costGold: 180, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Elemental focus for Mages (+18 Attack)." },
+    { id: "shop_wand_bone", itemId: "bone_wand", name: "Crypt Bone Wand", icon: "💀", category: "equipment", costGold: 180, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Necrotic wand for Mages (+16 Attack, +3% Lifesteal)." },
+    { id: "shop_armor_monk", itemId: "monk_silk_gi", name: "Monk's Silk Robe & Gi", icon: "🥋", category: "equipment", costGold: 200, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Flexible combat robe (+15 Def, +4% Dodge, +40 HP)." },
+    { id: "shop_armor_iron", itemId: "iron_plate", name: "Iron Breastplate", icon: "🛡️", category: "equipment", costGold: 200, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Sturdy standard iron breastplate (+20 Def, +50 HP)." },
+    { id: "shop_ring_copper", itemId: "copper_band", name: "Copper Band", icon: "💍", category: "equipment", costGold: 140, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "A simple polished band (+6 Attack, +6 Def)." },
 
     // ---------------- DEEP MOONLIT VALE (DEPTHS 2 & 3) ----------------
     { id: "shop_pot_major", itemId: "potion_major", name: "Greater Health Potion", icon: "🧪", category: "consumable", costGold: 180, reqLevel: 5, reqMap: "moonlit_vale", reqDepth: 2, stock: -1, description: "Concentrated healing draught. Restores 500 HP (or 60% of Max HP)." },
@@ -802,6 +1390,9 @@ window.ShopData = [
     { id: "shop_pot_rejuvenation", itemId: "potion_elixir_rest", name: "Elixir of Pure Rejuvenation", icon: "🏺", category: "consumable", costGold: 500, reqLevel: 10, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Ancient secret brew that completely resets Fatigue to 0 and heals 600 HP (or 75% of Max HP)." },
 
     // ---------------- SKILL SCROLLS (LEARNABLE SPECIAL SKILLS) ----------------
+    { id: "shop_sc_dragon_kick", itemId: "scroll_dragon_kick", name: "Scroll: Dragon Ascension Kick", icon: "🐉", category: "scroll", costGold: 1200, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches Dragon Ascension Kick (Martial Artist). 450% damage and +65 Attack buff." },
+    { id: "shop_sc_judgement_execution", itemId: "scroll_judgement_execution", name: "Scroll: Supreme Armament Verdict", icon: "⚡", category: "scroll", costGold: 1200, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches Supreme Armament Verdict (Weapon Master). 480% damage and +70 Attack buff." },
+    { id: "shop_sc_supernova", itemId: "scroll_supernova", name: "Scroll: Cosmic Supernova Calamity", icon: "💥", category: "scroll", costGold: 1200, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches Cosmic Supernova Calamity (Mage). 540% damage, +75 Attack, and 12% Max HP heal." },
     { id: "shop_sc_whirlwind", itemId: "scroll_whirlwind", name: "Scroll: Whirlwind Slash", icon: "📜", category: "scroll", costGold: 200, reqLevel: 1, reqMap: "moonlit_vale", reqDepth: 1, stock: -1, description: "Teaches the Whirlwind Slash skill (Knight). High damage cleave with +10% Crit." },
     { id: "shop_sc_holy_bastion", itemId: "scroll_holy_bastion", name: "Scroll: Holy Bastion", icon: "📜", category: "scroll", costGold: 950, reqLevel: 8, reqMap: "ashen_wastes", reqDepth: 1, stock: -1, description: "Teaches the Holy Bastion skill (Knight). Restores HP and grants +40 Defense." },
     { id: "shop_sc_judgment", itemId: "scroll_judgment", name: "Scroll: Heavenly Judgment", icon: "📜", category: "scroll", costGold: 2200, reqLevel: 15, reqMap: "bloodthorn_forest", reqDepth: 1, stock: -1, description: "Teaches Heavenly Judgment (Knight). Devastating 380% lightning burst." },
@@ -949,4 +1540,16 @@ window.buyUpgrade = function(id) {
     state.notify();
     return true;
 };
+
+// =========================================================
+// FOOD DATA ALIAS & HARVEST REGISTRY
+// =========================================================
+window.FoodData = {
+    food_bread: window.ItemsData.food_bread,
+    food_pie: window.ItemsData.food_pie,
+    food_meat: window.ItemsData.food_meat,
+    food_stew: window.ItemsData.food_stew,
+    food_feast: window.ItemsData.food_feast
+};
+
 

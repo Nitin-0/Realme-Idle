@@ -122,6 +122,7 @@
             <button class="nav-tab-btn" data-tab="arena">⚔️ Arena & Combat</button>
             <button class="nav-tab-btn" data-tab="inventory">🎒 Inventory & Forge</button>
             <button class="nav-tab-btn" data-tab="shop">🛒 Realm Shop</button>
+            <button class="nav-tab-btn" data-tab="journal">📖 Bestiary & Journal</button>
         </nav>
 
         <!-- ==================== TAB PAGE 1: ARENA & COMBAT ==================== -->
@@ -252,6 +253,24 @@
                         <span>Auto-Pot &lt;35% HP</span>
                     </label>
                 </div>
+
+                <div class="hud-food-box" id="hudFoodBox">
+                    <div class="food-belt">
+                        <button class="btn-belt-food" id="btnQuickEatFood" title="Eat equipped food to restore HP and gain buffs">
+                            <span id="quickFoodIcon">🍞</span>
+                            <span id="quickFoodName">Warm Bread</span>
+                            <span class="food-count" id="quickFoodCount">x5</span>
+                        </button>
+                        <button class="btn-swap-food" id="btnSwapFood" title="Cycle / swap equipped food">
+                            🔄
+                        </button>
+                    </div>
+
+                    <label class="hud-toggle">
+                        <input type="checkbox" id="chkAutoFood" checked>
+                        <span>Auto-Eat &lt;60% HP</span>
+                    </label>
+                </div>
             </div>
 
             <!-- ACTIVE BUFFS STRIP -->
@@ -297,8 +316,11 @@
                         <span class="decree-icon">👑</span>
                         <div>
                             <strong>Royal Decree of Sovereign Domain</strong>
-                            <p><em>Having banished the foul beasts from this forest, the High King granted him sovereign land to establish his citadel and command the realm's infrastructure.</em></p>
+                            <p><em>Having banished the foul beasts from this forest, the High King granted him sovereign land to establish his citadel, harvest crops, and document the realm.</em></p>
                         </div>
+                        <button class="btn-kingdom-journal" id="btnOpenKingdomJournal" title="View Bestiary of slain monsters and manage Farm harvests">
+                            📖 Realm Bestiary & Granary ➜
+                        </button>
                     </div>
 
                     <div class="kingdom-grid">
@@ -324,14 +346,14 @@
                             </button>
                         </div>
 
-                        <div class="bldg-card">
-                            <div class="bldg-icon">⚒️</div>
+                        <div class="bldg-card bldg-farms-card">
+                            <div class="bldg-icon">🌾</div>
                             <div class="bldg-info">
-                                <strong>Blacksmith (Lv. <span id="bldgLvl_blacksmith">1</span>)</strong>
-                                <small>+5% Attack & Gear Mult</small>
+                                <strong>Royal Farms (Lv. <span id="bldgLvl_farms">1</span>)</strong>
+                                <small id="bldgDesc_farms">Produces 🍞 Bread, +15 Max HP per lv</small>
                             </div>
-                            <button class="bldg-btn" id="btnBldg_blacksmith" data-bldg-upgrade="blacksmith">
-                                UPGRADE <span id="bldgCost_blacksmith">✦ 400</span>
+                            <button class="bldg-btn" id="btnBldg_farms" data-bldg-upgrade="farms">
+                                UPGRADE <span id="bldgCost_farms">✦ 350</span>
                             </button>
                         </div>
 
@@ -372,52 +394,21 @@
             <!-- BOTTOM UPGRADE GRID -->
             <section class="bottom-grid">
 
-                <div class="panel">
+                <div class="panel item-loot-panel" id="itemLootPanel">
 
                     <div class="panel-header">
-                        <h2>Ascension</h2>
-                        <span>UPGRADES</span>
+                        <h2>Item Loot Log</h2>
+                        <span id="itemLootCountTag">0 / 300 LOGS</span>
                     </div>
 
-                    <button class="upgrade" id="damageUpgrade">
-
-                        <div class="upgrade-icon">
-                            🗡️
+                    <div class="item-loot-container">
+                        <div class="item-loot-feed" id="itemLootFeed">
+                            <div class="loot-empty-hint">
+                                <span class="loot-empty-icon">🎁</span>
+                                <p>No items looted yet. Slay monsters and delve into dungeons to acquire weapons, armor, materials, and scrolls!</p>
+                            </div>
                         </div>
-
-                        <div class="upgrade-info">
-                            <strong>Runed Blade</strong>
-
-                            <small>
-                                Increase attack power
-                            </small>
-                        </div>
-
-                        <div class="upgrade-cost" id="damageCost">
-                            ✦ 120
-                        </div>
-
-                    </button>
-
-                    <button class="upgrade" id="incomeUpgrade">
-
-                        <div class="upgrade-icon">
-                            💰
-                        </div>
-
-                        <div class="upgrade-info">
-                            <strong>Royal Treasury</strong>
-
-                            <small>
-                                Increase gold generation
-                            </small>
-                        </div>
-
-                        <div class="upgrade-cost" id="incomeCost">
-                            ✦ 250
-                        </div>
-
-                    </button>
+                    </div>
 
                 </div>
 
@@ -482,32 +473,147 @@
 
                 <div class="char-sheet-grid">
                     <div class="char-hero-card">
-                        <div class="char-avatar" id="charSheetIcon">🛡️</div>
+                        <div class="char-avatar" id="charSheetIcon">🥋</div>
                         <div>
-                            <h3 id="charSheetName">Knight Templar</h3>
-                            <p class="char-hero-desc" id="charSheetDesc">Stalwart defender with high Defense.</p>
-                            <span class="char-hero-perk" id="charSheetPerks">+50% bonus from Shields and Armor.</span>
+                            <div class="char-hero-title-row">
+                                <h3 id="charSheetName">Martial Artist</h3>
+                                <span class="char-subclass-badge" id="charSheetSubclassBadge">Warrior</span>
+                            </div>
+                            <p class="char-hero-desc" id="charSheetDesc">Master of physical discipline, internal Qi energy, and close-quarters combat.</p>
+                            <span class="char-hero-perk" id="charSheetPerks">+20% bonus from unarmed wraps, cestus, and robes.</span>
                         </div>
                     </div>
 
                     <div class="char-stats-list">
-                        <div class="stat-line"><span>Total Attack Power:</span> <strong id="charStatAttack">42</strong>
+                        <div class="stat-line"><span>Total Attack Power:</span> <strong id="charStatAttack">46</strong>
                         </div>
                         <div class="stat-line"><span>Total Armor Defense:</span> <strong
-                                id="charStatDefense">15</strong></div>
+                                id="charStatDefense">14</strong></div>
                         <div class="stat-line"><span>Critical Strike Chance:</span> <strong
-                                id="charStatCrit">10%</strong></div>
+                                id="charStatCrit">12%</strong></div>
                         <div class="stat-line"><span>Critical Multiplier:</span> <strong
-                                id="charStatCritDmg">1.5x</strong></div>
-                        <div class="stat-line"><span>Dodge Probability:</span> <strong id="charStatDodge">5%</strong>
+                                id="charStatCritDmg">1.6x</strong></div>
+                        <div class="stat-line"><span>Dodge Probability:</span> <strong id="charStatDodge">10%</strong>
                         </div>
-                        <div class="stat-line"><span>Lifesteal Leech:</span> <strong id="charStatLifesteal">0%</strong>
+                        <div class="stat-line"><span>Lifesteal Leech:</span> <strong id="charStatLifesteal">2%</strong>
                         </div>
                         <div class="stat-line"><span>Maximum Health (HP):</span> <strong id="charStatHp">100</strong>
                         </div>
                         <div class="stat-line"><span>Passive Income:</span> <strong id="charStatGps">1g / 10 min</strong>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <!-- ATTRIBUTE STAT ALLOCATION (STR, INT, VIT, DEF, RNG) -->
+            <section class="panel" id="statAllocationPanel" style="margin-top: 14px;">
+                <div class="panel-header">
+                    <h2>Attribute Stat Points</h2>
+                    <span id="unspentStatBadge" class="unspent-stat-badge">⭐ 0 Points Available</span>
+                </div>
+                <div class="stat-allocation-container">
+                    <p class="stat-allocation-hint">
+                        Each level up awards <strong>+5 Stat Points</strong> to allocate into physical might, magical resonance, vitality, defense, or agility/range.
+                    </p>
+                    <div class="stat-allocation-grid" id="statAllocationGrid">
+                        <!-- STR -->
+                        <div class="stat-alloc-card" data-stat="str">
+                            <div class="stat-alloc-top">
+                                <span class="stat-alloc-icon">💪</span>
+                                <div class="stat-alloc-info">
+                                    <h4>Strength (STR)</h4>
+                                    <small>+3.5 Physical Attack power per point</small>
+                                </div>
+                                <div class="stat-alloc-val"><span id="allocVal_str">+0</span></div>
+                            </div>
+                            <div class="stat-alloc-actions">
+                                <button type="button" class="btn btn-sm btn-stat-alloc" data-action="alloc" data-stat="str" data-count="1">+1 STR</button>
+                                <button type="button" class="btn btn-sm btn-stat-alloc" data-action="alloc" data-stat="str" data-count="5">+5 STR</button>
+                            </div>
+                        </div>
+
+                        <!-- INT -->
+                        <div class="stat-alloc-card" data-stat="int">
+                            <div class="stat-alloc-top">
+                                <span class="stat-alloc-icon">🔮</span>
+                                <div class="stat-alloc-info">
+                                    <h4>Intelligence (INT)</h4>
+                                    <small>+3.5 Magic/Qi Attack (Mage & Qi Warrior) or +1.0 for others</small>
+                                </div>
+                                <div class="stat-alloc-val"><span id="allocVal_int">+0</span></div>
+                            </div>
+                            <div class="stat-alloc-actions">
+                                <button type="button" class="btn btn-sm btn-stat-alloc" data-action="alloc" data-stat="int" data-count="1">+1 INT</button>
+                                <button type="button" class="btn btn-sm btn-stat-alloc" data-action="alloc" data-stat="int" data-count="5">+5 INT</button>
+                            </div>
+                        </div>
+
+                        <!-- VIT -->
+                        <div class="stat-alloc-card" data-stat="vit">
+                            <div class="stat-alloc-top">
+                                <span class="stat-alloc-icon">❤️</span>
+                                <div class="stat-alloc-info">
+                                    <h4>Vitality (VIT)</h4>
+                                    <small>+25 Maximum Health (HP) per point</small>
+                                </div>
+                                <div class="stat-alloc-val"><span id="allocVal_vit">+0</span></div>
+                            </div>
+                            <div class="stat-alloc-actions">
+                                <button type="button" class="btn btn-sm btn-stat-alloc" data-action="alloc" data-stat="vit" data-count="1">+1 VIT</button>
+                                <button type="button" class="btn btn-sm btn-stat-alloc" data-action="alloc" data-stat="vit" data-count="5">+5 VIT</button>
+                            </div>
+                        </div>
+
+                        <!-- DEF -->
+                        <div class="stat-alloc-card" data-stat="def">
+                            <div class="stat-alloc-top">
+                                <span class="stat-alloc-icon">🛡️</span>
+                                <div class="stat-alloc-info">
+                                    <h4>Defense (DEF)</h4>
+                                    <small>+2.5 Armor Defense & damage reduction per point</small>
+                                </div>
+                                <div class="stat-alloc-val"><span id="allocVal_def">+0</span></div>
+                            </div>
+                            <div class="stat-alloc-actions">
+                                <button type="button" class="btn btn-sm btn-stat-alloc" data-action="alloc" data-stat="def" data-count="1">+1 DEF</button>
+                                <button type="button" class="btn btn-sm btn-stat-alloc" data-action="alloc" data-stat="def" data-count="5">+5 DEF</button>
+                            </div>
+                        </div>
+
+                        <!-- RNG -->
+                        <div class="stat-alloc-card" data-stat="rng">
+                            <div class="stat-alloc-top">
+                                <span class="stat-alloc-icon">🎯</span>
+                                <div class="stat-alloc-info">
+                                    <h4>Agility & Range (RNG)</h4>
+                                    <small>+3.0 Atk (Archer/Spear), +0.3% Crit Rate, +0.25% Dodge</small>
+                                </div>
+                                <div class="stat-alloc-val"><span id="allocVal_rng">+0</span></div>
+                            </div>
+                            <div class="stat-alloc-actions">
+                                <button type="button" class="btn btn-sm btn-stat-alloc" data-action="alloc" data-stat="rng" data-count="1">+1 RNG</button>
+                                <button type="button" class="btn btn-sm btn-stat-alloc" data-action="alloc" data-stat="rng" data-count="5">+5 RNG</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-allocation-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" id="btnResetStats">🔄 Reset Attribute Points</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SUBCLASS SPECIALIZATION PATH -->
+            <section class="panel" id="subclassSpecializationPanel" style="margin-top: 14px;">
+                <div class="panel-header">
+                    <h2>Subclass Specialization Path</h2>
+                    <span id="currentSubclassHeaderTag">DISCIPLINE SPECIALIZATION</span>
+                </div>
+                <div class="subclass-selection-container">
+                    <p class="subclass-selection-hint">
+                        Specialize your hero's discipline to unlock unique passive stat scaling, roles, and signature combat arts.
+                    </p>
+                    <div class="subclass-cards-grid" id="subclassCardsGrid"></div>
                 </div>
             </section>
 
@@ -662,22 +768,78 @@
 
         </div>
 
+        <!-- ==================== TAB PAGE 5: BESTIARY & JOURNAL ==================== -->
+        <div class="game-tab-page" id="tab_journal">
+
+            <!-- JOURNAL SUB-NAVIGATION BAR -->
+            <div class="journal-nav-bar">
+                <button class="journal-nav-btn active" data-journal-view="bestiary">
+                    💀 Monster Bestiary (<span id="journalSlainCount">0</span>/<span id="journalTotalMobsCount">0</span> Discovered)
+                </button>
+                <button class="journal-nav-btn" data-journal-view="farms">
+                    🌾 Royal Farms & Granary (<span id="granaryFoodCount">0</span> Food Stocked)
+                </button>
+            </div>
+
+            <!-- VIEW 1: MONSTER BESTIARY -->
+            <section class="panel journal-view-panel" id="journalView_bestiary">
+                <div class="panel-header">
+                    <h2>Monster Bestiary</h2>
+                    <span id="bestiaryProgressBadge">0 / 0 SLAIN</span>
+                </div>
+                <div class="journal-legend">
+                    <em>Monsters are permanently recorded only after you defeat them in battle. Slain monsters reveal their health, attack power, gold/XP rewards, and drop tables.</em>
+                </div>
+                <div class="bestiary-filter-row">
+                    <button class="bestiary-filter-btn active" data-bestiary-filter="all">All Monsters</button>
+                    <button class="bestiary-filter-btn" data-bestiary-filter="discovered">💀 Discovered Only</button>
+                    <button class="bestiary-filter-btn" data-bestiary-filter="boss">👑 Bosses Only</button>
+                </div>
+                <div class="bestiary-grid" id="bestiaryGrid"></div>
+            </section>
+
+            <!-- VIEW 2: ROYAL FARMS & GRANARY -->
+            <section class="panel journal-view-panel" id="journalView_farms" style="display:none;">
+                <div class="panel-header">
+                    <h2>Royal Granary & Harvest</h2>
+                    <span id="farmStatusBadge">🌾 FARMS LV. 1</span>
+                </div>
+                <div class="granary-summary-card">
+                    <div class="granary-summary-icon">🌾</div>
+                    <div class="granary-summary-details">
+                        <div class="granary-title-row">
+                            <h3 id="granaryFarmTitle">Royal Farms & Granary (Lv. 1)</h3>
+                            <span class="granary-nutrition-badge" id="granaryNutritionBadge">+15 Max HP (Nutrition)</span>
+                        </div>
+                        <p id="granaryFarmDesc">Produces nourishing bread over time and scales with Kingdom Domain upgrades. Higher Farm tiers unlock Hearty Pies, Roasted Boar, Dragon Stew, and Ambrosia Feasts.</p>
+                        <div class="granary-harvest-row">
+                            <span class="granary-timer-pill" id="granaryHarvestTimer">Next harvest in: calculating...</span>
+                            <button class="btn-harvest-now" id="btnHarvestFarms">🧺 Harvest Crops Now</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-header" style="margin-top: 18px;">
+                    <h2>Food Pantry & Quick Belt</h2>
+                    <span>CLICK 'EQUIP' TO ASSIGN FOOD TO COMBAT HUD BELT</span>
+                </div>
+                <div class="food-grid" id="foodGrid"></div>
+            </section>
+
+        </div>
+
                     <footer>
 
                 <div class="footer-buttons">
                     <span>
                         Auto-save enabled
                     </span>
-                    <button id="btnNewGame" class="btn-new-hero">
-                        👑 New Hero
+                    <button id="btnOpenNewGameModal" class="btn-new-hero" title="Start a fresh adventure or manage save states">
+                        👑 New Game
                     </button>
 
                     <button id="btnDevToggle" class="btn-dev-trigger">
                         🐛 DEBUG (F2)
-                    </button>
-
-                    <button id="reset">
-                        Reset Progress
                     </button>
                 </div>
 
@@ -886,17 +1048,14 @@
                         <button type="button" class="btn-quick-action" id="btnQuickCharSheet">
                             👤 Open Character Sheet
                         </button>
-                        <button type="button" class="btn-quick-action highlight" id="btnQuickNewHero">
-                            👑 Start New Hero (Onboarding)
+                        <button type="button" class="btn-quick-action highlight" id="btnQuickNewGame">
+                            👑 New Game & Save Rebirth
                         </button>
                         <button type="button" class="btn-quick-action" id="btnQuickDebug">
                             🐛 Quick Debug Cheats (F2)
                         </button>
                         <button type="button" class="btn-quick-action" id="btnQuickAdmin">
                             🛠️ Open Game Manager Panel
-                        </button>
-                        <button type="button" class="btn-quick-action danger" id="btnQuickWipe">
-                            🧹 Wipe Save & Restart Adventure
                         </button>
                     </div>
                 </div>
@@ -1102,8 +1261,8 @@
                     </div>
                 </div>
 
-                <button id="dbgBtnWipeRestart" class="dbg-btn-action" style="background: linear-gradient(135deg, #d63031, #b71540); color: white; font-weight: bold; width: 100%; margin-bottom: 8px;">
-                    🧹 Wipe Save & Start Whole New Adventure
+                <button id="dbgBtnWipeRestart" class="dbg-btn-action" style="background: linear-gradient(135deg, #e67e22, #d35400); color: white; font-weight: bold; width: 100%; margin-bottom: 8px;">
+                    👑 New Game & Reset Hub
                 </button>
 
                 <button id="dbgBtnOpenManager" class="dbg-btn-manager">
@@ -1112,6 +1271,99 @@
 
             </div>
 
+        </div>
+
+        <!-- ==================== NEW GAME & REBIRTH MODAL ==================== -->
+        <div class="newgame-modal" id="newGameModal">
+            <div class="newgame-card">
+                <div class="newgame-header">
+                    <div class="newgame-header-titles">
+                        <span class="newgame-emblem">👑</span>
+                        <div>
+                            <h2>NEW GAME & REALM REBIRTH</h2>
+                            <small>BEGIN A NEW ADVENTURE OR RESET YOUR JOURNEY</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-newgame-close" id="btnNewGameClose" title="Close Modal">&times;</button>
+                </div>
+
+                <!-- Active Hero Chronicle Summary -->
+                <div class="newgame-current-hero">
+                    <div class="newgame-hero-avatar" id="ngCurrentAvatar">🥋</div>
+                    <div class="newgame-hero-details">
+                        <div class="ng-title-row">
+                            <strong id="ngCurrentName">Roland</strong>
+                            <span class="ng-badge" id="ngCurrentClassBadge">Martial Artist (Warrior)</span>
+                        </div>
+                        <div class="ng-stats-row">
+                            <span>Level <strong id="ngCurrentLevel">1</strong></span>
+                            <span>Gold: <strong id="ngCurrentGold">100g</strong></span>
+                            <span id="ngCurrentRealm">📍 Realm I: Moonlit Vale</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two Distinct New Game Modes -->
+                <div class="newgame-options-grid">
+                    <!-- Option 1: Fresh Hero Adventure (New Game) -->
+                    <div class="newgame-option-card option-new-hero">
+                        <div class="ng-option-header">
+                            <span class="ng-option-icon">⚔️</span>
+                            <div>
+                                <span class="ng-option-tag tag-hero">RECOMMENDED</span>
+                                <h4>New Hero Adventure</h4>
+                            </div>
+                        </div>
+                        <p class="ng-option-desc">
+                            Restart the realm adventure with a brand new character. Resets your level, gold, gear, and maps back to Realm I, and opens the <strong>Character Creation Sanctuary</strong> to select your hero name, gender, class (Martial Artist, Weapon Master, or Mage), and initial subclass.
+                        </p>
+                        <div class="ng-option-impact">
+                            <span class="impact-item reset">🔄 Level, Gold & Gear reset to starter loadout</span>
+                            <span class="impact-item keep">🎨 New Hero customization & class selection</span>
+                        </div>
+                        <button type="button" class="btn btn-gold btn-block" id="btnConfirmNewHero">
+                            ⭐ Begin New Hero Adventure
+                        </button>
+                    </div>
+
+                    <!-- Option 2: Full Factory Wipe -->
+                    <div class="newgame-option-card option-factory-wipe">
+                        <div class="ng-option-header">
+                            <span class="ng-option-icon">🧹</span>
+                            <div>
+                                <span class="ng-option-tag tag-wipe">DANGER ZONE</span>
+                                <h4>Full Factory Storage Reset</h4>
+                            </div>
+                        </div>
+                        <p class="ng-option-desc">
+                            Permanently obliterate all local storage, custom data, save slots, and settings from this browser. Restores the application to pristine factory defaults and reloads the page.
+                        </p>
+                        <div class="ng-option-impact">
+                            <span class="impact-item danger">⚠️ Permanently wipes all browser storage</span>
+                            <span class="impact-item warning">🔄 Clean browser reload to factory state</span>
+                        </div>
+                        <button type="button" class="btn btn-danger btn-block" id="btnConfirmWipeData">
+                            🗑️ Wipe All Data & Factory Restart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Save Safeguard / Backup Bar -->
+                <div class="newgame-backup-bar">
+                    <div class="backup-bar-info">
+                        <span>💾 <strong>Save Safeguard:</strong> Back up your active character before restarting?</span>
+                    </div>
+                    <div class="backup-bar-actions">
+                        <button type="button" class="btn-sm-backup" id="btnBackupExportSave">
+                            📥 Download Save (.json)
+                        </button>
+                        <button type="button" class="btn-sm-backup" id="btnBackupImportSave">
+                            📤 Restore from File
+                        </button>
+                        <input type="file" id="fileInputSaveImport" accept=".json" style="display: none;">
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- DATA MODULES -->
