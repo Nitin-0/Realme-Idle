@@ -828,6 +828,10 @@ window.ItemsData = {
     // =========================================================
     // ROYAL FARMS & GRANARY FOODS (HEALING & COMBAT BUFFS)
     // =========================================================
+    // ROYAL FARMS & GRANARY FOODS (HEALING & COMBAT BUFFS)
+    // New foods introduced every +2 Farm Levels (Lv 1, 3, 5, 7, 9)
+    // Higher tier foods take less creation time and grant more HP!
+    // =========================================================
     food_bread: {
         id: "food_bread",
         name: "Warm Crust Bread",
@@ -836,10 +840,11 @@ window.ItemsData = {
         rarity: "common",
         baseValue: 15,
         farmLevelReq: 1,
+        baseCreationTimeSec: 300,
         healHp: 60,
         healPct: 0.20,
         icon: "🍞",
-        description: "Freshly baked artisan bread from the Royal Farms. Heals 60 HP (or 20% Max HP).",
+        description: "Freshly baked artisan bread from the Royal Farms. Created every 5 min. Restores 60 HP (or 20% Max HP).",
         effect: { type: "heal_food", amount: 60, minPct: 0.20 }
     },
     food_pie: {
@@ -849,12 +854,13 @@ window.ItemsData = {
         type: "food",
         rarity: "uncommon",
         baseValue: 45,
-        farmLevelReq: 2,
-        healHp: 150,
+        farmLevelReq: 3,
+        baseCreationTimeSec: 270,
+        healHp: 160,
         healPct: 0.35,
         icon: "🥧",
-        description: "Savory wild game pie with herb crust. Heals 150 HP (35% Max HP) and grants +8 Defense for 30s.",
-        effect: { type: "heal_food", amount: 150, minPct: 0.35, buff: { stat: "defense", bonus: 8, durationSec: 30, name: "Stout Constitution" } }
+        description: "Savory wild game pie with herb crust. Created faster (4.5 min base) and restores 160 HP (35% Max HP) + 8 Defense for 30s.",
+        effect: { type: "heal_food", amount: 160, minPct: 0.35, buff: { stat: "defense", bonus: 8, durationSec: 30, name: "Stout Constitution" } }
     },
     food_meat: {
         id: "food_meat",
@@ -863,12 +869,13 @@ window.ItemsData = {
         type: "food",
         rarity: "rare",
         baseValue: 120,
-        farmLevelReq: 3,
-        healHp: 350,
+        farmLevelReq: 5,
+        baseCreationTimeSec: 240,
+        healHp: 380,
         healPct: 0.50,
         icon: "🍗",
-        description: "Juicy fire-roasted wild boar shank. Heals 350 HP (50% Max HP) and grants +18 Attack for 35s.",
-        effect: { type: "heal_food", amount: 350, minPct: 0.50, buff: { stat: "attack", bonus: 18, durationSec: 35, name: "Carnivore Vigour" } }
+        description: "Juicy fire-roasted wild boar shank. Created faster (4 min base) and restores 380 HP (50% Max HP) + 18 Attack for 35s.",
+        effect: { type: "heal_food", amount: 380, minPct: 0.50, buff: { stat: "attack", bonus: 18, durationSec: 35, name: "Carnivore Vigour" } }
     },
     food_stew: {
         id: "food_stew",
@@ -877,12 +884,13 @@ window.ItemsData = {
         type: "food",
         rarity: "epic",
         baseValue: 300,
-        farmLevelReq: 4,
-        healHp: 800,
+        farmLevelReq: 7,
+        baseCreationTimeSec: 210,
+        healHp: 850,
         healPct: 0.70,
         icon: "🍲",
-        description: "Simmering spicy cauldron spiced with dragon peppers. Heals 800 HP (70% Max HP) and grants +8% Crit Chance for 45s.",
-        effect: { type: "heal_food", amount: 800, minPct: 0.70, buff: { stat: "critChance", bonus: 0.08, durationSec: 45, name: "Fiery Blood" } }
+        description: "Simmering spicy cauldron of dragon peppers. Created faster (3.5 min base) and restores 850 HP (70% Max HP) + 8% Crit Chance for 45s.",
+        effect: { type: "heal_food", amount: 850, minPct: 0.70, buff: { stat: "critChance", bonus: 0.08, durationSec: 45, name: "Fiery Blood" } }
     },
     food_feast: {
         id: "food_feast",
@@ -891,12 +899,13 @@ window.ItemsData = {
         type: "food",
         rarity: "legendary",
         baseValue: 800,
-        farmLevelReq: 5,
-        healHp: 2000,
+        farmLevelReq: 9,
+        baseCreationTimeSec: 180,
+        healHp: 2500,
         healPct: 1.0,
         icon: "🍇",
-        description: "The celestial harvest of royalty. Restores 100% Full HP, cleanses all fatigue, and grants +15% Attack for 60s.",
-        effect: { type: "heal_food", amount: 2000, minPct: 1.0, buff: { stat: "attackMult", bonus: 0.15, durationSec: 60, name: "Divine Feast" } }
+        description: "The celestial harvest of royalty. Fastest creation (3 min base), restores 100% Full HP, cleanses fatigue, and grants +15% Attack for 60s.",
+        effect: { type: "heal_food", amount: 2500, minPct: 1.0, buff: { stat: "attackMult", bonus: 0.15, durationSec: 60, name: "Divine Feast" } }
     },
 
     // Fatigue Potions & Advanced Elixirs

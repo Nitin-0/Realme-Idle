@@ -1029,8 +1029,61 @@ window.gameState = {
     getFarmHarvestIntervalSec() {
         const lvl = this.getFarmLevel();
         const speed = (window.devMode && window.devMode.enabled) ? (window.devMode.gameSpeed || 1) : 1;
-        const base = Math.max(20, 50 - (lvl * 3));
-        return Math.max(5, Math.floor(base / (speed > 0 ? speed : 1)));
+
+        // Base creation time starts at 300 seconds (5 min) for Bread
+        // New food introduced after +2 level upgrades only (Lv 1, 3, 5, 7, 9)
+        // Each higher tier takes less base creation time:
+        // Lv 1-2 (Bread): 300s (5.0 min)
+        // Lv 3-4 (Pie):   270s (4.5 min)
+        // Lv 5-6 (Meat):  240s (4.0 min)
+        // Lv 7-8 (Stew):  210s (3.5 min)
+        // Lv 9+  (Feast): 180s (3.0 min)
+        let baseTime = 300;
+        if (lvl >= 9) baseTime = 180;
+        else if (lvl >= 7) baseTime = 210;
+        else if (lvl >= 5) baseTime = 240;
+        else if (lvl >= 3) baseTime = 270;
+
+        // For every +1 lvl increase, reduce the create food time by -1 second
+        const lvlReduction = (lvl - 1) * 1;
+        const totalSec = Math.max(10, baseTime - lvlReduction);
+
+        return Math.max(2, Math.floor(totalSec / (speed > 0 ? speed : 1)));
+    },
+
+    getFoodHealingInfo(foodId) {
+        const foodDef = (window.FoodData && window.FoodData[foodId]) || (window.ItemsData && window.ItemsData[foodId]);
+        if (!foodDef) return { baseFlat: 50, basePct: 0.20, bonusFlat: 0, bonusPct: 0, effectiveFlat: 50, effectivePct: 0.20, totalHeal: 50 };
+
+        const farmLvl = this.getFarmLevel();
+        const effMaxHp = this.getEffectiveMaxHp();
+
+        // For every +1 lvl increase, improve HP recovery (+12 flat HP and +1.5% Max HP per farm level above 1)
+        const bonusFlat = Math.max(0, (farmLvl - 1) * 12);
+        const bonusPct = Math.max(0, (farmLvl - 1) * 0.015);
+
+        const baseFlat = foodDef.healHp || 50;
+        const basePct = foodDef.healPct || 0.20;
+
+        const effectiveFlat = baseFlat + bonusFlat;
+        const effectivePct = Math.min(1.0, basePct + bonusPct);
+
+        let totalHeal = 0;
+        if (foodId === "food_feast" || foodDef.healPct >= 1.0) {
+            totalHeal = effMaxHp;
+        } else {
+            totalHeal = Math.max(effectiveFlat, Math.floor(effMaxHp * effectivePct));
+        }
+
+        return {
+            baseFlat,
+            basePct,
+            bonusFlat,
+            bonusPct,
+            effectiveFlat,
+            effectivePct,
+            totalHeal
+        };
     },
 
     equipFood(foodId) {
@@ -1056,9 +1109,9 @@ window.gameState = {
 
         this.player.food[target]--;
         const effMaxHp = this.getEffectiveMaxHp();
-        const healAmt = Math.max(foodDef.healHp || 50, Math.floor(effMaxHp * (foodDef.healPct || 0.20)));
+        const healInfo = this.getFoodHealingInfo(target);
         const prevHp = this.player.hp;
-        this.player.hp = Math.min(effMaxHp, this.player.hp + healAmt);
+        this.player.hp = Math.min(effMaxHp, this.player.hp + healInfo.totalHeal);
         const actualHealed = this.player.hp - prevHp;
 
         // Apply temporary buff if any
@@ -1109,33 +1162,44 @@ window.gameState = {
         }
         const farmLevel = this.getFarmLevel();
 
-        // Produce food according to farm level
+        // New food introduced after +2 levels upgrade only:
+        // Lv 1: Bread
+        // Lv 3: Meat Pie (+ Bread)
+        // Lv 5: Boar Shank (+ Pie, Bread)
+        // Lv 7: Dragon Stew (+ Shank, Pie, Bread)
+        // Lv 9: Royal Feast (+ Stew, Shank, Pie, Bread)
         const harvestYield = {};
         if (farmLevel >= 1) harvestYield.food_bread = 1;
-        if (farmLevel >= 2) harvestYield.food_pie = 1;
-        if (farmLevel >= 3) harvestYield.food_meat = 1;
-        if (farmLevel >= 4) harvestYield.food_stew = 1;
-        if (farmLevel >= 5) harvestYield.food_feast = 1;
+        if (farmLevel >= 3) harvestYield.food_pie = 1;
+        if (farmLevel >= 5) harvestYield.food_meat = 1;
+        if (farmLevel >= 7) harvestYield.food_stew = 1;
+        if (farmLevel >= 9) harvestYield.food_feast = 1;
 
+        let producedNames = [];
         for (const [fKey, qty] of Object.entries(harvestYield)) {
             this.player.food[fKey] = (this.player.food[fKey] || 0) + qty;
             const fDef = (window.FoodData && window.FoodData[fKey]) || (window.ItemsData && window.ItemsData[fKey]);
-            if (fDef && this.recordItemLoot) {
-                this.recordItemLoot({
-                    key: fKey,
-                    name: fDef.name,
-                    icon: fDef.icon,
-                    rarity: fDef.rarity || "common",
-                    category: "food",
-                    count: qty,
-                    details: `Produced by Royal Farms (Lv. ${farmLevel})`
-                });
+            if (fDef) {
+                producedNames.push(`${fDef.icon || '🍞'} ${fDef.name} (x${qty})`);
+                if (this.recordItemLoot) {
+                    this.recordItemLoot({
+                        key: fKey,
+                        name: fDef.name,
+                        icon: fDef.icon || "🍞",
+                        rarity: fDef.rarity || "common",
+                        category: "food",
+                        count: qty,
+                        details: `Created by Royal Farms (Lv. ${farmLevel})`
+                    });
+                }
             }
         }
 
         this.player.lastFarmHarvestAt = Date.now();
         if (isManual && this.addLog) {
             this.addLog(`🌾 Harvested fresh crops from Royal Farms (Lv. ${farmLevel})!`, "system", "🌾");
+        } else if (this.addLog && producedNames.length > 0) {
+            this.addLog(`🌾 Royal Farms (Lv. ${farmLevel}) created food: ${producedNames.join(", ")}!`, "system", "🌾");
         }
         this.save();
         this.notify();

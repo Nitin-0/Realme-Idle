@@ -38,9 +38,23 @@ window.KingdomManager = {
         if (targetKey === "farms") {
             state.kingdom.farms = (state.kingdom.farms || state.kingdom.blacksmith || 1) + 1;
             state.kingdom.blacksmith = state.kingdom.farms; // keep alias in sync
+            const newLvl = state.kingdom.farms;
+
             if (state.harvestFarms) state.harvestFarms(true);
+
             if (state.addLog) {
-                state.addLog(`🌾 ROYAL FARMS UPGRADED to Level ${state.kingdom.farms}! Farm production yields increased.`, "system", "🌾");
+                const milestoneFoods = {
+                    3: "🥧 Hearty Meat Pie",
+                    5: "🍗 Roasted Boar Shank",
+                    7: "🍲 Dragon-Fire Stew",
+                    9: "🍇 Royal Ambrosia Feast"
+                };
+                if (milestoneFoods[newLvl]) {
+                    state.addLog(`⭐ ROYAL FARMS UPGRADED (Lv. ${newLvl})! NEW CUISINE UNLOCKED: [${milestoneFoods[newLvl]}]! Takes less creation time and restores greater HP!`, "level", "⭐");
+                } else {
+                    const nextTarget = newLvl < 3 ? 3 : newLvl < 5 ? 5 : newLvl < 7 ? 7 : newLvl < 9 ? 9 : (newLvl + 1);
+                    state.addLog(`🌾 ROYAL FARMS UPGRADED to Level ${newLvl}! Food creation time reduced by -1s and HP recovery improved! (Next cuisine unlocks at Lv. ${nextTarget})`, "system", "🌾");
+                }
             }
         } else {
             state.kingdom[targetKey] = (state.kingdom[targetKey] || 1) + 1;

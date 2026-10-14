@@ -1112,11 +1112,17 @@ window.MainEngine = {
         if (farmDescEl && state.getFarmLevel) {
             const fLvl = state.getFarmLevel();
             let fName = "Warm Crust Bread";
-            if (fLvl >= 5) fName = "Royal Ambrosia Feast";
-            else if (fLvl >= 4) fName = "Dragon-Fire Stew";
-            else if (fLvl >= 3) fName = "Roasted Boar Shank";
-            else if (fLvl >= 2) fName = "Hearty Meat Pie";
-            farmDescEl.textContent = `Produces ${fName} · +${fLvl * 15} Max HP`;
+            let nextMilestone = "Next cuisine at Lv. 3";
+            if (fLvl >= 9) { fName = "Royal Ambrosia Feast"; nextMilestone = "Max Cuisines Unlocked"; }
+            else if (fLvl >= 7) { fName = "Dragon-Fire Stew"; nextMilestone = fLvl === 7 ? "Next cuisine at Lv. 9" : "⭐ Upgrade to Lv. 9 unlocks Royal Ambrosia!"; }
+            else if (fLvl >= 5) { fName = "Roasted Boar Shank"; nextMilestone = fLvl === 5 ? "Next cuisine at Lv. 7" : "⭐ Upgrade to Lv. 7 unlocks Dragon Stew!"; }
+            else if (fLvl >= 3) { fName = "Hearty Meat Pie"; nextMilestone = fLvl === 3 ? "Next cuisine at Lv. 5" : "⭐ Upgrade to Lv. 5 unlocks Boar Shank!"; }
+            else if (fLvl === 2) { nextMilestone = "⭐ Upgrade to Lv. 3 unlocks Meat Pie!"; }
+
+            const intervalSec = state.getFarmHarvestIntervalSec ? state.getFarmHarvestIntervalSec() : 300;
+            const mins = Math.floor(intervalSec / 60);
+            const secs = intervalSec % 60;
+            farmDescEl.textContent = `Produces ${fName} (${mins}m ${secs < 10 ? '0' : ''}${secs}s) · +${fLvl * 15} Max HP · ${nextMilestone}`;
         }
 
         // Dynamic Quests UI
@@ -2443,11 +2449,12 @@ window.MainEngine = {
         const farmDesc = document.getElementById("granaryFarmDesc");
         if (farmDesc) {
             let nextUnlock = "";
-            if (farmLvl < 2) nextUnlock = " · Lv. 2 unlocks Hearty Meat Pie";
-            else if (farmLvl < 3) nextUnlock = " · Lv. 3 unlocks Roasted Boar Shank";
-            else if (farmLvl < 4) nextUnlock = " · Lv. 4 unlocks Dragon-Fire Stew";
-            else if (farmLvl < 5) nextUnlock = " · Lv. 5 unlocks Royal Ambrosia Feast";
-            farmDesc.textContent = `Produces wholesome food to sustain your champion. Upgrades grant +15 Max HP per level and unlock higher cuisine tiers.${nextUnlock}`;
+            if (farmLvl < 3) nextUnlock = " · Lv. 3 unlocks 🥧 Meat Pie";
+            else if (farmLvl < 5) nextUnlock = " · Lv. 5 unlocks 🍗 Boar Shank";
+            else if (farmLvl < 7) nextUnlock = " · Lv. 7 unlocks 🍲 Dragon Stew";
+            else if (farmLvl < 9) nextUnlock = " · Lv. 9 unlocks 🍇 Ambrosia Feast";
+            else nextUnlock = " · All cuisine tiers unlocked!";
+            farmDesc.textContent = `Food is created into your inventory every 5 min. New foods are introduced after upgrading +2 levels only, take less creation time, and restore greater HP. Every +1 level reduces creation time by -1s and boosts healing!${nextUnlock}`;
         }
 
         const nutritionBadge = document.getElementById("granaryNutritionBadge");
@@ -2605,25 +2612,39 @@ window.MainEngine = {
             Object.entries(window.FoodData).forEach(([foodId, foodDef]) => {
                 const stock = (state.player.food && state.player.food[foodId]) || 0;
                 const isEquipped = currentEquipped === foodId;
-                const isUnlocked = farmLvl >= (foodDef.reqFarmLevel || 1);
+                const reqLvl = foodDef.farmLevelReq || foodDef.reqFarmLevel || 1;
+                const isUnlocked = farmLvl >= reqLvl;
+
+                const healInfo = state.getFoodHealingInfo ? state.getFoodHealingInfo(foodId) : { totalHeal: foodDef.healHp || 50, effectivePct: foodDef.healPct || 0.20, bonusFlat: 0 };
 
                 const card = document.createElement("div");
                 card.className = `food-card ${isEquipped ? 'is-equipped' : ''} ${!isUnlocked ? 'is-locked' : ''}`;
 
                 let unlockNotice = "";
+                const baseSec = foodDef.baseCreationTimeSec || 300;
+                const baseMins = Math.floor(baseSec / 60);
+                const baseSecs = baseSec % 60;
+                const baseTimeStr = `${baseMins}m ${baseSecs < 10 ? '0' : ''}${baseSecs}s base`;
+
                 if (!isUnlocked) {
-                    unlockNotice = `<div class="food-unlock-tag">🔒 Requires Royal Farms Lv. ${foodDef.reqFarmLevel}</div>`;
+                    unlockNotice = `<div class="food-unlock-tag">🔒 Unlocks at Royal Farms Lv. ${reqLvl} (+2 lvl milestone) · Faster creation (${baseTimeStr})</div>`;
+                }
+
+                let healNotice = `Restores <strong>+${healInfo.totalHeal} HP</strong> (${Math.round(healInfo.effectivePct * 100)}% Max HP)`;
+                if (healInfo.bonusFlat > 0) {
+                    healNotice += ` <span style="color:#4ade80; font-size:11px;">(+${healInfo.bonusFlat} HP from Farm Lv. ${farmLvl})</span>`;
                 }
 
                 card.innerHTML = `
                     <div class="food-card-header">
                         <div class="food-icon">${foodDef.icon || '🍞'}</div>
                         <div class="food-meta">
-                            <div class="food-name">${foodDef.name}</div>
+                            <div class="food-name">${foodDef.name} <span style="font-size:11px; color:#facc15; font-weight:normal;">[${baseTimeStr}]</span></div>
                             <div class="food-stock">Pantry Stock: ${stock}</div>
                             ${unlockNotice}
                         </div>
                     </div>
+                    <div class="food-desc" style="margin-bottom:4px; color:#86efac;">${healNotice}</div>
                     <p class="food-desc">${foodDef.description || ''}</p>
                     <div class="food-actions">
                         <button class="btn-equip-food ${isEquipped ? 'active' : ''}" ${!isUnlocked || isEquipped ? 'disabled' : ''} data-equip-food="${foodId}">
